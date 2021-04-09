@@ -1,0 +1,59 @@
+DESeq2差异表达：
+
+library(tidyverse)
+library(DESeq2)
+mycounts<-read.csv("mRNA_exprSet.csv")#导入文档
+head(mycounts)#做一个检视
+
+rownames(mycounts)<-mycounts[,1]
+mycounts<-mycounts[,-1]
+head(mycounts)
+condition <- factor(c(rep("tumor",50),rep("normal",73)), levels = c("tumor","normal"))
+condition
+
+colData <- data.frame(row.names=colnames(mycounts), condition)
+colData
+
+dds <- DESeqDataSetFromMatrix(mycounts, colData, design= ~ condition)
+dds <- DESeq(dds)
+dds
+
+res = results(dds, contrast=c("condition", "tumor", "normal"))
+res= results(dds)
+res = res[order(res$pvalue),]
+head(res)
+summary(res)
+write.csv(res,file="All_results.csv")
+table(res$padj<0.05)
+
+差异表达后的绘图：
+
+rm(list = ls())
+library("DESeq2")
+library("limma")
+library("edgeR")
+expr=read.csv('All_results.csv',sep = ',',header=T)
+
+library(ggplot2)
+library(ggrepel)
+expr=read.csv('All_results.csv',sep = ',',header=T)
+#确定是上调还是下调，用于给图中点上色）
+expr$threshold = factor(ifelse(expr$padj < 0.05 & abs(expr$log2FoldChange) >= 1, ifelse(expr$log2FoldChange>= 1 ,'Up','Down'),'NoSignifi'),levels=c('Up','Down','NoSignifi'))
+
+
+ggplot(expr,aes(x=log2FoldChange,y=-log10(padj),color=threshold))+
+  geom_point()+
+  scale_color_manual(values=c("#DC143C","#00008B","#808080"))+#确定点的颜色
+  geom_text_repel(
+    data = expr[expr$padj<0.05&abs(expr$log2FoldChange)>1,],
+    aes(label = X),
+    size = 3,
+    segment.color = "black", show.legend = FALSE )+#添加关注的点的基因名
+  theme_bw()+#修改图片背景
+  theme(
+    legend.title = element_blank()#不显示图例标题
+  )+
+  ylab('-log10 (p-adj)')+#修改y轴名称
+  xlab('log2 (FoldChange)')+#修改x轴名称
+  geom_vline(xintercept=c(-1,1),lty=3,col="black",lwd=0.5) +#添加横线|FoldChange|>2
+  geom_hline(yintercept = -log10(0.05),lty=3,col="black",lwd=0.5)#添加竖线padj<0.05
