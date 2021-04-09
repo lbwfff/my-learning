@@ -5,16 +5,16 @@ library(DESeq2)
 mycounts<-read.csv("mRNA_exprSet.csv")#导入文档
 head(mycounts)#做一个检视
 
-rownames(mycounts)<-mycounts[,1]
+rownames(mycounts)<-mycounts[,1]#去除第一列，之后的每一列第一行当作行名
 mycounts<-mycounts[,-1]
-head(mycounts)
-condition <- factor(c(rep("tumor",50),rep("normal",73)), levels = c("tumor","normal"))
-condition
+head(mycounts)#去除了带x的第一列
+condition <- factor(c(rep("tumor",50),rep("normal",73)), levels = c("tumor","normal"))#设置condition因子水平，癌症组50次重复，正常组73次重复，当然是我乱填的。
+condition#检视
 
-colData <- data.frame(row.names=colnames(mycounts), condition)
+colData <- data.frame(row.names=colnames(mycounts), condition)#将样本名和因子名相对应
 colData
 
-dds <- DESeqDataSetFromMatrix(mycounts, colData, design= ~ condition)
+dds <- DESeqDataSetFromMatrix(mycounts, colData, design= ~ condition)#dds即DESeqDataSet_Object,将count_data和colData结合
 dds <- DESeq(dds)
 dds
 
