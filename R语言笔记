@@ -18,13 +18,15 @@ dds <- DESeqDataSetFromMatrix(mycounts, colData, design= ~ condition)#dds即DESe
 dds <- DESeq(dds)
 dds
 
-res = results(dds, contrast=c("condition", "tumor", "normal"))
+res = results(dds, contrast=c("condition", "tumor", "normal"))#正式分析，输出结果为tumor/normal
+#下面的和上一列一个意思
 res= results(dds)
 res = res[order(res$pvalue),]
 head(res)
 summary(res)
-write.csv(res,file="All_results.csv")
-table(res$padj<0.05)
+
+write.csv(res,file="All_results.csv")#输出结果文件
+table(res$padj<0.05)#对padj大于和小于0.05的基因进行了一个计数
 
 差异表达后的绘图：
 
@@ -32,23 +34,23 @@ rm(list = ls())
 library("DESeq2")
 library("limma")
 library("edgeR")
-expr=read.csv('All_results.csv',sep = ',',header=T)
+expr=read.csv('All_results.csv',sep = ',',header=T)#将DEseq2得到的All_result文件导入
 
 library(ggplot2)
 library(ggrepel)
-expr=read.csv('All_results.csv',sep = ',',header=T)
-#确定是上调还是下调，用于给图中点上色）
-expr$threshold = factor(ifelse(expr$padj < 0.05 & abs(expr$log2FoldChange) >= 1, ifelse(expr$log2FoldChange>= 1 ,'Up','Down'),'NoSignifi'),levels=c('Up','Down','NoSignifi'))
+expr=read.csv('All_results.csv',sep = ',',header=T)#为什么又导入了一遍？
 
+expr$threshold = factor(ifelse(expr$padj < 0.05 & abs(expr$log2FoldChange) >= 1, ifelse(expr$log2FoldChange>= 1 ,'Up','Down'),'NoSignifi'),levels=c('Up','Down','NoSignifi'))
+#设定阈值，分为上调，下调，无显著三组
 
 ggplot(expr,aes(x=log2FoldChange,y=-log10(padj),color=threshold))+
   geom_point()+
-  scale_color_manual(values=c("#DC143C","#00008B","#808080"))+#确定点的颜色
+  scale_color_manual(values=c("#DC143C","#00008B","#808080"))+#确定点的颜色，不知道要怎么改，位置改换之后颜色确实发生了改变，此处的＃号居然是有实际意义的，但是除了这三种颜色还有什么呢？
   geom_text_repel(
     data = expr[expr$padj<0.05&abs(expr$log2FoldChange)>1,],
     aes(label = X),
-    size = 3,
-    segment.color = "black", show.legend = FALSE )+#添加关注的点的基因名
+    size = 3,#标注的文字的大小
+    segment.color = "black", show.legend = FALSE )+#添加关注的点的基因名，颜色为基因名和点之间那根线的名字
   theme_bw()+#修改图片背景
   theme(
     legend.title = element_blank()#不显示图例标题
@@ -57,3 +59,5 @@ ggplot(expr,aes(x=log2FoldChange,y=-log10(padj),color=threshold))+
   xlab('log2 (FoldChange)')+#修改x轴名称
   geom_vline(xintercept=c(-1,1),lty=3,col="black",lwd=0.5) +#添加横线|FoldChange|>2
   geom_hline(yintercept = -log10(0.05),lty=3,col="black",lwd=0.5)#添加竖线padj<0.05
+  
+  #我人都傻了，这不是同一串代码吗？有什么区别呢？现在又出来了，和刚刚又有什么区别吗？
