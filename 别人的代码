@@ -1,28 +1,26 @@
 ## 1-10
 if(T){
-  # BiocManager::install('CLL')
   suppressPackageStartupMessages(library(CLL))
   data(sCLLex)
-  sCLLex
-  exprSet=exprs(sCLLex)   
+  sCLLex#得到具体信息
+  exprSet=exprs(sCLLex)   #得表达矩阵
   ##sCLLex是依赖于CLL这个package的一个对象
-  samples=sampleNames(sCLLex)
-  pdata=pData(sCLLex)
-  group_list=as.character(pdata[,2])
-  dim(exprSet)
-  exprSet[1:5,1:5]
+  samples=sampleNames(sCLLex)#暂时没明白这个sample是什么
+  pdata=pData(sCLLex)#pData中有每个sample的ID和对应的疾病
+  group_list=as.character(pdata[,2])#把pData中的第二列作为了group_list（疾病或稳定那列）
+  dim(exprSet)#告诉你矩阵有多少列多少行
+  exprSet[1:5,1:5]#检视前五列前五行
   
-  # BiocManager::install('hgu95av2.db')
   library(hgu95av2.db)
-  ls("package:hgu95av2.db") 
+  ls("package:hgu95av2.db") #查看此包中含有的指令
   
-  ids=toTable(hgu95av2SYMBOL)
-  save(ids,exprSet,pdata,file = 'input.Rdata')
-  length(unique(ids$symbol))
-  tail(sort(table(ids$symbol)))
-  table(sort(table(ids$symbol)))
+  ids=toTable(hgu95av2SYMBOL)#输出ids数据，数据中对探针做出了注释
+  save(ids,exprSet,pdata,file = 'input.Rdata')#将ids，exprSet，pdata数据集合输出为input.Rdate,如果我没猜错的话，
+  length(unique(ids$symbol))#输出不重复的基因的数量
+  tail(sort(table(ids$symbol)))#出现频率最高的基因的数量
+  table(sort(table(ids$symbol)))#每个频率出现的基因个数？
   
-  plot(table(sort(table(ids$symbol))))
+  plot(table(sort(table(ids$symbol))))#做了个简图
   
   table(rownames(exprSet) %in% ids$probe_id)
   dim(exprSet)
@@ -31,21 +29,21 @@ if(T){
   
   ids=ids[match(rownames(exprSet),ids$probe_id),]
   head(ids)
-  exprSet[1:5,1:5]
+  exprSet[1:5,1:5]#以上都没看懂
   if(F){
     tmp = by(exprSet,ids$symbol,
              function(x) rownames(x)[which.max(rowMeans(x))] )
-    probes = as.character(tmp)
+    probes = as.character(tmp)#输出了一个probes数据
     dim(exprSet)
     exprSet=exprSet[rownames(exprSet) %in% probes ,]
     dim(exprSet)
     
-    rownames(exprSet)=ids[match(rownames(exprSet),ids$probe_id),2]
+    rownames(exprSet)=ids[match(rownames(exprSet),ids$probe_id),2]#把探针名替换为了基因名
     exprSet[1:5,1:5]
   }
   
-  identical(ids$probe_id,rownames(exprSet))
-  dat=exprSet
+  identical(ids$probe_id,rownames(exprSet))#验证了一个看不懂的东西
+  dat=exprSet#因为下面的代码时copy的，所以改这么一句就很方便
   ids$median=apply(dat,1,median) #ids新建median这一列，列名为median，同时对dat这个矩阵按行操作，取每一行的中位数，将结果给到median这一列的每一行
   ids=ids[order(ids$symbol,ids$median,decreasing = T),]#对ids$symbol按照ids$median中位数从大到小排列的顺序排序，将对应的行赋值为一个新的ids
   ids=ids[!duplicated(ids$symbol),]#将symbol这一列取取出重复项，'!'为否，即取出不重复的项，去除重复的gene ，保留每个基因最大表达量结果s
@@ -57,37 +55,37 @@ if(T){
 }
 
 exprSet=dat
-exprSet['GAPDH',]
-boxplot(exprSet[,1])
-boxplot(exprSet['GAPDH',])
-exprSet['ACTB',]
+exprSet['GAPDH',]#看了一下GAPDH在每个sample中的表达
+boxplot(exprSet[,1])#对第一列基因的表达作了图
+boxplot(exprSet['GAPDH',])#对GAPDH的表达作图
+exprSet['ACTB',]#就是β-actin的表达
 
 
 library(reshape2)
-exprSet_L=melt(exprSet)
-colnames(exprSet_L)=c('probe','sample','value')
-exprSet_L$group=rep(group_list,each=nrow(exprSet))
-head(exprSet_L)
+exprSet_L=melt(exprSet)#把矩阵中所有的数据放到了两列？melt是什么
+colnames(exprSet_L)=c('probe','sample','value')#改了列位置吗？不太确定
+exprSet_L$group=rep(group_list,each=nrow(exprSet))#添加了group列
+head(exprSet_L)#检视了前几个数据
 
 
 ### ggplot2 
 library(ggplot2)
 p=ggplot(exprSet_L,
          aes(x=sample,y=value,fill=group))+geom_boxplot()
-print(p)
+print(p)#利用exprSet_L来作图，先是每个sample的箱图
 p=ggplot(exprSet_L,aes(x=sample,y=value,fill=group))+geom_violin()
-print(p)
+print(p)#小提琴图
 p=ggplot(exprSet_L,aes(value,fill=group))+geom_histogram(bins = 200)+facet_wrap(~sample, nrow = 4)
-print(p)
+print(p)#分面图？还是什么东西
 p=ggplot(exprSet_L,aes(value,col=group))+geom_density()+facet_wrap(~sample, nrow = 4)
-print(p)
+print(p)#和上图类似的一个图形
 p=ggplot(exprSet_L,aes(value,col=group))+geom_density() 
-print(p)
+print(p)#密度图？
 p=ggplot(exprSet_L,aes(x=sample,y=value,fill=group))+geom_boxplot()
 p=p+stat_summary(fun.y="mean",geom="point",shape=23,size=3,fill="red")
 p=p+theme_set(theme_set(theme_bw(base_size=20)))
 p=p+theme(text=element_text(face='bold'),axis.text.x=element_text(angle=30,hjust=1),axis.title=element_blank())
-print(p)
+print(p)#还是图，还是箱图？
 
 ## mean,median,max,min,sd,var,mad
 g_mean <- tail(sort(apply(exprSet,1,mean)),50)
@@ -98,13 +96,15 @@ g_sd <- tail(sort(apply(exprSet,1,sd)),50)
 g_var <- tail(sort(apply(exprSet,1,var)),50)
 g_mad <- tail(sort(apply(exprSet,1,mad)),50)
 g_mad
-names(g_mad)
+names(g_mad)#完全没懂
+
 ## heatmap 
 library(pheatmap)
-choose_gene=names(tail(sort(apply(exprSet,1,mad)),50))
+choose_gene=names(tail(sort(apply(exprSet,1,mad)),50))#上个单元筛选了一些基因，在这用到了exprSet,1,mad,能这样理解吗？
 choose_matrix=exprSet[choose_gene,]
 choose_matrix=t(scale(t(choose_matrix)))
 pheatmap(choose_matrix)
+
 ## UpSetR
 # https://cran.r-project.org/web/packages/UpSetR/README.html
 library(UpSetR)
@@ -119,7 +119,7 @@ dat=data.frame(g_all=g_all,
                g_var=ifelse(g_all %in%  names(g_var) ,1,0),
                g_mad=ifelse(g_all %in%  names(g_mad) ,1,0)
 )
-upset(dat,nsets = 7)
+upset(dat,nsets = 7)#取了一堆值然后做了一个看不懂的图，要理解其中的统计学意义
 
 
 pdata=pData(sCLLex)
@@ -127,14 +127,16 @@ group_list=as.character(pdata[,2])
 group_list
 dim(exprSet)
 exprSet[1:5,1:5]
+
 ## hclust 
-colnames(exprSet)=paste(group_list,1:22,sep='')
+colnames(exprSet)=paste(group_list,1:22,sep='')#什么时候把列开头换掉的？
+
 # Define nodePar
 nodePar <- list(lab.cex = 0.6, pch = c(NA, 19), 
                 cex = 0.7, col = "blue")
 hc=hclust(dist(t(exprSet)))
 par(mar=c(5,5,5,10)) 
-plot(as.dendrogram(hc), nodePar = nodePar,  horiz = TRUE)
+plot(as.dendrogram(hc), nodePar = nodePar,  horiz = TRUE)#对每个sample做了一个相当于是相关性的分析？
 
 ## PCA 
 
@@ -142,7 +144,7 @@ plot(as.dendrogram(hc), nodePar = nodePar,  horiz = TRUE)
 library(ggfortify)
 df=as.data.frame(t(exprSet))
 df$group=group_list 
-autoplot(prcomp( df[,1:(ncol(df)-1)] ), data=df,colour = 'group')
+autoplot(prcomp( df[,1:(ncol(df)-1)] ), data=df,colour = 'group')#作了一个sample相似性的散点图？
 
 library("FactoMineR")#画主成分分析图需要加载这两个包
 library("factoextra") 
@@ -174,7 +176,7 @@ log2FC = avg_2-avg_1
 DEG_t.test = cbind(avg_1, avg_2, log2FC, pvals, p.adj)
 DEG_t.test=DEG_t.test[order(DEG_t.test[,4]),]
 DEG_t.test=as.data.frame(DEG_t.test)
-head(DEG_t.test)
+head(DEG_t.test)#不想看了，这都什么啊
 
 # DEG by limma 
 suppressMessages(library(limma)) 
@@ -197,7 +199,7 @@ fit2 <- eBayes(fit2)  ## default no trend !!!
 tempOutput = topTable(fit2, coef=1, n=Inf)
 nrDEG = na.omit(tempOutput) 
 #write.csv(nrDEG2,"limma_notrend.results.csv",quote = F)
-head(nrDEG)
+head(nrDEG)#虽然不知道作者在这做了一些什么，但是看到nrDEG数据的时候就好像看到了出路了一样，
 
 ## volcano plot
 DEG=nrDEG
@@ -217,7 +219,7 @@ g = ggplot(data=DEG, aes(x=logFC, y=-log10(P.Value), color=change)) +
   xlab("log2 fold change") + ylab("-log10 p-value") +
   ggtitle( this_tile  ) + theme(plot.title = element_text(size=15,hjust = 0.5))+
   scale_colour_manual(values = c('blue','black','red'))  ## corresponding to the levels(res$change)
-print(g)
+print(g)#作了一个比较丑的火山图，但是好像取值有些不同？
 
 ### different P values 
 head(nrDEG)
