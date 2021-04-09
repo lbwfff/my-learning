@@ -9,5 +9,8 @@ a=read.table('GSE42872_series_matrix.txt.gz',
              comment.char = "!",header=T)
 ?read.table
 
+class（a）
+str(a)#了解a是什么
+
 rownames(a)=a[,1]
 a=a[,-1]
