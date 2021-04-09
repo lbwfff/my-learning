@@ -1,0 +1,13 @@
+library(GEOquery)
+
+gset <- getGEO('GSE42872', destdir=".")
+names(Meta(gset))
+Table(gset)[1:5,1:5]
+
+a=read.table('GSE42872_series_matrix.txt.gz',
+             sep = '\t',quote="",fill=T,
+             comment.char = "!",header=T)
+?read.table
+
+rownames(a)=a[,1]
+a=a[,-1]
