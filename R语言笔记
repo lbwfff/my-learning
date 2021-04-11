@@ -6,8 +6,8 @@ mycounts<-read.csv("mRNA_exprSet.csv")#导入文档
 head(mycounts)#做一个检视
 
 rownames(mycounts)<-mycounts[,1]#每一列当成每行的行名，填2就是第二列
-mycounts<-mycounts[,-1]#从第几列开始算变量？不知道怎么描述
-head(mycounts)#去除了带x的第一列
+mycounts<-mycounts[,-1]#去除了第一行
+head(mycounts)
 condition <- factor(c(rep("tumor",50),rep("normal",73)), levels = c("tumor","normal"))#设置condition因子水平，癌症组50次重复，正常组73次重复，当然是我乱填的。
 condition#检视
 
