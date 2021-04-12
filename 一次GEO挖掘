@@ -15,7 +15,7 @@ for (i in 1:nrow(a)){
   x=as.character(x) #化作字符串
   V1=gsub('["]', '', x)  #去双引号
   a[i,1]=V1  #给矩阵重新赋值
-}
+}#下载下来的数据发现探针名一列的数据带有引号，之后分析会没法匹配，所以用一串代码删掉V1列数据的引号
 
 rownames(a)<-a[,1]#每一列当成每行的行名，填2就是第二列
 a<-a[,-1]
@@ -56,11 +56,11 @@ if(F){
   
   rownames(exprSet)=ids[match(rownames(exprSet),ids$probe_id),2]#把探针名替换为了基因名
   exprSet[1:5,1:5]
-}
+}#这边有一个报错会显示whitch.max无法计算，我发现矩阵中每个数值都有一个引号（不知道为什么），将矩阵改为数据框后就没问题了
 
 
-identical(ids$probe_id,rownames(exprSet))#验证了一个看不懂的东西
-dat=exprSet#因为下面的代码时copy的，所以改这么一句就很方便
+identical(ids$probe_id,rownames(exprSet))#验证数据框行数和probe_id行数一致
+dat=exprSet#
 ids$median=apply(dat,1,median) #ids新建median这一列，列名为median，同时对dat这个矩阵按行操作，取每一行的中位数，将结果给到median这一列的每一行
 ids=ids[order(ids$symbol,ids$median,decreasing = T),]#对ids$symbol按照ids$median中位数从大到小排列的顺序排序，将对应的行赋值为一个新的ids
 ids=ids[!duplicated(ids$symbol),]#将symbol这一列取取出重复项，'!'为否，即取出不重复的项，去除重复的gene ，保留每个基因最大表达量结果s
@@ -70,15 +70,15 @@ dat[1:4,1:4]  #保留每个基因ID第一次出现的信息
 dim(dat)
 
 exprSet=dat
-exprSet['GAPDH',]#看了一下GAPDH在每个sample中的表达
+exprSet['GAPDH',]#看了一下GAPDH在每个sample中的表达，但这个表达矩阵中没有
 boxplot(exprSet[,1])#对第一列基因的表达作了图
-boxplot(exprSet['GAPDH',])#对GAPDH的表达作图
-exprSet['ACTB',]#就是β-actin的表达
+boxplot(exprSet['GAPDH',])#对GAPDH的表达作图，自然做不出图
+exprSet['ACTB',]#就是β-actin的表达，也没有
 
 library(reshape2)
-exprSet<-as.matrix(exprSet)
-exprSet_L=melt(exprSet)#把矩阵中所有的数据放到了两列？melt是什么
-colnames(exprSet_L)=c('probe','sample','value')#改了列位置吗？不太确定
+exprSet<-as.matrix(exprSet)#又把数据框转成了矩阵，因为之后melt函数对数据框运行的话会少一列
+exprSet_L=melt(exprSet)
+colnames(exprSet_L)=c('probe','sample','value')
 exprSet_L$group=rep(group_list,each=nrow(exprSet))#添加了group列
 head(exprSet_L)#检视了前几个数据
 
@@ -170,7 +170,7 @@ dat2 = dat[, group2]
 dat3 = dat[, group3]
 dat4 = dat[, group4]
 dat = cbind(dat3,dat4)
-ygroup_list<-c("YoungMACO","YoungMACO","YoungMACO","Yongsham","Yongsham","Yongsham")
+ygroup_list<-c("YoungMACO","YoungMACO","YoungMACO","Yongsham","Yongsham","Yongsham")#差异表达，我发现下面的函数只能对两组数据进行差异表达，所以这里只分析了yong组的MCAO/SHAM
 
 pvals = apply(dat, 1, function(x){
   t.test(as.numeric(x)~ygroup_list)$p.value
@@ -195,8 +195,8 @@ contrast.matrix
 
 fit <- lmFit(dat,design)
 ##step2
-fit2 <- contrasts.fit(fit, contrast.matrix) ##这一步很重要，大家可以自行看看效果
-fit2 <- eBayes(fit2)  ## default no trend !!!
+fit2 <- contrasts.fit(fit, contrast.matrix) #这一步很重要，可以自行看看效果
+fit2 <- eBayes(fit2)  #default no trend !!!
 ##eBayes() with trend=TRUE
 ##step3
 tempOutput = topTable(fit2, coef=1, n=Inf)
@@ -222,12 +222,12 @@ g = ggplot(data=DEG, aes(x=logFC, y=-log10(P.Value), color=change)) +
   xlab("log2 fold change") + ylab("-log10 p-value") +
   ggtitle( this_tile  ) + theme(plot.title = element_text(size=15,hjust = 0.5))+
   scale_colour_manual(values = c('blue','black','red'))  ## corresponding to the levels(res$change)
-print(g)
+print(g)#这边出了一个很鬼畜的火山图，因为这次跑的数据本身就很诡异，我应该看看文献作者具体是怎样处理的数据
 
 head(nrDEG)
 head(DEG_t.test)
 DEG_t.test=DEG_t.test[rownames(nrDEG),]
-plot(DEG_t.test[,3],nrDEG[,1]) ## 可以看到logFC是相反的
+plot(DEG_t.test[,3],nrDEG[,1]) #可以看到logFC是相反的
 plot(DEG_t.test[,4],nrDEG[,4]) # 可以看到使用limma包和t.test本身的p值差异尚可接受
 plot(-log10(DEG_t.test[,4]),-log10(nrDEG[,4]))
 
