@@ -1,4 +1,4 @@
-DESeq2差异表达：
+DESeq2差异表达：#这串代码跑DESeq2需要数值为整数
 
 library(tidyverse)
 library(DESeq2)
