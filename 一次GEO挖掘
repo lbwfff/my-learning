@@ -158,7 +158,7 @@ fviz_pca_ind(dat.pca,
              legend.title = "Groups"
 )
 
-
+group_list=as.factor(group_list)
 group_list
 dat = exprSet
 group1 = which(group_list == levels(group_list)[1])
