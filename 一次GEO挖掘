@@ -158,7 +158,7 @@ fviz_pca_ind(dat.pca,
              legend.title = "Groups"
 )
 
-group_list=as.factor(group_list)
+group_list=as.factor(group_list)#4-13，t检验的时候加了这么一行才跑出来的
 group_list
 dat = exprSet
 group1 = which(group_list == levels(group_list)[1])
@@ -237,3 +237,6 @@ choose_gene=head(rownames(nrDEG),25)
 choose_matrix=exprSet[choose_gene,]
 choose_matrix=t(scale(t(choose_matrix)))
 pheatmap(choose_matrix)
+
+#这次的数据应该是FPKM还是RPKM什么的，前面样本间的分析都没有太大问题，就是最后出火山图挺诡异的。对于counts也好，FPKM也好，其实都不应该出这样诡异的图，只能说目前对于NSG后数据的理解还是不够
+#这次跑完这个流程，包括这几天阅读R的数据，对于代码的理解加深了许多，现在电池换上了，也可以在Linux上跑一些demo了，道阻且长，慢慢来呗
