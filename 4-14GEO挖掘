@@ -236,3 +236,126 @@ ggplot(Dat,aes(x=logFC,y=-log10(P.Value),color=threshold))+
   geom_vline(xintercept=c(-1,1),lty=3,col="black",lwd=0.5) +#添加横线|FoldChange|>2
   geom_hline(yintercept = -log10(0.05),lty=3,col="black",lwd=0.5)
 
+
+###4-15诡异的kegg
+exprSet<-read.table("expr.csv",header = T,sep = ",")
+exprSet<-exprSet[,-1]
+
+library("clusterProfiler")
+library(org.Mm.eg.db)
+exprSet.df <- bitr(exprSet$gene, fromType = "SYMBOL", #fromType是指你的数据ID类型是属于哪一类的
+                toType = c("ENSEMBL"), #R是指你要转换成哪种ID类型，可以写多种，也可以只写一种
+                OrgDb = org.Mm.eg.db)#Orgdb是指对应的注释包是哪个
+head(exprSet.df)
+
+a=exprSet
+table(a$gene %in% exprSet.df$SYMBOL)
+a=a[a$gene %in% exprSet.df$SYMBOL,]
+dim(a)
+exprSet.df=exprSet.df[exprSet.df$SYMBOL %in% a$gene,]
+dim(exprSet.df)
+b=exprSet.df[!duplicated(exprSet.df$SYMBOL), ]
+
+identical(b$SYMBOL,a$gene)
+c=cbind(b$ENSEMBL,a)
+fix(c)
+c<-c[,-2]
+c=c[!duplicated(c$ENSEMBL), ]
+rownames(c)=c$ENSEMBL
+c<-c[,-1]
+
+group_list<-c("MCAO-24","MCAO-24","MCAO-24","MCAO-24","MCAO-24","MCAO-24","MCAO-72","MCAO-72","MCAO-72","MCAO-72","MCAO-72","MCAO-72","sham-24","sham-24","sham-24","sham-24","sham-24","sham-24","sham-72","sham-72","sham-72","sham-72","sham-72","sham-72")
+group_list=as.factor(group_list)
+
+dat = c
+group1 = which(group_list == levels(group_list)[1])
+group2 = which(group_list == levels(group_list)[2])
+group3 = which(group_list == levels(group_list)[3])
+group4 = which(group_list == levels(group_list)[4])
+dat1 = dat[, group1]
+dat2 = dat[, group2]
+dat3 = dat[, group3]
+dat4 = dat[, group4]
+dat = cbind(dat1,dat3)
+ngroup_list<-c("MACO24","MACO24","MACO24","MACO24","MACO24","MACO24","sham24","sham24","sham24","sham24","sham24","sham24")#差异表达，我发现下面的函数只能对两组数据进行差异表达，所以这里只分析了yong组的MCAO/SHAM
+
+pvals = apply(dat, 1, function(x){
+  t.test(as.numeric(x)~ngroup_list)$p.value
+})
+p.adj = p.adjust(pvals, method = "BH")
+avg_1 = rowMeans(dat1)
+avg_3 = rowMeans(dat3)
+log2FC = avg_1-avg_3
+DEG_t.test = cbind(avg_1, avg_3, log2FC, pvals, p.adj)
+DEG_t.test=DEG_t.test[order(DEG_t.test[,4]),]
+DEG_t.test=as.data.frame(DEG_t.test)
+head(DEG_t.test)
+
+suppressMessages(library(limma)) 
+design <- model.matrix(~0+factor(ngroup_list))
+colnames(design)=levels(factor(ngroup_list))
+rownames(design)=colnames(dat)
+design
+
+contrast.matrix<-makeContrasts(paste0(unique(ngroup_list),collapse = "-"),levels = design)
+contrast.matrix 
+
+fit <- lmFit(dat,design)
+##step2
+fit2 <- contrasts.fit(fit, contrast.matrix) #这一步很重要，可以自行看看效果
+fit2 <- eBayes(fit2)  #default no trend !!!
+##eBayes() with trend=TRUE
+##step3
+tempOutput = topTable(fit2, coef=1, n=Inf)
+nrDEG = na.omit(tempOutput) 
+#write.csv(nrDEG2,"limma_notrend.results.csv",quote = F)
+head(nrDEG)
+
+write.table(nrDEG,"nrDEG.csv",sep=",")#不知道为什么就空了一行，不过影响倒是不大
+DEG=nrDEG
+logFC_cutoff <- with(DEG,mean(abs( logFC)) + 2*sd(abs( logFC)) )
+DEG$change = as.factor(ifelse(DEG$P.Value < 0.05 & abs(DEG$logFC) > logFC_cutoff,
+                              ifelse(DEG$logFC > logFC_cutoff ,'UP','DOWN'),'NOT')
+)
+this_tile <- paste0('Cutoff for logFC is ',round(logFC_cutoff,3),
+                    '\nThe number of up gene is ',nrow(DEG[DEG$change =='UP',]) ,
+                    '\nThe number of down gene is ',nrow(DEG[DEG$change =='DOWN',])
+)
+this_tile
+head(DEG)
+
+up<-DEG[DEG$change=="UP",]
+down<-DEG[DEG$change=="DOWN",]
+up=row.names(up)
+down=row.names(down)
+deg<-list(up=up,down=down)
+fix(deg)
+
+library(ggplot2)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+gene_up= bitr(unique(deg$up), fromType = "ENSEMBL",
+              toType = c( "ENTREZID"),
+              OrgDb = org.Mm.eg.db)[,2] 
+
+gene_down= bitr(unique(deg$down), fromType = "ENSEMBL",
+                toType = c( "ENTREZID"),
+                OrgDb = org.Mm.eg.db)[,2] 
+gene_diff=c(gene_up,gene_down)
+
+source('kegg_and_go_up_and_down.R')
+# 同样的，里面包装了一些代码，比如setReadable函数
+# 很有可能你使用的时候就发现过期了里面有一些参数
+# 要学会调试代码，不要畏手畏脚。
+run_kegg(gene_up,gene_down,pro='rna_test')
+# 需要多go数据库的3个条目进行3次富集分析，非常耗时。
+run_go(gene_up,gene_down,pro='rna_test')
+# 很多绘图代码，都是依据数据本身特性需要调整的，而且高阶情况下需要AI等等。
+go <- enrichGO(gene_up, OrgDb = "org.Mm.eg.db", ont="all") 
+barplot(go, split="ONTOLOGY")+ facet_grid(ONTOLOGY~., scale="free") 
+ggsave('gene_up_GO_all_barplot.png',width = 9, height = 6)
+go <- enrichGO(gene_down, OrgDb = "org.Mm.eg.db", ont="all") 
+barplot(go, split="ONTOLOGY",font.size =10)+ 
+  facet_grid(ONTOLOGY~., scale="free") + 
+  scale_x_discrete(labels=function(x) str_wrap(x, width=50))+
+  ggsave('gene_down_GO_all_barplot.png',width = 9, height = 6)
