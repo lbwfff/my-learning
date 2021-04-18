@@ -1,0 +1,42 @@
+target<-read.table("target.csv",sep =",",header = T)
+cc<-cbind(target$Target.gene.symbol,target$Target.gene.ID)
+cc<-data.frame(cc)
+cc=cc[!duplicated(cc$X1),]
+cc=cc[!duplicated(cc$X2),]
+up<-read.table('upgene.csv',sep = ',',header = T)
+down<-read.table('downgene.csv',sep = ',',header = T)
+
+cc$X1=toupper(cc$X1)
+upgene=cc[cc$X1 %in% up$Gene,]
+downgene=cc[cc$X1 %in% down$Gene,]
+
+up=upgene$X2
+down=downgene$X2
+deg<-list(up=down,down=up)
+save(deg,file = 'deg.Rdata')
+library(ggplot2)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+gene_up= bitr(unique(deg$up), fromType = "ENSEMBL",
+              toType = c( "ENTREZID"),
+              OrgDb = org.Hs.eg.db)[,2] 
+
+gene_down= bitr(unique(deg$down), fromType = "ENSEMBL",
+                toType = c( "ENTREZID"),
+                OrgDb = org.Hs.eg.db)[,2] 
+gene_diff=c(gene_up,gene_down) 
+save(gene_up,gene_down,gene_diff,file = 'UP.Rdata')
+load('UP.Rdata')
+
+source('kegg_and_go_up_and_down.R')
+
+run_kegg(gene_up,gene_down,pro='airway_test')
+run_go(gene_up,gene_down,pro='airway_test')
+go <- enrichGO(gene_up, OrgDb = "org.Hs.eg.db", ont="all") 
+barplot(go, split="ONTOLOGY")+ facet_grid(ONTOLOGY~., scale="free") 
+ggsave('gene_up_GO_all_barplot.png',width = 9, height = 6)
+go <- enrichGO(gene_down, OrgDb = "org.Hs.eg.db", ont="all") 
+barplot(go, split="ONTOLOGY",font.size =10)+ 
+  facet_grid(ONTOLOGY~., scale="free") + 
+  scale_x_discrete(labels=function(x) str_wrap(x, width=50))+
+  ggsave('gene_down_GO_all_barplot.png',width = 9, height = 6)
