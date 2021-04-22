@@ -37,7 +37,7 @@ sapply(countsFiles,gunzip)
 
 rm(list = ls())
 library(rjson)
-metadata_json_File <- fromJSON(file="..\\metadata.cart.2021-04-22.json")
+metadata_json_File <- fromJSON(file="..\\metadata.cart.2021-04-22.json")#这边加两点能定到上一级的文件夹
 json_File_Info <- data.frame(fileName = c(),TCGA_Barcode = c())
 for(i in 1:length(metadata_json_File)){
   TCGA_Barcode <- metadata_json_File[[i]][["associated_entities"]][[1]][["entity_submitter_id"]]
@@ -116,7 +116,8 @@ res= results(dds)
 res = res[order(res$pvalue),]
 head(res)
 summary(res)
-write.csv(res,file="All_results.csv")
+write.csv(res,file="All_results.csv")#跑出来很奇怪，不知道为什么，没有用这个结果
+
 write.csv(LUADIWANT,file="WANT.csv")
 
 library(ggplot2)
@@ -128,4 +129,5 @@ ggplot(LUADIWANT_L[LUADIWANT_L$`E-ID`=='ENSG00000155363',],aes(group,value,fill=
 ggplot(LUADIWANT_L[LUADIWANT_L$`E-ID`=='ENSG00000164548',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='TRA2A', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
 ggplot(LUADIWANT_L[LUADIWANT_L$`E-ID`=='ENSG00000135387',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='CAPRIN1', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
 ggplot(LUADIWANT_L[LUADIWANT_L$`E-ID`=='ENSG00000165792',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='METTL17', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
+#做了四个箱图，我在合计着能不能整成一个
 
