@@ -1,0 +1,84 @@
+rm(list= ls())
+library(data.table)
+library(DESeq2)
+
+pd <- fread("TcgaTargetGTEX_phenotype.txt.gz")
+pd <- as.data.frame.matrix(pd)
+table(pd[,4])
+
+fix(pd)
+a=pd[pd$study=='TARGET',]
+table(a[,2])
+
+
+pd_N <- pd[pd[,4]== "Nerve",]
+pd_n <- as.character(pd_N$sample)
+
+pd_C <- pd[pd[,3] == "Neuroblastoma",]
+fix(pd_C)
+pd_C <- pd_C[pd_C$sample_type== "Primary Solid Tumor",]
+pd_c <- as.character(pd_C$sample)
+
+exp <- fread("gtex_RSEM_Hugo_norm_count")
+exp <- as.data.frame.matrix(exp)
+
+exp[1:5,1:5]
+rownames(exp) <- exp[,1]
+exp[1:5,1:5]
+exp <- exp[,2:ncol(exp)]
+exp[1:5,1:5]
+tty<-read.csv('tty.csv')
+rownames(tty)<-tty[,1]
+tty<-tty[,-1]
+
+
+exp_n <- exp[,colnames(exp) %in% pd_n]
+
+pd_c <- as.character(pd_C$sample)
+
+pd_c=gsub('[A]', '.', pd_c)
+pd_c=gsub('[.01R]', '', pd_c)
+pd_c=gsub('[-]', '', pd_c)
+colnames(tty)=gsub('[A]','',colnames(tty))
+colnames(tty)=gsub('[.01R]','',colnames(tty))
+
+exp_c <- tty[,colnames(tty) %in% pd_c]
+MOV10<-exp_n[rownames(exp_n)=='MOV10',]
+TRA2A<-exp_n[rownames(exp_n)=='TRA2A',]
+CAPRIN1<-exp_n[rownames(exp_n)=='CAPRIN1',]
+METTL17<-exp_n[rownames(exp_n)=='METTL17',]
+
+IWANT<-rbind(MOV10,TRA2A,CAPRIN1,METTL17)
+
+MOV10<-exp_c[rownames(exp_c)=='ENSG00000155363',]
+TRA2A<-exp_c[rownames(exp_c)=='ENSG00000164548',]
+CAPRIN1<-exp_c[rownames(exp_c)=='ENSG00000135387',]
+METTL17<-exp_c[rownames(exp_c)=='ENSG00000165792',]
+IWANT2<-rbind(MOV10,TRA2A,CAPRIN1,METTL17)
+IWANT <- (2^IWANT - 1)
+IWANT <- round(IWANT,0)
+
+exp_nc <- cbind(IWANT,IWANT2)
+
+group_list<-c(rep('NT',278),rep('TP',152))
+group_list=as.factor(group_list)
+
+library(reshape2)
+exp_nc<-as.matrix(exp_nc)
+exp_nc_L=melt(exp_nc)
+colnames(exp_nc_L)=c('ID','sample','value')
+exp_nc_L$group=rep(group_list,each=nrow(exp_nc))
+head(exp_nc_L)
+
+write.csv(exp_nc,file="WANT.csv")
+
+library(ggplot2)
+library(ggsignif)
+ggplot(exp_nc_L[exp_nc_L$`ID`=='MOV10',], aes(group,value,fill=group))+geom_boxplot()
+compaired <- list(c("TP", "NT"))
+
+ggplot(exp_nc_L[exp_nc_L$`ID`=='MOV10',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='MOV10', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
+ggplot(exp_nc_L[exp_nc_L$`ID`=='TRA2A',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='TRA2A', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
+ggplot(exp_nc_L[exp_nc_L$`ID`=='CAPRIN1',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='CAPRIN1', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
+ggplot(exp_nc_L[exp_nc_L$`ID`=='METTL17',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='METTL17', y= 'count')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)
+#做了四个箱图，我在合计着能不能整成一个
