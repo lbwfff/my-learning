@@ -1,0 +1,97 @@
+options(stringsAsFactors = F)
+
+dir.create("SampleFiles")
+filepath<-dir(path = ".\\gdc_download_20210429_005503/",full.names=T)
+for(wd in filepath){
+  files <-dir(path = wd,pattern="gz$")
+  fromfilepath <- paste(wd,"\\",files,sep="")
+  tofilepath <- paste(".\\SampleFiles\\",files,sep="")
+  file.copy(fromfilepath,tofilepath)
+}
+
+setwd(".\\SampleFiles")
+countsFiles<-dir(path=".\\",pattern="gz$")
+library(R.utils)
+sapply(countsFiles,gunzip)
+
+rm(list = ls())
+library(rjson)
+metadata_json_File <- fromJSON(file="..\\metadata.cart.2021-04-29.json")#这边加两点能定到上一级的文件夹
+json_File_Info <- data.frame(fileName = c(),TCGA_Barcode = c())
+for(i in 1:length(metadata_json_File)){
+  TCGA_Barcode <- metadata_json_File[[i]][["associated_entities"]][[1]][["entity_submitter_id"]]
+  file_name <- metadata_json_File[[i]][["file_name"]]
+  json_File_Info <- rbind(json_File_Info,data.frame(filesName=file_name,TCGA_Barcode=TCGA_Barcode))
+}
+
+rownames(json_File_Info) <- json_File_Info[,1]
+write.csv(json_File_Info,file ="..\\jiso_File_Info.csv" )
+
+filesName_To_TCGA_BarcodeFile <- json_File_Info[-1]
+countsFileNames<-dir(pattern = "txt$")
+
+allsampleRawCounts <- data.frame()
+for (txtFile in countsFileNames) {
+  SampleCounts <- read.table(txtFile,header=F)
+  rownames(SampleCounts) <- SampleCounts[,1]
+  SampleCounts <- SampleCounts[-1]
+  colnames(SampleCounts) <- filesName_To_TCGA_BarcodeFile[paste(txtFile,".gz",sep = ""),"TCGA_Barcode"]
+  if (dim(allsampleRawCounts)[1]==0){
+    allsampleRawCounts <- SampleCounts
+  }
+  else
+  {allsampleRawCounts<- cbind(allsampleRawCounts,SampleCounts)}
+}
+
+write.csv(allsampleRawCounts,file = "..\\allSampleRawCounts.csv")
+head(allsampleRawCounts)
+ensembl_id <- substr(row.names(allsampleRawCounts),1,15)
+rownames(allsampleRawCounts) <- ensembl_id
+
+write.csv(allsampleRawCounts,file = "..\\RawCounts.csv")
+
+library(TCGAbiolinks)
+query <- GDCquery(project = "TCGA-LUAD",
+                  data.category = "Transcriptome Profiling",
+                  data.type = "Gene Expression Quantification",
+                  workflow.type = "HTSeq - FPKM")
+sampleDown <- getResults(query,cols = c("cases"))
+
+dataSmTP <- TCGAquery_SampleTypes(barcode = sampleDown,typesample = "TP")#肿瘤
+dataSmNT <- TCGAquery_SampleTypes(barcode = sampleDown,typesample = "NT")
+
+dataSmNT<-dataSmNT[dataSmNT %in% colnames(allsampleRawCounts)]
+dataSmTP<-dataSmTP[dataSmTP %in% colnames(allsampleRawCounts)]
+Counts<- data.frame(c(allsampleRawCounts[,dataSmNT],allsampleRawCounts[,dataSmTP]))
+rownames(Counts) <-row.names(allsampleRawCounts)
+colnames(Counts) <-c(dataSmNT,dataSmTP)
+
+a<-Counts[rownames(Counts)=='ENSG00000155363',]
+b<-Counts[rownames(Counts)=='ENSG00000164548',]
+c<-Counts[rownames(Counts)=='ENSG00000135387',]
+d<-Counts[rownames(Counts)=='ENSG00000165792',]
+LUADIWANT=rbind(a,b,c,d)
+
+group_list<-c(rep('NT',54),rep('TP',495))
+group_list=as.factor(group_list)
+
+library(reshape2)
+LUADIWANT<-as.matrix(LUADIWANT)
+LUADIWANT_L=melt(LUADIWANT)
+colnames(LUADIWANT_L)=c('E-ID','sample','value')
+LUADIWANT_L$group=rep(group_list,each=nrow(LUADIWANT))
+head(LUADIWANT_L)
+
+try<-LUADIWANT_L
+try$from<-substring(try$sample,9,12)
+plot(table(try$from))
+
+library(ggplot2)
+library(ggsignif)
+
+compaired <- list(c("TP", "NT"))
+
+ggplot(try[try$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='MOV10', y= 'FPKM')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)+geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)
+ggplot(try[try$`E-ID`=='ENSG00000164548',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='TRA2A', y= 'FPKM')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)+geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)
+ggplot(try[try$`E-ID`=='ENSG00000135387',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='CAPRIN1', y= 'FPKM')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)+geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)
+ggplot(try[try$`E-ID`=='ENSG00000165792',],aes(group,value,fill=group))+geom_boxplot(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='METTL17', y= 'FPKM')+geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = t.test)+geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)
