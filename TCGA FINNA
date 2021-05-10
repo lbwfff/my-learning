@@ -71,6 +71,7 @@ b<-Counts[rownames(Counts)=='ENSG00000164548',]
 c<-Counts[rownames(Counts)=='ENSG00000135387',]
 d<-Counts[rownames(Counts)=='ENSG00000165792',]
 LUADIWANT=rbind(a,b,c,d)
+rownames(LUADIWANT)<-c('ENSG00000155363','ENSG00000164548','ENSG00000135387','ENSG00000165792')
 
 group_list<-c(rep('NT',54),rep('TP',495))
 group_list=as.factor(group_list)
