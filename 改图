@@ -1,0 +1,25 @@
+library(ggplot2)
+library(ggsignif)
+library(ggsci)
+library(ggpubr)
+
+compaired <- list(c("TP", "NT"))
+my_comparisons <- list(c("TP", "NT"))
+IWANT_L$group<-c(rep('TP',156*4),rep('NT',105*4))
+
+ggplot(IWANT_L[IWANT_L$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_boxplot(width=0.5,outlier.shape = NA)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='MOV10', y= 'TPM')+
+  theme(panel.grid.major =element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black")) +
+  geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)+
+  scale_fill_npg()+ 
+  geom_jitter(aes(fill=group),width =0.2,shape = 21,size=1,colour="black",alpha = 0.07)+
+  ggsave( file='MOV10.pdf', width=10, height=8)+
+  coord_cartesian(ylim=c(0,80))+
+  stat_compare_means(method = "t.test",aes(label = paste0('p =',..p.format..)), label.x = 0.5, label.y = 75)
+  
+ggplot(IWANT_L[IWANT_L$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_violin(width=0.5,outlier.shape = NA)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='MOV10', y= 'TPM')+
+  theme(panel.grid.major =element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black")) +
+  scale_fill_npg()+ 
+  geom_jitter(aes(fill=group),width =0.2,shape = 21,size=1,colour="black",alpha = 0.07)+
+  coord_cartesian(ylim=c(0,50))+#压缩Y轴视图但不删除视图外值的函数
+  stat_compare_means(method = "t.test",aes(label = paste0('p =',..p.format..)), label.x = 0.5, label.y = 40)+
+  ggsave( file='MOV10.pdf', width=10, height=8)
