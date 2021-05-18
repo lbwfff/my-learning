@@ -1,0 +1,161 @@
+library(GEOquery)
+gset <- getGEO('GSE127003', destdir=".")
+names(Meta(gset))
+Table(gset)[1:5,1:5]
+
+rm(list = ls())
+a=read.table('GSE127003_series_matrix.txt.gz',
+             sep = '\t',quote="",fill=T,
+             comment.char = "!",header=T)
+
+for (i in 1:nrow(a)){
+  x=a[i,1]
+  x=as.character(x)
+  V1=gsub('["]', '', x)
+  a[i,1]=V1
+}
+
+rownames(a)<-a[,1]
+a<-a[,-1]
+class(a)
+str(a)
+
+exprSet=a
+
+soft=read.table('GSE127003_family.soft.tar',
+             sep = '\t',quote="",fill=T,
+             comment.char="!",header=T)
+
+table(rownames(exprSet) %in% soft$ID)
+exprSet=exprSet[rownames(exprSet) %in% soft$ID,]
+dim(exprSet)
+
+soft=soft[match(rownames(exprSet),soft$ID),]
+head(soft)
+exprSet[1:5,1:5] 
+
+if(F){
+  tmp = by(exprSet,soft$ENTREZ_GENE_ID,
+           function(x) rownames(x)[which.max(rowMeans(x))] )
+  fix(exprSet)
+  probes = as.character(tmp)#输出了一个probes数据
+  dim(exprSet)
+  exprSet=exprSet[rownames(exprSet) %in% probes ,]
+  dim(exprSet)
+  
+  rownames(exprSet)=soft[match(rownames(exprSet),soft$ENTREZ_GENE_ID),2]#把探针名替换为了基因名
+  exprSet[1:5,1:5]
+}
+
+identical(soft$ID,rownames(exprSet))#验证数据框行数和probe_id行数一致
+dat=exprSet#
+soft$median=apply(dat,1,median) 
+soft=soft[order(soft$ENTREZ_GENE_ID,soft$median,decreasing = T),]
+soft=soft[!duplicated(soft$ENTREZ_GENE_ID),]
+dat=dat[soft$ID,] 
+rownames(dat)=soft$ENTREZ_GENE_ID
+dat[1:4,1:4]
+dim(dat)
+
+library(org.Hs.eg.db)
+Ensembl=toTable(org.Hs.egENSEMBL)
+SYMBOL=toTable(org.Hs.egSYMBOL)
+table(SYMBOL$gene_id %in% rownames(dat))
+SYMBOL<-SYMBOL[SYMBOL$gene_id %in% rownames(dat),]
+dat<-dat[rownames(dat) %in% SYMBOL$gene_id,]
+SYMBOL=SYMBOL[match(rownames(dat),SYMBOL$gene_id),]
+identical(SYMBOL$gene_id,rownames(dat))
+rownames(dat)=SYMBOL$symbol
+
+exprSet=dat
+exprSet['GAPDH',]
+boxplot(exprSet[,1])
+boxplot(exprSet['GAPDH',])
+exprSet['ACTB',]
+
+group_list=c('CIT','R')
+group_list=c(rep(group_list,46))
+group_list=as.factor(group_list)
+
+library(reshape2)
+exprSet<-as.matrix(exprSet)#又把数据框转成了矩阵，因为之后melt函数对数据框运行的话会少一列
+exprSet_L=melt(exprSet)
+colnames(exprSet_L)=c('gene','sample','value')
+exprSet_L$group=rep(group_list,each=nrow(exprSet))#添加了group列
+head(exprSet_L)#检视了前几个数据
+
+library(ggplot2)
+p=ggplot(exprSet_L,
+         aes(x=sample,y=value,fill=group))+geom_boxplot()
+print(p)#利用exprSet_L来作图，先是每个sample的箱图
+p=ggplot(exprSet_L,aes(x=sample,y=value,fill=group))+geom_violin()
+print(p)#小提琴图
+p=ggplot(exprSet_L,aes(value,fill=group))+geom_histogram(bins = 200)+facet_wrap(~sample, nrow = 4)
+print(p)#分面图？还是什么东西
+p=ggplot(exprSet_L,aes(value,col=group))+geom_density()+facet_wrap(~sample, nrow = 4)
+print(p)#和上图类似的一个图形
+p=ggplot(exprSet_L,aes(value,col=group))+geom_density() 
+print(p)#密度图？
+p=ggplot(exprSet_L,aes(x=sample,y=value,fill=group))+geom_boxplot()
+p=p+stat_summary(fun.y="mean",geom="point",shape=23,size=3,fill="red")
+p=p+theme_set(theme_set(theme_bw(base_size=20)))
+p=p+theme(text=element_text(face='bold'),axis.text.x=element_text(angle=30,hjust=1),axis.title=element_blank())
+print(p)
+
+g_mean <- tail(sort(apply(exprSet,1,mean)),50)
+g_median <- tail(sort(apply(exprSet,1,median)),50)
+g_max <- tail(sort(apply(exprSet,1,max)),50)
+g_min <- tail(sort(apply(exprSet,1,min)),50)
+g_sd <- tail(sort(apply(exprSet,1,sd)),50)
+g_var <- tail(sort(apply(exprSet,1,var)),50)
+g_mad <- tail(sort(apply(exprSet,1,mad)),50)
+g_mad
+names(g_mad)#完全没懂
+
+library(pheatmap)
+choose_gene=names(tail(sort(apply(exprSet,1,mad)),50))#上个单元筛选了一些基因，在这用到了exprSet,1,mad,能这样理解吗？
+choose_matrix=exprSet[choose_gene,]
+choose_matrix=t(scale(t(choose_matrix)))
+pheatmap(choose_matrix)
+
+library(UpSetR)
+g_all <- unique(c(names(g_mean),names(g_median),names(g_max),names(g_min),
+                  names(g_sd),names(g_var),names(g_mad) ))
+dat=data.frame(g_all=g_all,
+               g_mean=ifelse(g_all %in%  names(g_mean) ,1,0),
+               g_median=ifelse(g_all %in%  names(g_median) ,1,0),
+               g_max=ifelse(g_all %in%  names(g_max) ,1,0),
+               g_min=ifelse(g_all %in%  names(g_min) ,1,0),
+               g_sd=ifelse(g_all %in%  names(g_sd) ,1,0),
+               g_var=ifelse(g_all %in%  names(g_var) ,1,0),
+               g_mad=ifelse(g_all %in%  names(g_mad) ,1,0)
+)
+upset(dat,nsets = 7)
+
+group_list
+dim(exprSet)
+exprSet[1:5,1:5]
+
+colnames(exprSet)=paste(group_list,1:12,sep='')
+nodePar <- list(lab.cex = 0.6, pch = c(NA, 19), 
+                cex = 0.7, col = "blue")
+hc=hclust(dist(t(exprSet)))
+par(mar=c(5,5,5,10)) 
+plot(as.dendrogram(hc), nodePar = nodePar,  horiz = TRUE)
+
+library(ggfortify)
+df=as.data.frame(t(exprSet))
+df$group=group_list 
+autoplot(prcomp( df[,1:(ncol(df)-1)] ), data=df,colour = 'group')
+
+library("FactoMineR")#画主成分分析图需要加载这两个包
+library("factoextra") 
+df=as.data.frame(t(exprSet))
+dat.pca <- PCA(df, graph = FALSE)#现在dat最后一列是group_list，需要重新赋值给一个dat.pca,这个矩阵是不含有分组信息的
+fviz_pca_ind(dat.pca,
+             geom.ind = "point", # show points only (nbut not "text")
+             col.ind = group_list, # color by groups
+             # palette = c("#00AFBB", "#E7B800"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Groups"
+)
