@@ -20,3 +20,18 @@ ggplot(try[try$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_vio
   #coord_cartesian(ylim=c(0,80))+
   stat_compare_means(method = "t.test", label.x = 0.7, label.y = 75)+
   ggsave( file='MOV10vio2.pdf', width=10, height=8)
+
+forcor<-t(LUADIWANT)
+colnames(forcor)=c('MOV10','TRA2A','CAPRIN1','METTL17')
+library(corrplot)
+M <- cor(forcor)
+col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "white",
+                           "cyan", "#007FFF", "blue","#00007F"))
+col2 <- colorRampPalette(c("#67001F", "#B2182B", "#D6604D", "#F4A582",
+                           "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE",
+                           "#4393C3", "#2166AC", "#053061"))
+col3 <- colorRampPalette(c("red", "white", "blue"))
+col4 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "#7FFF7F",
+                           "cyan", "#007FFF", "blue", "#00007F"))
+wb <- c("white", "black")
+corrplot(M, method = "number")
