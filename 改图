@@ -14,7 +14,7 @@ ggplot(try[try$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_box
 
 ggplot(try[try$`E-ID`=='ENSG00000155363',],aes(group,value,fill=group))+geom_violin(width=0.5)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(x='MOV10', y= 'TPM')+
   theme(panel.grid.major =element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black")) +
-  geom_line(aes(group=from) ,size=0.8,colour="orange",alpha = 0.05)+
+  geom_line(aes(group=from) ,size=0.8,colour="gray",alpha = 0.05)+
   scale_fill_npg()+ 
   #geom_jitter(aes(fill=group),width =0.2,shape = 21,size=1,colour="black",alpha = 0.04)+
   #coord_cartesian(ylim=c(0,80))+
