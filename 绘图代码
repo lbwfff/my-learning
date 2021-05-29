@@ -1,0 +1,58 @@
+library(ggplot2)
+library(ggsignif)
+library(ggsci)
+library(ggpubr)
+
+############1##############
+ggplot(data = cor,aes(x=METTL3,y=CAPRIN1))+
+  geom_point()+
+  stat_smooth(method = lm)+
+  stat_cor(data=cor,method='pearson')+
+  theme_classic()+
+  ggsave(file='METTL3-CAPRIN1-GBM.PDF',width = 10,height = 8)
+ #一个简单的散点图加回归线，回归用的简单线性回归分析，平滑线附近的蓝色区域为置信区间
+
+##########2###############
+forcor<-t(LUADIWANT)
+colnames(forcor)=c('MOV10','TRA2A','CAPRIN1','METTL17')
+library(corrplot)
+M <- cor(forcor)
+col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "white",
+                           "cyan", "#007FFF", "blue","#00007F"))
+col2 <- colorRampPalette(c("#67001F", "#B2182B", "#D6604D", "#F4A582",
+                           "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE",
+                           "#4393C3", "#2166AC", "#053061"))
+col3 <- colorRampPalette(c("red", "white", "blue"))
+col4 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "#7FFF7F",
+                           "cyan", "#007FFF", "blue", "#00007F"))
+wb <- c("white", "black")
+corrplot(M, method = "number")
+#一个多因素的相关性图，先用cor函数算出因数的相关性矩阵，后进行绘制，能绘制出的种类还挺多的，多因素相关分析可以用
+
+##########3##############
+ggplot(try[try$`E-ID`=='MOV10',],aes(group,value,fill=group))+geom_boxplot(width=0.5,outlier.shape = NA)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(title="MOV10",x="group", y = "TPM")+
+  theme(panel.grid.major =element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black")) +
+  geom_line(aes(group=from) ,size=0.8,colour="gray",alpha = 0.07)+
+  scale_fill_npg()+ 
+  geom_jitter(aes(fill=group),width =0.2,shape = 21,size=1,colour="black",alpha = 0.04)+
+  coord_cartesian(ylim=c(0,50))+
+  stat_compare_means(method = "t.test", label.x = 0.7, label.y = 45)+
+  scale_fill_brewer(palette="RdBu")+
+  ggsave( file='GBM-MOV10-BOXPLOT.pdf', width=10, height=8)
+
+#改了很多版才出的一个箱线图，其实我也还没有太摸清楚要怎么去做。加了连线，加了点点，限制了坐标轴，加了p值，改了颜色，这个配色我觉得会soft一些，但也不知道老板觉得怎么样。
+
+############4###############
+dp <- ggplot(try[try$`E-ID`=='MOV10',], aes(x=group, y=value, fill=group))+
+  geom_violin(trim=FALSE)+
+  scale_fill_npg()+
+  geom_line(aes(group=from) ,size=0.8,colour="gray",alpha = 0.07)+
+  #geom_jitter(aes(fill=group),width =0.2,shape = 21,size=1,colour="black",alpha = 0.1)+
+  geom_boxplot(width=0.1, fill="white",outlier.shape = NA)+
+  labs(title="MOV10",x="group", y = "TPM")+
+  coord_cartesian(ylim=c(0,80))+
+  stat_compare_means(method = "t.test", label.x = 0.7, label.y = 78)
+dp + theme_classic()+ scale_fill_brewer(palette="RdBu") + 
+  theme_classic()+
+  ggsave( file='GBM-MOV10-VIOLINPLOT.pdf', width=10, height=8)
+#小提琴图，我一直没想清楚到底要不要点点，所有带点或不带点都做了一版，小提琴里加了箱线，配色延续的上面箱线图的配色，自认为比较soft，但是谁知道呢？
