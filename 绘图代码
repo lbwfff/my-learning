@@ -12,6 +12,22 @@ ggplot(data = cor,aes(x=METTL3,y=CAPRIN1))+
   ggsave(file='METTL3-CAPRIN1-GBM.PDF',width = 10,height = 8)
  #一个简单的散点图加回归线，回归用的简单线性回归分析，平滑线附近的蓝色区域为置信区间
 
+ggplot(data = TPCOR,aes(x=METTL3,y=TRA2A))+#把癌症组和非癌症组分开统计了
+  geom_point(shape=21,size=2)+#把点改为了空心，并放大了一倍，美化了不少
+  stat_smooth(method = lm)+
+  stat_cor(data=TPCOR,method='pearson')+
+  theme_classic()+
+  labs(title="TP",subtitle = 'sample size=155')+
+  ggsave(file='TP-METTL3-TRA2A-GBM.PDF',width = 10,height = 8)
+#有一个问题始终无法解决，就是p值小于2.2e-16后不能显示真实值的问题，现在能找到的办法就是在出图后用pdf编辑器改，p值获得方法如下：
+A=TPCOR$MOV10
+B=TPCOR$METTL3
+C<-cor.test(A,B,method='pearson')
+p <- 2* pt(C$statistic,  df = C$parameter, lower.tail=FALSE)#p值在这里得到
+#还有一个细节就是平滑线的颜色，可以再考虑一下，出多张图的时候可以使用不同颜色的平滑线。
+
+
+
 ##########2###############
 forcor<-t(LUADIWANT)
 colnames(forcor)=c('MOV10','TRA2A','CAPRIN1','METTL17')
