@@ -2,4 +2,5 @@ ctrl+c终结进程
 rm 删除
 复制命令:Ctrl + Shift + C 组合键. 粘贴命令:Ctrl + Shift + V 组合键
 sudo su#权限
-环境变量：export PATH=/home/uusama/mysql/bin:$PATH #当前终端有用
+环境变量：（1）：export PATH=/home/uusama/mysql/bin:$PATH #当前终端有用
+（2）：vim /etc/profile 
