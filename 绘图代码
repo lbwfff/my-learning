@@ -12,6 +12,7 @@ ggplot(data = cor,aes(x=METTL3,y=CAPRIN1))+
   ggsave(file='METTL3-CAPRIN1-GBM.PDF',width = 10,height = 8)
  #一个简单的散点图加回归线，回归用的简单线性回归分析，平滑线附近的蓝色区域为置信区间
 
+##########1+加强版#############
 ggplot(data = TPCOR,aes(x=METTL3,y=TRA2A))+#把癌症组和非癌症组分开统计了
   geom_point(shape=21,size=2)+#把点改为了空心，并放大了一倍，美化了不少
   stat_smooth(method = lm)+
@@ -72,3 +73,5 @@ dp + theme_classic()+ scale_fill_brewer(palette="RdBu") +
   theme_classic()+
   ggsave( file='GBM-MOV10-VIOLINPLOT.pdf', width=10, height=8)
 #小提琴图，我一直没想清楚到底要不要点点，所有带点或不带点都做了一版，小提琴里加了箱线，配色延续的上面箱线图的配色，自认为比较soft，但是谁知道呢？
+#然后还是存在一些问题，就是颜色和p值，颜色方面如果可以将肿瘤组和正常组进行交换就更好了，但目前为止调色盘什么的要怎么使用我还得自己摸索
+#p值的问题我或许可以根据上面线性相关的思路解决，也不好每次都放到excel里面求，但其实两种方法都挺麻烦的，试着去寻找一些更加彻底的方法吧。
