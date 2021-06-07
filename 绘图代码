@@ -75,3 +75,24 @@ dp + theme_classic()+ scale_fill_brewer(palette="RdBu") +
 #小提琴图，我一直没想清楚到底要不要点点，所有带点或不带点都做了一版，小提琴里加了箱线，配色延续的上面箱线图的配色，自认为比较soft，但是谁知道呢？
 #然后还是存在一些问题，就是颜色和p值，颜色方面如果可以将肿瘤组和正常组进行交换就更好了，但目前为止调色盘什么的要怎么使用我还得自己摸索
 #p值的问题我或许可以根据上面线性相关的思路解决，也不好每次都放到excel里面求，但其实两种方法都挺麻烦的，试着去寻找一些更加彻底的方法吧。
+
+
+##################5#########################还是小提琴图，我也不知道怎么样才是好的，又或许抄的作业才是最好的
+dp <- ggplot(mat, aes(x=Grade, y=log2(TRA2A), fill=Grade))+
+  geom_violin(trim=FALSE,show.legend=FALSE)+
+  geom_jitter(aes(fill=Grade),width =0.2,shape = 21,size=0.6,colour="black",alpha = 0.07)+
+  geom_boxplot(width=0.1, fill="white",outlier.shape = NA)+
+  labs(y="TRA2A  log2(TPM)",subtitle= 'WHO II N=103
+WHO III N=79
+WHO IV N=139')+
+  #theme(axis.title.x = element_text(size = 15, family = "myFont", color = "green", face = "bold", vjust = 0.5, hjust = 0.5, angle = 45))+
+  stat_compare_means(method = "anova",label.x = 0.7,size=5)
+dp + theme_classic()+ scale_fill_brewer(palette="Blues") + 
+  theme(legend.position = "none")+
+  theme(axis.text=element_text(size=12),
+         axis.title=element_text(size=16))+
+  ggsave( file='CGGA325-GRADE-TRA2A.pdf', width=8, height=7)
+
+
+
+
