@@ -92,6 +92,16 @@ dp + theme_classic()+ scale_fill_brewer(palette="Blues") +
   theme(axis.text=element_text(size=12),
          axis.title=element_text(size=16))+
   ggsave( file='CGGA325-GRADE-TRA2A.pdf', width=8, height=7)
+  
+  
+  #############自定义的调色盘#########
+cols<-c("#A9A9A9", "#ff8C00", "#00BFFF")#自己选择的颜色
+pal<-colorRampPalette(cols)
+image(x=1:20,y=1,z=as.matrix(1:20),col=pal(20))#审阅不同颜色渐变的划分程度
+image(x=1:20,y=1,z=as.matrix(1:20),col=pal(3))
+colors = pal(3)#赋值到colors后就可以直接用了，例如以下
+p+scale_fill_manual(values=c(colors))
+
 
 
 
