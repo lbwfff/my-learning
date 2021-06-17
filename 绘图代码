@@ -102,6 +102,10 @@ image(x=1:20,y=1,z=as.matrix(1:20),col=pal(3))
 colors = pal(3)#赋值到colors后就可以直接用了，例如以下
 p+scale_fill_manual(values=c(colors))
 
+############怎么copy一个颜色############
+截图，使用windows画图软件，颜色选取器，编辑颜色，得RGB值
+rgb(red=170, green=197, blue=226, alpha=255, max=255)#得颜色编号
+
 
 
 
