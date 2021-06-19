@@ -27,6 +27,18 @@ C<-cor.test(A,B,method='pearson')
 p <- 2* pt(C$statistic,  df = C$parameter, lower.tail=FALSE)#p值在这里得到
 #还有一个细节就是平滑线的颜色，可以再考虑一下，出多张图的时候可以使用不同颜色的平滑线。
 
+#############再次加强版##########
+C<-cor.test(cor$TRA2A,cor$METTL3,method='pearson')
+D<-cor(cor$TRA2A,cor$METTL3,method='pearson')
+ptext<-paste0("R=",signif(D,2),',','P=',signif(2* pt(C$statistic, df = C$parameter, lower.tail=FALSE),3))#手动计算了R值和p值
+ggplot(data = cor,aes(x=METTL3,y=TRA2A))+
+  geom_point(shape=21,size=4)+#把点再加大了一倍
+  stat_smooth(method = lm)+
+  #stat_cor(data=cor,method='pearson',size=6,p.digits = digits)+
+  theme_classic()+
+  annotate('text',x=0.7,y=2.1,label='Sample N=109',colour = "black",size=6)+
+  annotate('text',x=0.7,y=2.2,label=ptext,colour = "black",size=6)+
+  ggsave(file='TOTAL-cor-CAPTAC.PDF',width = 10,height = 8)
 
 
 ##########2###############
