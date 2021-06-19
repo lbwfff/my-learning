@@ -5,7 +5,7 @@ library(ggpubr)
 
 ############1##############
 ggplot(data = cor,aes(x=METTL3,y=CAPRIN1))+
-  geom_point()+
+  geom_point(shape=21,size=4)+
   stat_smooth(method = lm)+
   stat_cor(data=cor,method='pearson')+
   theme_classic()+
