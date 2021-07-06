@@ -4,3 +4,82 @@ rm 删除
 sudo su#权限
 环境变量：（1）：export PATH=/home/uusama/mysql/bin:$PATH #当前终端有用
 （2）：vim /etc/profile 
+
+#!bin/bash
+脚本的抬头
+
+zcat CRR042287_f1.fastq.gz |head -n 100|grep 'AGATCGGAAGAGC'
+#grep标红
+
+hisat2 --dta -t -x /home/leelee/biodata/index/GRCH38/genome -U SRR9595630_trimmed.fq.gz -S 630.sam -p 18
+hisat2 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -U SRR9595630_trimmed.fq.gz -S 630.sam -p 18 
+nohup hisat2 -p 18 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -1 CRR042286_f1_val_1.100bp_3prime.fq.gz -2 CRR042286_r2_val_2.100bp_3prime.fq.gz -S 5-3-IP.sam &
+
+cutadapt -j 4 -a GATCGGAAG -a AGATCGGAAG -o 224.fastq SRR11554224.fastq
+
+trim_galore -j 10 -length 30 -stringency 3 SRR11554224.fastq
+trim_galore --paired --quality 20 --length 30  -o ../clean CRR042286_f1.fastq CRR042286_r2.fastq.gz -j 17
+#双端去法
+nohup trim_galore --paired --three_prime_clip_R1 10 --three_prime_clip_R2 10 --quality 20 --length 30  -o ../test CRR042286_f1.fastq CRR042286_r2.fastq.gz -j 17 &
+#尝试去掉接头之后的几个bp
+--hardtrim3 100 
+#再从3端往前数100个bp
+
+samtools view -bS 224.sam>224.bam -@ 3
+samtools view -bSq 10 -@ 10 630.sam -o 630.bam
+
+samtools sort -m 700M -@ 10 630.bam -o 630.sort.bam
+
+bamCoverage -b 633.sort.bam -o shNC-IP.bw -bs 20 --normalizeUsing BPM --skipNAs --ignoreDuplicates
+bamCoverage -b 636.sort.bam -o shNC-input.bw -bs 20 --normalizeUsing BPM --skipNAs --ignoreDuplicates
+bamCompare -b1 630.sort.bam -b2 631.sort.bam -o shTRA2A.bw -bs 20 --skipNAs --ignoreDuplicates
+直接跑bam会失败，需先建立索引,建立索引失败，需先排序
+
+macs2 callpeak -t 630.sort.bam -c 631.sort.bam -f BAM -n shTRA2A -g hs
+
+/data/home/huangwx/biodata/BAM/235.bam
+featureCounts -T 5 -a Caenorhabditis_elegans.WBcel235.103.gtf -o 235 /data/home/huangwx/biodata/BAM/235.bam
+
+fastaFromBed -fi /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -fo shTRA2A-motif.fa -bed shTRA2A_summits.bed
+fastaFromBed -fi /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -bed shTRA2A.bed -fo test-peak.fa -split -s
+
+nohup annotatePeaks.pl shNC_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -gtf /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf > shNC.annotation.xls &
+nohup annotatePeaks.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -gtf /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf > shTRA2A.annotation.xls &
+##自己的基因组自己的注释文件
+
+findMotifs.pl shTRA2A-motif.fa /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -len 8,10,12
+findMotifsGenome.pl shTRA2A-motif.fa fasta motif/ -fasta /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -len 7,8,9 -p 10 -rna
+findMotifsGenome.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -len 7,8,9 -p 10 -rna
+这样改完跑出来倒是人模狗样的
+findMotifsGenome.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -p 10 -len 7,8,9 -size 100 -rna
+好像结果更加理想了
+findMotifs.pl test-peak.fa fasta /home/leelee/biodata/TRA2Ash/sam/bam/test-peak -fasta /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -rna -p 10 -len 5,6,7 
+emmm完全说不上理想啊
+
+
+meme-chip -rna shTRA2A-motif.fa
+meme-chip -rna -meme-maxw 12 -meme-p 5 shTRA2A-motif.fa
+
+ascp -l 100M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR959/000/SRR9595630/SRR9595630.fastq.gz ./SRR9595630.fastq.gz
+
+computeMatrix scale-regions -S <biwig file(s)> -R /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf -m 100 -bs 5 --metagene -o test -p 10
+computeMatrix scale-regions -R /home/leelee/biodata/annotation/ -S x.bw --smartLabels -p 20 --binSize 10 -b 3000 -a 3000 --regionBodyLength 5000 --sortRegions keep -o x.gz --outFileSortedRegions computeMatrix_x.bed --outFileNameMatrix matrix_x.tab
+
+computeMatrix scale-regions -S H3K27Me3-input.bigWig \
+                                 H3K4Me1-Input.bigWig  \
+                                 H3K4Me3-Input.bigWig \
+
+ computeMatrix scale-regions -R /home/leelee/biodata/annotation/ucschuman.bed -S shTRA2A-IP.bw --smartLabels -p 20 --binSize 10 -b 3000 -a 3000 --regionBodyLength 5000 --sortRegions keep -o test.gz --outFileSortedRegions computeMatrix_test.bed --outFileNameMatrix matrix_test.tab
+
+plotProfile -m test.gz -out ExampleProfile1.png
+plotHeatmap -m test.gz -out ExampleHeatmap1.png 
+
+computeMatrix scale-regions -S shTRA2A-IP.bw \
+                                 shTRA2A-input.bw  \
+                                 shNC-IP.bw \
+                                 shNC-input.bw  \
+                              -R /home/leelee/biodata/annotation/ucschuman.bed \
+                              --beforeRegionStartLength 3000 \
+                              --regionBodyLength 5000 \
+                              --afterRegionStartLength 3000 \
+                              --skipZeros -o matrix.mat.gz -p 20
