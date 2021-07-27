@@ -1,0 +1,152 @@
+#######主要我发现自己好像还没有记录过箱线图的配色，以及生存曲线的画法，这段时间没怎么做过下游的分析却进步了许多，实属奇怪
+LUAD<-read.table('TCGA-LUAD.htseq_fpkm.tsv',header = T)
+rownames(LUAD)=LUAD[,1]
+LUAD=LUAD[,-1]
+rownames(LUAD)<-substr(rownames(LUAD),1,15)
+
+FPKM2TPM <- function(fpkm){
+  exp(log(fpkm) - log(sum(fpkm)) + log(1e6))
+}
+LUAD <- apply(LUAD,2,FPKM2TPM)
+
+LUSC<-read.table('TCGA-LUSC.htseq_fpkm.tsv',header = T)
+rownames(LUSC)=LUSC[,1]
+LUSC=LUSC[,-1]
+rownames(LUSC)<-substr(rownames(LUSC),1,15)
+
+LUSC <- apply(LUSC,2,FPKM2TPM)
+
+######luad
+
+luadphe<-read.table('TCGA-LUAD.GDC_phenotype.tsv',fill = T,header = T,sep = '\t')
+luadphe$submitter_id.samples<-gsub('-','.',luadphe$submitter_id.samples)
+luadphe<-luadphe[luadphe$submitter_id.samples %in% colnames(LUAD),]
+
+exp<-rbind(LUAD[rownames(LUAD)=='ENSG00000272620',],LUAD[rownames(LUAD)=='ENSG00000285338',])
+exp=as.data.frame(exp)
+row.names(exp)<-c('ENSG00000272620')
+luadphe<-luadphe[order(luadphe$sample_type.samples,decreasing = T),]  
+exp<-exp[match(luadphe$submitter_id.samples,colnames(exp))]
+identical(luadphe$submitter_id,colnames(exp))
+table(luadphe$sample_type.samples)
+exp=as.data.frame(t(exp))
+exp$group<-c(rep('TP',526),rep('NT',59))
+
+library(ggplot2)
+library(ggsignif)
+library(ggsci)
+library(ggpubr)
+
+cols<-c('#36537155', "#96345A74")#自己选择的颜色
+pal<-colorRampPalette(cols)
+image(x=1:20,y=1,z=as.matrix(1:20),col=pal(5))#审阅不同颜色渐变的划分程度
+image(x=1:20,y=1,z=as.matrix(1:20),col=pal(4))
+colors = pal(2)#赋值到colors后就可以直接用了，例如以下
+
+ptext<-paste0("T.test, P=",compare_means(ENSG00000272620~group,exp,method = "t.test")[[6]])
+dat_text <- data.frame(label = ptext)#手动算出p值
+dp <- ggplot(exp, aes(x=group, y=log2(ENSG00000272620)))+
+  geom_violin(aes(colour=group),fill='#DDDDDD50',trim=FALSE,show.legend=FALSE,size=0.7)+
+  geom_jitter(aes(fill=group),width =0.2,shape = 21,size=4,colour='NA',alpha = 0.4)+
+  geom_boxplot(fill='white',width=0.12,,outlier.shape = NA,size=0.8)+
+  labs(y="AFAP1-AS1  log2(TPM)")
+#stat_compare_means(label.x = 0.7,size=5)#这一句还是保留了
+dp + theme_classic(base_size = 22)+ 
+  scale_colour_manual(values=c(colors))+
+  scale_fill_manual(values=c(colors))+
+  theme(legend.position = "none")+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=22))+
+  annotate('text',x=0.8,y=8.45,label=dat_text,colour = "black",size=6)+
+  annotate('text',x=0.8,y=9.8,label='Normal N=59
+Tumor N=526',colour = "black",size=6)+
+  ggsave( file='TCGA-AFAP1-AS1-LUAD.pdf', width=8, height=7)
+
+#######lusc
+luscphe<-read.table('TCGA-LUSC.GDC_phenotype.tsv',fill = T,header = T,sep = '\t')
+luscphe$submitter_id.samples<-gsub('-','.',luscphe$submitter_id.samples)
+luscphe<-luscphe[luscphe$submitter_id.samples %in% colnames(LUSC),]
+
+exp2<-rbind(LUSC[rownames(LUSC)=='ENSG00000272620',],LUSC[rownames(LUSC)=='ENSG00000285338',])
+exp2=as.data.frame(exp2)
+row.names(exp2)<-c('ENSG00000272620')
+luscphe<-luscphe[order(luscphe$sample_type.samples,decreasing = T),]  
+exp2<-exp2[match(luscphe$submitter_id.samples,colnames(exp2))]
+identical(luscphe$submitter_id.samples,colnames(exp2))
+table(luscphe$sample_type.samples)
+exp2=as.data.frame(t(exp2))
+exp2$group<-c(rep('TP',501),rep('NT',49))
+
+ptext<-paste0("T.test, P=",compare_means(ENSG00000272620~group,exp2,method = "t.test")[[6]])
+dat_text <- data.frame(label = ptext)#手动算出p值
+dp <- ggplot(exp2, aes(x=group, y=log2(ENSG00000272620)))+
+  geom_violin(aes(colour=group),fill='#DDDDDD50',trim=FALSE,show.legend=FALSE,size=0.7)+
+  geom_jitter(aes(fill=group),width =0.2,shape = 21,size=4,colour='NA',alpha = 0.4)+
+  geom_boxplot(fill='white',width=0.12,,outlier.shape = NA,size=0.8)+
+  labs(y="AFAP1-AS1  log2(TPM)")
+#stat_compare_means(label.x = 0.7,size=5)#这一句还是保留了
+dp + theme_classic(base_size = 22)+ 
+  scale_colour_manual(values=c(colors))+
+  scale_fill_manual(values=c(colors))+
+  theme(legend.position = "none")+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=22))+
+  annotate('text',x=0.8,y=9.05,label=dat_text,colour = "black",size=6)+
+  annotate('text',x=0.8,y=10.4,label='Normal N=59
+Tumor N=526',colour = "black",size=6)+
+  ggsave( file='TCGA-AFAP1-AS1-LUSC.pdf', width=8, height=7)
+  
+ 
+luadsuv<-read.table('TCGA-LUAD.survival.tsv',fill = T,header = T,sep = '\t')
+luadsuv$sample<-gsub('-','.',luadsuv$sample)
+luadsuv<-luadsuv[luadsuv$sample %in% colnames(LUAD),]
+
+n=grep("11A",luadsuv$sample) 
+luadsuv<-luadsuv[-n,]
+
+exp<-rbind(LUAD[rownames(LUAD)=='ENSG00000272620',],LUAD[rownames(LUAD)=='ENSG00000285338',])
+exp=as.data.frame(exp)
+row.names(exp)<-c('ENSG00000272620')
+exp<-exp[,colnames(exp) %in% luadsuv$sample]
+exp<-exp[match(luadsuv$sample,colnames(exp))]
+identical(luadsuv$sample,colnames(exp))
+exp=as.data.frame(t(exp))
+exp<-cbind(exp,luadsuv$OS,luadsuv$OS.time)
+colnames(exp)<-c('TPM','OS','OStime')
+
+library(survminer)
+library(survival)
+library(ggpubr)
+library(gridExtra)
+
+exp$osm=(exp$OStime)/30
+exp$osm=floor(exp$osm)
+os=exp
+mat<-os[!is.na(os$osm)&
+          !is.na(os$OS),]
+matt<-mat
+med.exp<-median(matt$TPM)
+more.med.exp.index<-which(matt$TPM>=med.exp)
+less.med.exp.index<-which(matt$TPM< med.exp)
+matt$status<-NA
+matt$status[more.med.exp.index]<-paste0('High (',length(more.med.exp.index),')')
+matt$status[less.med.exp.index]<-paste0('Low (',length(less.med.exp.index),')')
+
+s.fit<-survfit(Surv(osm,OS) ~ status, data = matt)
+s.diff<-survdiff(Surv(osm,OS) ~ status, data = matt)
+
+sdata.plot3<-ggsurvplot(s.fit,
+                        data=matt,
+                        palette="Pastel1",
+                        pval = TRUE,
+                        pval.method = TRUE,
+                        conf.int = TRUE,
+                        xlab = 'Time (Month)',
+                        ggtheme = theme_survminer(),
+                        surv.median.line = 'hv',
+                        title=paste0("TCGA-survival"))
+plot(sdata.plot3$plot)
+ggsave(filename = 'TCGA-survival.pdf',width=10, height=8)
+surv_diff <- survdiff(Surv(osm,OS) ~ status, data = matt)
+p.value <- 1 - pchisq(surv_diff$chisq, length(surv_diff$n) -1)
+print(surv_diff)
