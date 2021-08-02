@@ -96,11 +96,14 @@ computeMatrix scale-regions -S shTRA2A-IP.bw \
                               --regionBodyLength 5000 \
                               --afterRegionStartLength 3000 \
                               --skipZeros -o matrix.mat.gz -p 20
+deeptools里面的一些工具，没有用过
 
-~/tools/R-4.0.5/bin/Rscript callpeak.R &>nohup.out&
+
 nohup ~/tools/R-4.1.0/bin/Rscript exomepeak.R &
+后台跑r语言的句子
 
 stringtie input.markdup.bam -p 15 -G ~/biodata/annotation/gencode.v35.annotation.sorted.gtf -A input.txt -o input.gft
+感觉比count工具要方便，就是这玩意要怎么对多个文件进行处理呢？
 
 trimmomatic PE \
  -threads 15 \
@@ -113,6 +116,8 @@ trimmomatic PE \
  LEADING:3 \
  TRAILING:3 \
  MINLEN:36
+主要对这个fa文件不太懂，感觉挺麻烦的，trim-galore目前已经完全能满足我的需求了，有机会再去整这些东西吧
 
 source /home/leelee/miniconda3/etc/profile.d/conda.sh
 conda activate p2
+之前不是没法在脚本里改变conda环境吗，用这个方法。
