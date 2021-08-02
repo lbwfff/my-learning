@@ -5,62 +5,75 @@ sudo su#权限
 环境变量：（1）：export PATH=/home/uusama/mysql/bin:$PATH #当前终端有用
 （2）：vim /etc/profile 
 
+
 #!bin/bash
 脚本的抬头
 
-zcat CRR042287_f1.fastq.gz |head -n 100|grep 'AGATCGGAAGAGC'
-#grep标红
+zcat CRR042287_f1.fastq.gz |head -n 100|grep 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCA'
+#带grep标红你想要的东西
 
 hisat2 --dta -t -x /home/leelee/biodata/index/GRCH38/genome -U SRR9595630_trimmed.fq.gz -S 630.sam -p 18
-hisat2 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -U SRR9595630_trimmed.fq.gz -S 630.sam -p 18 
-nohup hisat2 -p 18 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -1 CRR042286_f1_val_1.100bp_3prime.fq.gz -2 CRR042286_r2_val_2.100bp_3prime.fq.gz -S 5-3-IP.sam &
+hisat2 -p 18 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -U clean/CRR042286_r2_val_2.fq.gz -S 5-3-IP.sam
+hisat2 -p 18 --dta -t -x /home/leelee/biodata/index/grch38_snp_rep/genome_snp_rep -1 CRR042286_f1_val_1.100bp_3prime.fq.gz -2 CRR042286_r2_val_2.100bp_3prime.fq.gz -S 5-3-IP.sam
+现在没用用到过grch38_snp_rep这个索引了，因为exomepeak2 callpeak时会报错，应该是注释信息和索引没有很好的对应的原因。
+
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz SRR7366868_trimmed.derRNA.fq.gz -U SRR7366868_trimmed.fq.gz -p 8 -S SRR7366868_trimmed.fq.gz.rRNA.mapped.sam 2>SRR7366868_trimmed.fq.gz.log
+使用bowtie2去除rRNA，一堆莫名其妙的参数，我还没有较好的理解
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-conc-gz Input-2-trimmed.derRNA.fq.gz -1 Input-2_L1_702D01.R1_val_1.fq.gz -2 Input-2_L1_702D01.R2_val_2.fq.gz -p 15 -S input-2-rRNA.mapped.sam 2>input-2-trimmed.fq.gz.log
+双端的
 
 cutadapt -j 4 -a GATCGGAAG -a AGATCGGAAG -o 224.fastq SRR11554224.fastq
+不怎么用cutadapt
 
 trim_galore -j 10 -length 30 -stringency 3 SRR11554224.fastq
 trim_galore --paired --quality 20 --length 30  -o ../clean CRR042286_f1.fastq CRR042286_r2.fastq.gz -j 17
-#双端去法
-nohup trim_galore --paired --three_prime_clip_R1 10 --three_prime_clip_R2 10 --quality 20 --length 30  -o ../test CRR042286_f1.fastq CRR042286_r2.fastq.gz -j 17 &
-#尝试去掉接头之后的几个bp
---hardtrim3 100 
-#再从3端往前数100个bp
+双端
+trim_galore --quality 20 --length 35 --paired -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -a2 AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT raw/Input-2_L1_702D01.R1.fastq.gz raw/Input-2_L1_702D01.R2.fastq.gz -j 17 --stringency 1 --three_prime_clip_R1 3 --three_prime_clip_R2 3 --clip_R1 8 --clip_R2 8
+因为reads比较长，所以刀法比较迪拜
 
-samtools view -bS 224.sam>224.bam -@ 3
-samtools view -bSq 10 -@ 10 630.sam -o 630.bam
+for i in Input-1 Input-2 Abcam-1 Abcam-2 CST-1 CST-2 SYSY-1 SYSY-2
+do
+samtools view -bSq 10 -@ 15 -F 4 -F 256 sam/"$i".sam -o "$i".bam
+samtools sort -@ 15 -n -o "$i".sorted.bam "$i".bam
+samtools fixmate -@ 15 -m "$i".sorted.bam "$i".fixmate.bam
+samtools sort -@ 15 -o "$i".positionsort.bam "$i".fixmate.bam
+samtools markdup -r -@ 15 "$i".positionsort.bam "$i".markdup.bam
+samtools index "$i".markdup.bam
+done
+对sam（bam）文件的处理，排序，去pcr重复什么的
 
-samtools sort -m 700M -@ 10 630.bam -o 630.sort.bam
 
 bamCoverage -b 633.sort.bam -o shNC-IP.bw -bs 20 --normalizeUsing BPM --skipNAs --ignoreDuplicates
-bamCoverage -b 636.sort.bam -o shNC-input.bw -bs 20 --normalizeUsing BPM --skipNAs --ignoreDuplicates
 bamCompare -b1 630.sort.bam -b2 631.sort.bam -o shTRA2A.bw -bs 20 --skipNAs --ignoreDuplicates
 直接跑bam会失败，需先建立索引,建立索引失败，需先排序
 
 macs2 callpeak -t 630.sort.bam -c 631.sort.bam -f BAM -n shTRA2A -g hs
 
-/data/home/huangwx/biodata/BAM/235.bam
 featureCounts -T 5 -a Caenorhabditis_elegans.WBcel235.103.gtf -o 235 /data/home/huangwx/biodata/BAM/235.bam
 
 fastaFromBed -fi /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -fo shTRA2A-motif.fa -bed shTRA2A_summits.bed
 fastaFromBed -fi /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -bed shTRA2A.bed -fo test-peak.fa -split -s
+bedtools getfasta -fi /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -bed Mod.bed -fo peak.fa -split -s
+
 
 nohup annotatePeaks.pl shNC_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -gtf /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf > shNC.annotation.xls &
-nohup annotatePeaks.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -gtf /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf > shTRA2A.annotation.xls &
-##自己的基因组自己的注释文件
+##自己的基因组自己的注释文件，试着使用-cpu参数
 
-findMotifs.pl shTRA2A-motif.fa /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -len 8,10,12
-findMotifsGenome.pl shTRA2A-motif.fa fasta motif/ -fasta /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -len 7,8,9 -p 10 -rna
-findMotifsGenome.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -len 7,8,9 -p 10 -rna
-这样改完跑出来倒是人模狗样的
-findMotifsGenome.pl shTRA2A_summits.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -p 10 -len 7,8,9 -size 100 -rna
-好像结果更加理想了
-findMotifs.pl test-peak.fa fasta /home/leelee/biodata/TRA2Ash/sam/bam/test-peak -fasta /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa -rna -p 10 -len 5,6,7 
-emmm完全说不上理想啊
-
+findMotifsGenome.pl Mod.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -p 10 -len 5,6,7 -size -100,100 -rna -mis 1 -basic
+#这个五基序非常完美，可为什么六基序完全不行？
+findMotifsGenome.pl motif.bed /home/leelee/biodata/index/GRCH38/GRCh38.primary_assembly.genome.fa motif -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
+#去掉bed中的Inf后再做这个，感觉结果接近完美了，加上-mis 0能得到完美的motif
 
 meme-chip -rna shTRA2A-motif.fa
 meme-chip -rna -meme-maxw 12 -meme-p 5 shTRA2A-motif.fa
+meme-chip -rna -meme-minw 5 -meme-maxw 7  -meme-p 10 
+做meme没得到过理想的效果，所以用得比较少
+
+awk '{if($5>=300) print }' Mod.bed > motif.bed
+对bed文件的简单处理
 
 ascp -l 100M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR959/000/SRR9595630/SRR9595630.fastq.gz ./SRR9595630.fastq.gz
+ascp很不稳，所以对于断点重连的参数非常重要
 
 computeMatrix scale-regions -S <biwig file(s)> -R /home/leelee/biodata/annotation/gencode.v35.annotation.sorted.gtf -m 100 -bs 5 --metagene -o test -p 10
 computeMatrix scale-regions -R /home/leelee/biodata/annotation/ -S x.bw --smartLabels -p 20 --binSize 10 -b 3000 -a 3000 --regionBodyLength 5000 --sortRegions keep -o x.gz --outFileSortedRegions computeMatrix_x.bed --outFileNameMatrix matrix_x.tab
@@ -69,7 +82,7 @@ computeMatrix scale-regions -S H3K27Me3-input.bigWig \
                                  H3K4Me1-Input.bigWig  \
                                  H3K4Me3-Input.bigWig \
 
- computeMatrix scale-regions -R /home/leelee/biodata/annotation/ucschuman.bed -S shTRA2A-IP.bw --smartLabels -p 20 --binSize 10 -b 3000 -a 3000 --regionBodyLength 5000 --sortRegions keep -o test.gz --outFileSortedRegions computeMatrix_test.bed --outFileNameMatrix matrix_test.tab
+computeMatrix scale-regions -R /home/leelee/biodata/annotation/ucschuman.bed -S shTRA2A-IP.bw --smartLabels -p 20 --binSize 10 -b 3000 -a 3000 --regionBodyLength 5000 --sortRegions keep -o test.gz --outFileSortedRegions computeMatrix_test.bed --outFileNameMatrix matrix_test.tab
 
 plotProfile -m test.gz -out ExampleProfile1.png
 plotHeatmap -m test.gz -out ExampleHeatmap1.png 
@@ -83,3 +96,23 @@ computeMatrix scale-regions -S shTRA2A-IP.bw \
                               --regionBodyLength 5000 \
                               --afterRegionStartLength 3000 \
                               --skipZeros -o matrix.mat.gz -p 20
+
+~/tools/R-4.0.5/bin/Rscript callpeak.R &>nohup.out&
+nohup ~/tools/R-4.1.0/bin/Rscript exomepeak.R &
+
+stringtie input.markdup.bam -p 15 -G ~/biodata/annotation/gencode.v35.annotation.sorted.gtf -A input.txt -o input.gft
+
+trimmomatic PE \
+ -threads 15 \
+ -phred33 \
+ -trimlog trim.log \
+ Input-1_L1_701D01.R1.fastq.gz Input-1_L1_701D01.R2.fastq.gz \
+ trim-input1-r1.fastq.gz trim-input1-r1-unpair.fastq.gz trim-input-1-r2.fastq.gz trim-input-1-r2-unpair.fastq.gz\
+ ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:8:true \
+ SLIDINGWINDOW:5:20 \
+ LEADING:3 \
+ TRAILING:3 \
+ MINLEN:36
+
+source /home/leelee/miniconda3/etc/profile.d/conda.sh
+conda activate p2
