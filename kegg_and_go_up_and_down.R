@@ -1,14 +1,17 @@
 ###在jimmy的代码上做的调整，主要在于绘图和图片的保存
 ###把png图片同一调整为了pdf矢量图，在dobplot上对于labels的长度进行了限制
 ###dobplot能调整的地方还挺多的，有时间的话以后可以慢慢的美化。
-###library(stringr)
+###对labels长度进行限制时需要library(stringr)
+
 run_kegg <- function(gene_up,gene_down,geneList=F,pro='shTRA2A-shNC'){
   gene_up=unique(gene_up)
   gene_down=unique(gene_down)
   gene_diff=unique(c(gene_up,gene_down))
+  
   ###   over-representation test
   # 下面把3个基因集分开做超几何分布检验
   # 首先是上调基因集。
+  
   kk.up <- enrichKEGG(gene         = gene_up,
                       organism     = 'hsa',
                       #universe     = gene_all,
@@ -22,7 +25,8 @@ run_kegg <- function(gene_up,gene_down,geneList=F,pro='shTRA2A-shNC'){
   kk=DOSE::setReadable(kk, OrgDb='org.Hs.eg.db', keyType='ENTREZID')
   write.csv(kk@result,paste0(pro,'kegg.up.csv'))
   
-  # 首先是下调基因集。
+  # 然后是下调基因集。
+  
   kk.down <- enrichKEGG(gene         =  gene_down,
                         organism     = 'hsa',
                         #universe     = gene_all,
@@ -36,7 +40,8 @@ run_kegg <- function(gene_up,gene_down,geneList=F,pro='shTRA2A-shNC'){
   kk=DOSE::setReadable(kk, OrgDb='org.Hs.eg.db',keyType='ENTREZID')
   write.csv(kk@result,paste0(pro,'kegg.down.csv'))
   
-  # 最后是上下调合并后的基因集。
+  # 最后是合并基因集。
+  
   kk.diff <- enrichKEGG(gene         = gene_diff,
                         organism     = 'hsa',
                         pvalueCutoff = 0.5)
@@ -54,6 +59,7 @@ run_kegg <- function(gene_up,gene_down,geneList=F,pro='shTRA2A-shNC'){
   kegg_up_dt <- as.data.frame(kk.up)
   down_kegg<-kegg_down_dt[kegg_down_dt$pvalue<0.01,];down_kegg$group=-1
   up_kegg<-kegg_up_dt[kegg_up_dt$pvalue<0.01,];up_kegg$group=1
+  
   #画图设置, 这个图很丑，大家可以自行修改。
   g_kegg=kegg_plot(up_kegg,down_kegg)
   print(g_kegg)
