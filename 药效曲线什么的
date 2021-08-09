@@ -1,0 +1,53 @@
+dose <- rep(c(0.1,1,5,10,20,40,80,160), each = 3)
+log_dose <- log(dose)
+relative_viability <- c(0.949711134,1.005451403,1.022812111,
+                        1.01772584,0.937641271,1.00635974,
+                        0.981617647,0.78447015,1.049495368,
+                        0.87447479,0.917963037,0.802571547,
+                        0.563419118,0.392766919,0.182082124,
+                        0.468487395,0.870495945,0.082814876,
+                        0.10884979,0.105305146,0.145721001,
+                        0.001838235,-0.015423481,-0.011751694)
+test_data <- data.frame(
+  y = relative_viability,
+  x = log_dose
+)
+######没什么好说的，构建输入的矩阵
+
+library(drda)
+fit <- drda(y ~ x, data = test_data)                        
+summary(fit)
+
+fit_logistic2 <- drda(y ~ x, data = test_data, mean_function = "logistic2")
+fit_logistic4 <- drda(y ~ x, data = test_data, mean_function = "logistic4")
+fit_logistic5 <- drda(y ~ x, data = test_data, mean_function = "logistic5")
+fit_gompertz <- drda(y ~ x, data = test_data, mean_function = "gompertz")
+anova(fit_logistic2, fit_logistic4, fit_logistic5, fit_gompertz)
+####选取一个最好的模型做曲线
+
+fit1 <- drda(y ~ x, data = test_data, mean_function = "logistic2")
+pdf(file = "U87 Cell growth.pdf",width = 8,height = 6)
+plot(fit1,xlab = "log (Dose)", ylab = "Cell growth",
+     legend = c('U87'))
+dev.off()
+####有一个问题是按照作者代码画出来的图是没有IC50值的
+coef(fit1) 
+exp(coef(fit1))
+####但包是提供IC50值的，用这个函数可以得到IC50
+
+Corner_text <- function(drda,location="topright"){
+  text=paste0("IC50=",
+              round(exp(as.data.frame(coef(fit1))[rownames(as.data.frame(coef(fit1)))=='phi',]),3),
+              "μmol/L")
+  legend(location,legend=text, bty ="n", pch=NA) 
+}
+####自己包装的代码可以在图片右上显示IC50值
+
+pdf(file = "test.pdf",width = 8,height = 6)
+
+plot(fit1,xlab = "log (Dose)", ylab = "Cell growth",
+     legend = c('U87'))
+Corner_text(fit1)
+
+dev.off()
+####重新绘图，IC50加上去了
