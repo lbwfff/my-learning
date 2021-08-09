@@ -37,7 +37,7 @@ exp(coef(fit1))
 
 Corner_text <- function(drda,location="topright"){
   text=paste0("IC50=",
-              round(exp(as.data.frame(coef(fit1))[rownames(as.data.frame(coef(fit1)))=='phi',]),3),
+              round(exp(as.data.frame(coef(drda))[rownames(as.data.frame(coef(drda)))=='phi',]),3),
               "μmol/L")
   legend(location,legend=text, bty ="n", pch=NA) 
 }
@@ -47,7 +47,7 @@ pdf(file = "test.pdf",width = 8,height = 6)
 
 plot(fit1,xlab = "log (Dose)", ylab = "Cell growth",
      legend = c('U87'))
-Corner_text(fit1)
+Corner_text(drda=fit1)
 
 dev.off()
 ####重新绘图，IC50加上去了
