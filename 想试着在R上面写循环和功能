@@ -1,0 +1,35 @@
+####主要还是为了节省劳动力吧
+
+案例一：
+  n1= c('gene_up','gene_down','gene_diff')
+  n2= c('BP','MF','CC') 
+for (i in 1:3){
+    for (j in 1:3){
+      fn=paste0(pro, '_dotplot_',n1[i],'_',n2[j],'.pdf')
+      cat(paste0(fn,'\n'))
+      pdf(fn,width = 8,height = 6)
+      print( dotplot(go_enrich_results[[i]][[j]],color = "pvalue")+
+               scale_y_discrete(labels = function(x) str_wrap(x, width = 45)))
+      dev.off()
+    }
+  }
+
+这种用法在linux上也用到过，for (i in ""){},感觉比较能理解
+
+案例二：
+
+test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
+  gene_up=unique(gene_up)
+  kk.up <- enrichKEGG(gene         = gene_up,
+                      organism     = 'hsa',
+                      pvalueCutoff = 0.9,
+                      qvalueCutoff =0.9)
+  head(kk.up)[,1:6]
+  kk=kk.up
+  pdf(file = paste0(pro,'test.kegg.up.pdf'),width=8,height = 6)
+  dotplot(kk,color = "pvalue")+
+    scale_y_discrete(labels = function(x) str_wrap(x, width = 45))
+  dev.off()
+  kk=DOSE::setReadable(kk, OrgDb='org.Hs.eg.db', keyType='ENTREZID')
+  write.csv(kk@result,paste0(pro,'kegg.up.csv'))
+  }
