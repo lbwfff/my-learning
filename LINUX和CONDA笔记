@@ -1,3 +1,8 @@
+locate libcom_err.so.3
+sudo ln -s /home/leelee/miniconda3/lib/libcom_err.so.3.0 /usr/lib/x86_64-linux-gnu/libcom_err.so.3
+####究极有用的两句话，用于r语言的奇怪报错
+
+
 ctrl+c终结进程
 rm 删除
 复制命令:Ctrl + Shift + C 组合键. 粘贴命令:Ctrl + Shift + V 组合键
