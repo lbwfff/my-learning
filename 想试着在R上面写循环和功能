@@ -27,10 +27,13 @@ test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
   head(kk.up)[,1:6]
   kk=kk.up
   pdf(file = paste0(pro,'test.kegg.up.pdf'),width=8,height = 6)
-  dotplot(kk,color = "pvalue")+
-    scale_y_discrete(labels = function(x) str_wrap(x, width = 45))
+  print(dotplot(kk,color = "pvalue")+
+    scale_y_discrete(labels = function(x) str_wrap(x, width = 45)))
   dev.off()
   kk=DOSE::setReadable(kk, OrgDb='org.Hs.eg.db', keyType='ENTREZID')
   write.csv(kk@result,paste0(pro,'kegg.up.csv'))
-  }
-#####不能理解，是因为function中没法dev.off()还是什么？为什么图片无法正常
+}
+
+test_kegg(gene_up,pro = 'ipe')
+
+##试了一下，可以运行，暂时先体会这两种方法，可以减少非常多的无效代码
