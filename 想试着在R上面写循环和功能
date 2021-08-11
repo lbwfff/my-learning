@@ -33,3 +33,4 @@ test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
   kk=DOSE::setReadable(kk, OrgDb='org.Hs.eg.db', keyType='ENTREZID')
   write.csv(kk@result,paste0(pro,'kegg.up.csv'))
   }
+#####不能理解，是因为function中没法dev.off()还是什么？为什么图片无法正常
