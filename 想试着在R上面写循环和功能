@@ -37,3 +37,31 @@ test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
 test_kegg(gene_up,pro = 'ipe')
 
 ##试了一下，可以运行，暂时先体会这两种方法，可以减少非常多的无效代码
+
+
+实战一：
+list<-c('Abcam','CST','SYSY')
+for (i in list){
+  path1<-paste0("~/biodata/merip/exomepeak2/",i,"-1/Mod.bed")
+  path2<-paste0("~/biodata/merip/exomepeak2/",i,"-2/Mod.bed")
+gr1 <- toGRanges(path1, format="BED", header=FALSE) 
+gr2 <- toGRanges(path2, format="BED", header=FALSE) 
+
+peaks <- GRangesList(rep1=gr1,
+                     rep2=gr2)
+pdf(file = paste0(i,'genomicElementDistribution.pdf'),width=6,height = 4)
+genomicElementDistribution(peaks, 
+                           TxDb = TxDb,
+                           promoterRegion = c(upstream = 2000, downstream = 100),
+                           geneDownstream = c(upstream = 0, downstream = 1000),
+                           labels = list(geneLevel = c(promoter = "Promoter", geneDownstream = "Downstream",geneBody = "Gene body", distalIntergenic = "Distal Intergenic"), 
+                                         ExonIntron = c(exon= "Exon", intron = "Intron", intergenic = "Intergenic"), 
+                                         Exons = c(utr5 = "5' UTR",utr3 = "3' UTR", CDS = "CDS", otherExon = "Other exon"), 
+                                         group = c(geneLevel ="Gene Level", promoterLevel = "Promoter Level", Exons = "Exon level", ExonIntron ="Exon/Intron/Intergenic")),
+                           labelColors = c(promoter = "#D55E00", geneDownstream = "#E69F00", geneBody ="#51C6E6", 
+                                           distalIntergenic = "#AAAAAA", exon = "#009DDA", intron = "#666666",
+                                           intergenic = "#DDDDDD", utr5 = "#0072B2", utr3 = "#56B4E9", CDS = "#0033BF",
+                                           otherExon = "#009E73")
+)
+dev.off()
+}
