@@ -91,3 +91,75 @@ for (i in list){
   dev.off()
 }
 
+
+##########写了一款这样的，内核和上面的一模一样，只是为了应付不同的文件存储模式而已，多写写总是没错的########
+
+gEDadjust <- function(nc,treated){
+  path1<-paste0(nc,"-m/Mod.bed")
+  gr1 <- toGRanges(path1, format="BED", header=FALSE) 
+  path2<-paste0(treated,"-m/Mod.bed")
+  gr2 <- toGRanges(path2, format="BED", header=FALSE) 
+  
+  gr1<-genomicElementDistribution(gr1, 
+                                  TxDb = TxDb,
+                                  promoterRegion = c(upstream = 2000, downstream = 100),
+                                  geneDownstream = c(upstream = 0, downstream = 1000),
+                                  labels = list(geneLevel = c(promoter = "Promoter", geneDownstream = "Downstream",geneBody = "Gene body", distalIntergenic = "Distal Intergenic"), 
+                                                ExonIntron = c(exon= "Exon", intron = "Intron", intergenic = "Intergenic"), 
+                                                Exons = c(utr5 = "5' UTR",utr3 = "3' UTR", CDS = "CDS", otherExon = "Other exon"), 
+                                                group = c(geneLevel ="Gene Level", promoterLevel = "Promoter Level", Exons = "Exon level", ExonIntron ="Exon/Intron/Intergenic")),
+                                  labelColors = c(promoter = "#D55E00", geneDownstream = "#E69F00", geneBody ="#51C6E6", 
+                                                  distalIntergenic = "#AAAAAA", exon = "#009DDA", intron = "#666666",
+                                                  intergenic = "#DDDDDD", utr5 = "#0072B2", utr3 = "#56B4E9", CDS = "#0033BF",
+                                                  otherExon = "#009E73")
+  )
+  gr1<-gr1$plot$data
+  gr1<-gr1[5:8,]
+  gr1$sample<-c(rep(paste0(nc),4))
+  
+  gr2<-genomicElementDistribution(gr2, 
+                                  TxDb = TxDb,
+                                  promoterRegion = c(upstream = 2000, downstream = 100),
+                                  geneDownstream = c(upstream = 0, downstream = 1000),
+                                  labels = list(geneLevel = c(promoter = "Promoter", geneDownstream = "Downstream",geneBody = "Gene body", distalIntergenic = "Distal Intergenic"), 
+                                                ExonIntron = c(exon= "Exon", intron = "Intron", intergenic = "Intergenic"), 
+                                                Exons = c(utr5 = "5' UTR",utr3 = "3' UTR", CDS = "CDS", otherExon = "Other exon"), 
+                                                group = c(geneLevel ="Gene Level", promoterLevel = "Promoter Level", Exons = "Exon level", ExonIntron ="Exon/Intron/Intergenic")),
+                                  labelColors = c(promoter = "#D55E00", geneDownstream = "#E69F00", geneBody ="#51C6E6", 
+                                                  distalIntergenic = "#AAAAAA", exon = "#009DDA", intron = "#666666",
+                                                  intergenic = "#DDDDDD", utr5 = "#0072B2", utr3 = "#56B4E9", CDS = "#0033BF",
+                                                  otherExon = "#009E73")
+  )
+  gr2<-gr2$plot$data
+  gr2<-gr2[5:8,]
+  gr2$sample<-c(rep(paste0(treated),4))
+
+  c<-rbind(gr1,gr2)
+  
+  file<-paste0('distribution.pdf')
+  
+  c$type = factor(c$type, levels=c('utr5','CDS','utr3','otherExon'))
+ 
+  pdf(file = file,width=8,height = 6)
+  print(ggplot(data = c,aes(x = type,y = percentage)) +
+          geom_bar(aes(color  = sample, fill = sample),
+                   stat = 'identity', position = position_dodge(0.8),
+                   width = 0.72,show.legend=T)+
+          theme_bw() + 
+          theme_classic(base_size = 18)+ 
+          theme(panel.grid.major =element_blank(), 
+                panel.grid.minor = element_blank(),
+                panel.background = element_blank(),
+                panel.border = element_blank(),
+                legend.position = c(0.9,0.9),legend.title = element_blank())+
+          labs(y="Percentage of peak",x=NULL)+
+          geom_text(aes(label = paste0(round(percentage,4)*100,"%"), group = sample), 
+                    position = position_dodge(0.8),
+                    vjust = -0.3, size = 5)+
+          coord_cartesian(ylim=c(0,0.5))+
+          scale_color_manual(values = c("#36537155", "#96345A74"))+
+          scale_fill_manual(values = c("#36537155", "#96345A74")))
+  dev.off()
+}
+
+gEDadjust(nc='shNC',treated='shTRA2A')
