@@ -1,0 +1,93 @@
+######感觉自己在乱写，但，毫无疑问节省了精力，其实那也不错了#########
+######把genomicElementDistribution的功能重新解构了，虽然可能有点买椟还珠的感觉，但拿到我想要的东西了，也就可以了#########
+######和文献里的柱状图相比，他们一帮会用TTS，TSS，或是终止密码子，起始密码子，这些用genomicElementDistribution是得不到的，我也不知道他们是怎么得到的######
+######至于genomicElementDistribution中的other exon是什么，暂时也还，没有找到描述##########
+
+TxDb<-makeTxDbFromGFF('~/biodata/annotation/gencode.v35.annotation.sorted.gtf',
+                      format=c("gtf"))
+setwd('~/biodata/merip/exomepeak2/')
+list<-c('Abcam','CST','SYSY')
+######模块化你的文件存储位置，会为之后的简化处理提供便利######
+
+for (i in list){
+  path1<-paste0("~/biodata/merip/exomepeak2/",i,"-1/Mod.bed")
+  gr1 <- toGRanges(path1, format="BED", header=FALSE) 
+  
+  path2<-paste0("~/biodata/merip/exomepeak2/",i,"-2/Mod.bed")
+  gr2 <- toGRanges(path2, format="BED", header=FALSE) 
+  
+  gr1<-genomicElementDistribution(gr1, 
+                             TxDb = TxDb,
+                             promoterRegion = c(upstream = 2000, downstream = 100),
+                             geneDownstream = c(upstream = 0, downstream = 1000),
+                             labels = list(geneLevel = c(promoter = "Promoter", geneDownstream = "Downstream",geneBody = "Gene body", distalIntergenic = "Distal Intergenic"), 
+                                           ExonIntron = c(exon= "Exon", intron = "Intron", intergenic = "Intergenic"), 
+                                           Exons = c(utr5 = "5' UTR",utr3 = "3' UTR", CDS = "CDS", otherExon = "Other exon"), 
+                                           group = c(geneLevel ="Gene Level", promoterLevel = "Promoter Level", Exons = "Exon level", ExonIntron ="Exon/Intron/Intergenic")),
+                             labelColors = c(promoter = "#D55E00", geneDownstream = "#E69F00", geneBody ="#51C6E6", 
+                                             distalIntergenic = "#AAAAAA", exon = "#009DDA", intron = "#666666",
+                                             intergenic = "#DDDDDD", utr5 = "#0072B2", utr3 = "#56B4E9", CDS = "#0033BF",
+                                             otherExon = "#009E73")
+  )
+  gr1<-gr1$plot$data
+  gr1<-gr1[5:8,]
+  gr1$sample<-c(rep(paste0(i,'-rep1'),4))
+  file1<-paste0("~/biodata/merip/exomepeak2/",i,"-1-plot.csv")
+  write.csv(gr1,file = file1)
+
+  gr2<-genomicElementDistribution(gr2, 
+                                  TxDb = TxDb,
+                                  promoterRegion = c(upstream = 2000, downstream = 100),
+                                  geneDownstream = c(upstream = 0, downstream = 1000),
+                                  labels = list(geneLevel = c(promoter = "Promoter", geneDownstream = "Downstream",geneBody = "Gene body", distalIntergenic = "Distal Intergenic"), 
+                                                ExonIntron = c(exon= "Exon", intron = "Intron", intergenic = "Intergenic"), 
+                                                Exons = c(utr5 = "5' UTR",utr3 = "3' UTR", CDS = "CDS", otherExon = "Other exon"), 
+                                                group = c(geneLevel ="Gene Level", promoterLevel = "Promoter Level", Exons = "Exon level", ExonIntron ="Exon/Intron/Intergenic")),
+                                  labelColors = c(promoter = "#D55E00", geneDownstream = "#E69F00", geneBody ="#51C6E6", 
+                                                  distalIntergenic = "#AAAAAA", exon = "#009DDA", intron = "#666666",
+                                                  intergenic = "#DDDDDD", utr5 = "#0072B2", utr3 = "#56B4E9", CDS = "#0033BF",
+                                                  otherExon = "#009E73")
+  )
+  gr2<-gr2$plot$data
+  gr2<-gr2[5:8,]
+  gr2$sample<-c(rep(paste0(i,'-rep2'),4))
+  file2<-paste0("~/biodata/merip/exomepeak2/",i,"-2-plot.csv")
+  write.csv(gr2,file = file2)
+}
+
+for (i in list){
+  path1<-paste0("~/biodata/merip/exomepeak2/",i,"-1-plot.csv")
+  path2<-paste0("~/biodata/merip/exomepeak2/",i,"-2-plot.csv")
+  a<-read.csv(path1)
+  b<-read.csv(path2)
+  c<-rbind(a,b)
+  
+  file<-paste0('~/biodata/merip/exomepeak2/',i,'-distribution.pdf')
+  
+  c$type = factor(c$type, levels=c('utr5','CDS','utr3','otherExon'))
+  
+#######我不想要genomicElementDistribution给的图片，而是把genomicElementDistribution给的矩阵自己画了出来########
+#######这让我丢掉了许多genomicElementDistribution返回的信息，但好处是是我可以自定义这张图片的表现形式#########
+
+  pdf(file = file,width=8,height = 6)
+  print(ggplot(data = c,aes(x = type,y = percentage)) +
+    geom_bar(aes(color  = sample, fill = sample),
+             stat = 'identity', position = position_dodge(0.8),
+             width = 0.72,show.legend=T)+
+    theme_bw() + 
+    theme_classic(base_size = 18)+ 
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.position = c(0.9,0.9),legend.title = element_blank())+
+    labs(y="Percentage of peak",x=NULL)+
+    geom_text(aes(label = paste0(round(percentage,4)*100,"%"), group = sample), 
+              position = position_dodge(0.8),
+              vjust = -0.3, size = 5)+
+    coord_cartesian(ylim=c(0,0.5))+
+    scale_color_manual(values = c("#36537155", "#96345A74"))+
+    scale_fill_manual(values = c("#36537155", "#96345A74")))
+  dev.off()
+}
+
