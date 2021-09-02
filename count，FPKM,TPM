@@ -1,0 +1,8 @@
+
+lens <- exons_gene_lens1[ match(rownames(exp),rownames(exons_gene_lens1)),]
+exp$length<-lens$V1
+kb<-exp$length/1000
+countdata<-exp[,1:6]
+rpk<-countdata/kb
+fpkm<-t(t(rpk)/colSums(countdata)*10^6)
+fpkm=as.data.frame(fpkm)
