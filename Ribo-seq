@@ -1,0 +1,134 @@
+#####hcc-ribo数据，最近在做的######
+
+#####共十个样本，每个样本四个数据，下载的数据已经没有接头了，这边直接去rRNA########
+
+for i in LC001 LC033 LC034 LC501 LC502 LC505 LC506 LC507 LC508 LC509
+do
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz "$i"_normal_RPF.derRNA.fq.gz -U raw/"$i"_normal_RPF.fastq.gz -p 18 -S "$i"_normal_RPF.rRNA.mapped.sam 2>"$i"_normal_RPF.log
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz "$i"_normal_totalRNA.derRNA.fq.gz -U raw/"$i"_normal_totalRNA.fastq.gz -p 18 -S "$i"_normal_total.rRNA.mapped.sam 2>"$i"_normal_totalRNA.log
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz "$i"_tumor_RPF.derRNA.fq.gz -U raw/"$i"_tumor_RPF.fastq.gz -p 18 -S "$i"_tumor_RPF.rRNA.mapped.sam 2>"$i"_tumor_RPF.log
+bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz "$i"_tumor_totalRNA.derrRNA.fq.gz -U raw/"$i"_tumor_totalRNA.fastq.gz -p 18 -S "$i"_tumor_totalRNA.rRNA.mapped.sam 2>"$i"_tumor_totalRNA.log
+done
+
+#####RPF的reads都特别短（这种长度分布也是质控的重要一环），hisat2无法很好的适应这种情况，这种时候可以用star######
+#####star真是慢啊，不过功能是真的多，某些情况下mapping长的reads也可以考虑一下star####
+source activate p3
+for i in LC001 LC033 LC034 LC501 LC502 LC505 LC506 LC507 LC508 LC509
+do
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrRNA/"$i"_normal_RPF.derRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype SAM --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix "$i"_normal_RPF --readFilesCommand zcat
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrRNA/"$i"_normal_totalRNA.derRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype SAM --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix "$i"_normal_totalRNA --readFilesCommand zcat
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrRNA/"$i"_tumor_RPF.derRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype SAM --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix "$i"_tumor_RPF --readFilesCommand zcat
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrRNA/"$i"_tumor_totalRNA.derrRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype SAM --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix "$i"_tumor_totalRNA --readFilesCommand zcat
+done
+
+####后来重新改了一下star的参数，可以直接数据sort后的bam文件，在后续的步骤里可以方便一些#####
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrRNA/"$i"_normal_RPF.derRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix "$i"_normal_RPF --readFilesCommand zcat --outReadsUnmapped None 
+
+####直接输出bam的话就不需要下面这步了######
+for i in LC001 LC033 LC034 LC501 LC502 LC505 LC506 LC507 LC508 LC509
+do
+samtools view -bSq 10 -@ 15 -F 4 -F 256 afm/"$i"_normal_RPFAligned.out.sam -o "$i"_normal_RPF.bam
+samtools view -bSq 10 -@ 15 -F 4 -F 256 afm/"$i"_normal_totalRNAAligned.out.sam -o "$i"_normal_totalRNA.bam
+samtools view -bSq 10 -@ 15 -F 4 -F 256 afm/"$i"_tumor_RPFAligned.out.sam -o "$i"_tumor_RPF.bam
+samtools view -bSq 10 -@ 15 -F 4 -F 256 afm/"$i"_tumor_totalRNAAligned.out.sam -o "$i"_tumor_totalRNA.bam
+done
+
+####忘记htseq怎么用了，这边用的featureCounts，应该没有什么区别######
+featureCounts -T 18 -a ~/biodata/annotation/gencode.v35.annotation.sorted.gtf -o hccribo.count -g gene_id *.bam
+
+###之后用xtail进行分析####
+###xtail这个包实在太久没有更新了，只能通过docker载入####
+
+docker exec -it xtail bash
+cd /home/test/share
+R
+
+###以下是R代码######
+###处理count矩阵#####
+library(xtail)
+hcc<-read.table('hccribo.count',header = T)
+hcc<-hcc[,-(2:5)]
+length<-hcc[,1:2]
+hcc<-hcc[,-2]
+rownames(hcc)<-hcc[,1]
+hcc<-hcc[,-1]
+####用循环来做分析#####
+list<-c('LC001','LC033','LC034','LC501','LC502','LC505','LC506','LC507','LC508','LC509')
+for (i in list){
+exp<-hcc[,grep(i,colnames(hcc))]
+mrna<-exp[,grep('totalRNA',colnames(exp))]
+rpf <-exp[,grep('RPF',colnames(exp))]
+condition <- c('normal','tumor')
+results <- xtail(mrna,rpf,condition,bins=10000)
+tab <- resultsTable(results)
+path<-paste0(i,'result.txt')
+write.table(tab,path,quote=F,sep="\t")
+###FC图####
+path<-paste0(i,'FCs.pdf')
+pdf(file=path,width=6,height=6)
+plotFCs(results)
+dev.off()
+###Rs图####
+path<-paste0(i,'Rs.pdf')
+pdf(file=path,width=6,height=6)
+plotRs(results)
+dev.off()
+###存一下数据###
+path<-paste0(i,'results.RData')
+save(results,file=path)
+###火山图#####
+path<-paste0(i,'volcanoPlot.pdf')
+pdf(file=path,width=6,height=6)
+volcanoPlot(results)
+dev.off()
+}
+####火山图并没有正常输出，不知道为什么####
+
+#####不考虑肿瘤的异质性的话，可以一起分析，用riborex#####
+hcc<-read.table('hccribo.count',header = T)
+hcc<-hcc[,-(2:5)]
+length<-hcc[,1:2]
+hcc<-hcc[,-2]
+rownames(hcc)<-hcc[,1]
+hcc<-hcc[,-1]
+
+library(riborex)
+RNACntTable<-hcc[,grep('totalRNA',colnames(hcc))]
+RiboCntTable<-hcc[,grep('RPF',colnames(hcc))]
+head(RNACntTable,5)
+head(RiboCntTable,5)
+
+rnaCond <- c("normal", "tumor", "normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor")
+riboCond <- c("normal", "tumor", "normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor")
+res.deseq2 <- riborex(RNACntTable, RiboCntTable, rnaCond, riboCond,engine = "DESeq2")
+res.deseq2
+summary(res.deseq2)
+write.csv(res.deseq2, "riborex_res_deseq2.csv")
+
+####ribotricer可以做CDS的预测，画metagene图，长度分布什么的，还是挺方便的######
+source activate ribotricer
+for i in LC001 LC033 LC034 LC501 LC502 LC505 LC506 LC507 LC508 LC509
+do
+ribotricer detect-orfs --bam ~/biodata/hcc-ribo/"$i"_tumor_RPF.sort.bam --ribotricer_index test_candidate_orfs.tsv --prefix "$i"_tumor_RPF --phase_score_cutoff 0.440
+ribotricer detect-orfs --bam ~/biodata/hcc-ribo/"$i"_normal_RPF.sort.bam --ribotricer_index test_candidate_orfs.tsv --prefix "$i"_normal_RPF --phase_score_cutoff 0.440
+done
+
+#####RiboDiPA是一个R包，好像能画的还挺多的，有时间可以玩一下#######
+library('RiboDiPA')
+classlabel <- data.frame(
+  condition = c("normal", "tumor", "normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor", "normal", "tumor","normal", "tumor","normal", "tumor","normal", "tumor"),
+  comparison = c(1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2)
+)
+rownames(classlabel) <- c("LC001_normal","LC001_tumor",
+                          "LC033_normal","LC033_tumor",
+                          "LC034_normal","LC034_tumor",
+                          "LC501_normal","LC501_tumor",
+                          "LC502_normal","LC502_tumor",
+                          "LC505_normal","LC505_tumor",
+                          "LC506_normal","LC506_tumor",
+                          "LC507_normal","LC507_tumor",
+                          "LC508_normal","LC508_tumor",
+                          "LC509_normal","LC509_tumor" )
+path<-paste0('~/biodata/hcc-ribo/',rownames(classlabel),'_RPF.sort.bam')
+result.pst <- RiboDiPA(path, '~/biodata/annotation/gencode.v35.annotation.sorted.gtf', classlabel, cores = 15)
+save(result.pst,file =('~/biodata/hcc-ribo/ribodipa.RData'))
