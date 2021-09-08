@@ -39,8 +39,10 @@ featureCounts -T 18 -a ~/biodata/annotation/gencode.v35.annotation.sorted.gtf -o
 ###之后用xtail进行分析####
 ###xtail这个包实在太久没有更新了，只能通过docker载入####
 
-docker run --name=xtail -dt  -h yanglab --restart unless-stopped -v ~/share:/home/test/share yanglab/xtail ##运行容器##
+docker run --name=xtail -dt  -h yanglab --restart unless-stopped -v ~/share:/home/test/share yanglab/xtail ##第一次需要这个##
+docker start 558cd9319f66 ####之后用这个进入停止的xtail容器#####
 docker exec -it xtail bash ##进入容器###
+docker stop xtail ###停止容器容器####
 cd /home/test/share
 R
 
