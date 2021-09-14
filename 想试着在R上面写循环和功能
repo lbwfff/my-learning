@@ -65,3 +65,17 @@ genomicElementDistribution(peaks,
 )
 dev.off()
 }
+
+#######apply循环的使用#######
+#######这种循环对于你操作矩阵至关重要！######
+
+f<-function(x) sum(x > 0 & !is.na(x))
+apply(fc,1,f)####1为行，2为列，此处计算fc矩阵中每一行大于零且不为na的值的数目
+
+#######进阶实例########
+######使用poolr包的stouffer函数对p矩阵的每一行进行p值的合并######
+######此例可以让你更好的理解apply循环，function的x是是什么？如果想把function应用在apply上，此处的x应该是行（或列）#####
+library('poolr')
+f<-function(x) stouffer(as.numeric(x[!is.na(as.numeric(unlist(x)))]))$p
+allgene$integrateP<-apply(p,1,f)
+
