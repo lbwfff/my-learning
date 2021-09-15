@@ -1,0 +1,27 @@
+######2021-9-15一整天的工作#####
+######把预测得到的ORF转化为氨基酸序列######
+
+#######首先得到去外显子的注释文件#####
+./gtfToGenePred gencode.v35.annotation.sorted.gtf gencode.v35.genePred
+./genePredToBed gencode.v35.genePred gencode.v35.bed
+
+####这里得到得是BED12文件，具有巨大得信息量#####
+####之后得到去外显子转录本的具体序列#####
+bedtools getfasta -fi ~/biodata/index/GRCh38/GRCh38.primary_assembly.genome.fa -bed gencode.v35.bed -split -name > all.exon.fasta
+
+#####之后用R语言处理#######
+fasta<-read.table('~/tools/ucsc/tools/all.exon.fasta')###读入fasta文件
+
+num<-grep('ENST00000650360.1',fasta$V1) #####寻找感兴趣的转录本####
+test<-as.data.frame(fasta[num:(num+1),]) #####找到文件中的两行#####
+test[2,]<-substr(fasta[(num+1),],330,812) ######截取ORF序列########
+
+write.table(test,file = 'test.fasta',col.names = F,row.names = F,sep = '\t',quote = F) #####写成fasta文件###
+
+library(Biostrings)
+seqs <- readDNAStringSet("test.fasta", format = "fasta", use.names = TRUE) #####读入后可以用biostrings处理###
+seqs_translated <- translate(seqs, no.init.codon = TRUE) #####将核苷酸序列转换为氨基酸序列######
+seqs_translated
+
+writeXStringSet(seqs_translated,filepath = 'testpor.fasta') #####写出为fasta文件#####
+######一天就做了这么多，任重而道远啊#####
