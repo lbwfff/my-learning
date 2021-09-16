@@ -79,6 +79,14 @@ library('poolr')
 f<-function(x) stouffer(as.numeric(x[!is.na(as.numeric(unlist(x)))]))$p
 allgene$integrateP<-apply(p,1,f)
 
+######解决了你一直想解决的一些问题######
+f <-function(x) unlist(strsplit(x$experiment_title,';'))[1]
+plate <-apply(list2,1,f) 
+#####这是错误示范，会显示报错：$ operator is invalid for atomic vectors,具体的原理我不是太懂，但是通过像下面的改动可以避开这个问题####
+f <-function(x) unlist(strsplit(x['experiment_title'],';'))[1]
+list2$plate <-apply(list2,1,f)
+####这样就可以取得任意封号前的字符了，换成'_',或者其他什么也可以操作，解决了一个大麻烦#####
+
 #####判断句#####
 #####基本的使用方法是，ifelse(对象,yes,no)######
 #####此处的应用是，对于diff矩阵，如果v1，v2同时为0或同时为翻译，则输出‘no change’，若不则进行下一步的判断。在下一步的判断中，若v1为0，v2为翻译，则输出‘turn-on’，否则输出‘turn-off’########
