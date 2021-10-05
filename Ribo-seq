@@ -138,3 +138,25 @@ rownames(classlabel) <- c("LC001_normal","LC001_tumor",
 path<-paste0('~/biodata/hcc-ribo/',rownames(classlabel),'_RPF.sort.bam')
 result.pst <- RiboDiPA(path, '~/biodata/annotation/gencode.v35.annotation.sorted.gtf', classlabel, cores = 15)
 save(result.pst,file =('~/biodata/hcc-ribo/ribodipa.RData'))
+
+
+########################仔细比较以下自己的pipi和ribocode1的pip
+cutadapt -m 20 --match-read-wildcards -a (Adapter sequence) -o <Trimmed fastq file> <Input fastq file>
+
+bowtie-build <rRNA.fa> rRNA
+bowtie -p 8 -norc --un <un_aligned.fastq> -q <SRR1630831.fastq> rRNA <HEK293_rRNA.align>
+
+STAR --runThreadN 8 --runMode genomeGenerate --genomeDir <hg19_STARindex>
+--genomeFastaFiles <hg19_genome.fa> --sjdbGTFfile <gencode.v19.annotation.gtf>
+
+STAR --outFilterType BySJout --runThreadN 8 --outFilterMismatchNmax 2 --genomeDir <hg19_STARindex>
+--readFilesIn <un_aligned.fastq>  --outFileNamePrefix <HEK293> --outSAMtype BAM
+SortedByCoordinate --quantMode TranscriptomeSAM GeneCounts --outFilterMultimapNmax 1
+--outFilterMatchNmin 16 --alignEndsType EndToEnd
+####我基本就是按照他的pip改的，这样写有一个问题就是因为太短而被丢弃的reads很多，可是如果连16个碱基都没有的reads在找orf时也不会被用到啊，我不明白。
+
+STAR (v2.4.2a): STAR --runThreadN 23 --runMode alignReads --outFilterMultimapNmax 1 --outFilterType BySJout --outSAMattributes All --outSAMtype BAM SortedByCoordinate
+#######这是GSE166544的参数，这个系列的数据用我的pip跑会因为reads太短和错配太多几乎得不到结果
+#######首先他这个条件特别松，错配数，最小的匹配数，都按照默认的跑了，然后是outSAMattributes这个参数输出了很多（不过这个应该不是很关键，只是对reads的描述更多了）
+#######那么问题来了，我是不是对mapping的要求太高了，我应该降低这个要求吗？
+
