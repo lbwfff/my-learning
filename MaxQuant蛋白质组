@@ -1,4 +1,28 @@
+#######简单使用#####
 使用方式，在图形化界面（my pc）选择好合适参数后，将mqpar.xml文件转移至linux服务器
 手动改变mqpar.xml中需要分析的文件以及index文件的所属位置（MaxQuantCmd.exe --changeFolder会报错，不知道为什么，现在只能手动的去改）
 然后 mono MaxQuant/bin/MaxQuantCmd.exe mqpar.xml（虽然官方推荐的是dotnet，但是使用dotnet的话会有一个非常诡异的版本报错问题，幸运的是mono可以作为替代）
 
+######想要使用这个软件非常简单，但是想要通过使用这个软件来进行蛋白质组的定量则需要自己不断的去接受新的知识点，之后是我的笔记#####
+######《The MaxQuant computational platform for mass spectrometry-based shotgun proteomics》这篇是个很好的学习资料######
+首先对于我来说，对于蛋白质组的学习，主要是想能够分析captac的数据，用来验证我的index是有意义的，所以学习的主要方向是TMT11的定量方法。
+TMT11的定量方法有点像m6A-seq2，就是把不同的样本标记以不同的离子，一次测得信号得强度，TMT11一次能测得11个样本得蛋白质组数据，方便了操作也降低了误差。
+在图形界面选择MS2，TMT11，（MS3也有TMT11，两种不同的选择有什么区别？）
+在sequence选项可以输入作为索引的fasta文件，除了蛋白质序列之外可以把常见污染物的序列合并在一起。
+identification选项可以设置肽与蛋白match的FDR值（默认0.01），maxquant的搜库也是基于靶点诱饵库搜索策略所进行的，在advance选项可以对于诱饵进行设定，可以选择用靶点的反序或是乱序构建诱饵库。
+之后就没有什么需要特别修改的了， parent ion tolerance在哪改？没找到
+
+#####之后是结果文件#####
+重要的首先是proteinGroups.txt，有对于蛋白组的定量描述
+首先所谓的蛋白质group是什么，The proteome is characterized by a relatively high sequence redundancy. This results from different evolutionary processes and the presence of isoforms. In bottom-up proteomics, this situation leads to the problem that often a peptide cannot be uniquely associated with one protein of origin, which makes it impossible to unambiguously claim the presence of one protein over another.
+Depending on the user-defined setting, the shared peptide will not be used for quantification (unique peptides only), or it will be used for the quantification of the protein group with a larger number of associated peptides (unique + razor peptides).
+这里同时也解释了两种定量的选择（在Protein quantification选项），如果是unique peptides only则不会使用这些match到蛋白group的肽来定量，如果unique + razor peptides则相反。（用RNA-seq的思维来思考的话，unique + razor的道理是什么？）
+可以看到蛋白名列有许多CON_抬头的名字，文章给出的解释是If any of the contaminants is found, it will be marked with the prefix ‘CON_’ in the MaxQuant output tables，（为什么我的index里没有污染物还输出了CON？可能是我点了includ？whatever）
+
+定量有Reporter intensity corrected，Reporter intensity，Reporter intensity count，这分别是什么？
+Reporter intensities come in two forms: the original ones and the ones for which the correction factors are applied. The columns referring to the letter one are indicated by the prefix ‘Corrected’
+意思是，Reporter intensity corrected是应用了矫正因子的结果，（点解在我的结果里是一样咩？）
+If your experiment involves isobaric labeling, such as iTRAQ and TMT, correction factors to account for mixing between channels can be specified. These are defined as a percentage of the total amount or as a percentage of the main isotope for iTRAQ and TMT labeling, respectively. The specific values for these correction factors may vary from batch to batch and are provided by the vendors of the labeling reagents
+没理解错的话，我可以一定一个correction factors（how？what？文章也没说是多少啊）
+
+如果没理解错的话Reporter intensity corrected 1指的是126C呗，为什么不在表格里给出来呢
