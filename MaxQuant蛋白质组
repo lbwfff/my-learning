@@ -1,0 +1,4 @@
+使用方式，在图形化界面（my pc）选择好合适参数后，将mqpar.xml文件转移至linux服务器
+手动改变mqpar.xml中需要分析的文件以及index文件的所属位置（MaxQuantCmd.exe --changeFolder会报错，不知道为什么，现在只能手动的去改）
+然后 mono MaxQuant/bin/MaxQuantCmd.exe mqpar.xml（虽然官方推荐的是dotnet，但是使用dotnet的话会有一个非常诡异的版本报错问题，幸运的是mono可以作为替代）
+
