@@ -24,5 +24,6 @@ Reporter intensities come in two forms: the original ones and the ones for which
 意思是，Reporter intensity corrected是应用了矫正因子的结果，（点解在我的结果里是一样咩？）
 If your experiment involves isobaric labeling, such as iTRAQ and TMT, correction factors to account for mixing between channels can be specified. These are defined as a percentage of the total amount or as a percentage of the main isotope for iTRAQ and TMT labeling, respectively. The specific values for these correction factors may vary from batch to batch and are provided by the vendors of the labeling reagents
 没理解错的话，我可以一定一个correction factors（how？what？文章也没说是多少啊）
+ok,搞定了这里，correction factors的话可以在type选项编辑具体的离子标记label，至于correction factors的出处的话，可以在试剂盒的说明书上找到，虽然都是TMT10的试剂盒但是如果货号不同的话都会有差别，LSCC_Satpathy_Cell2021的话作者提供了correction factors（实验用到了两种不同货号的试剂盒，我还真不知道要填什么）
 
 如果没理解错的话Reporter intensity corrected 1指的是126C呗，为什么不在表格里给出来呢
