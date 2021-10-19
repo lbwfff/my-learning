@@ -27,3 +27,7 @@ If your experiment involves isobaric labeling, such as iTRAQ and TMT, correction
 ok,搞定了这里，correction factors的话可以在type选项编辑具体的离子标记label，至于correction factors的出处的话，可以在试剂盒的说明书上找到，虽然都是TMT10的试剂盒但是如果货号不同的话都会有差别，LSCC_Satpathy_Cell2021的话作者提供了correction factors（实验用到了两种不同货号的试剂盒，我还真不知道要填什么）
 
 如果没理解错的话Reporter intensity corrected 1指的是126C呗，为什么不在表格里给出来呢
+
+#####跑了两天没有跑出来，我把进程关了，是不是哪里有问题我在想######
+我不知道这个FDR为什么算不出来，明明protocol里也没有花这么多时间，我能想到的问题就是污染物，maxquant是内置污染物的index的，如果我把污染物和蛋白的index合并在一起可以会造成混乱，后来我重新写了参数，使用了不包括污染物的index
+但暂时还没有再跑一次，我只希望能够解决这个问题吧
