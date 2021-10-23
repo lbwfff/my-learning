@@ -1,0 +1,20 @@
+########安装##########
+wget https://ftpmirror.gnu.org/parallel/parallel-20210922.tar.bz2
+wget https://ftpmirror.gnu.org/parallel/parallel-20210922.tar.bz2.sig
+gpg parallel-20210922.tar.bz2.sig ###没做这一步也安装成功了
+bzip2 -dc parallel-20210922.tar.bz2 | tar xvf -
+cd parallel-20210922
+./configure && make && sudo make install
+
+#########使用############
+#/bin/bash
+
+a=$(date +%H%M%S) #####记录时间的命令
+
+ls *.html | parallel -4 gzip --best
+
+b=$(date +%H%M%S)
+
+echo -e "startTime:\t$a"
+echo -e "endTime:\t$b"
+
