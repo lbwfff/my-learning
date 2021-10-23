@@ -18,3 +18,4 @@ b=$(date +%H%M%S)
 echo -e "startTime:\t$a"
 echo -e "endTime:\t$b"
 
+#####for循环和while循环，应该都可以适用？（没试过），主要针对一些只能单核跑的软件，比如ribocode，ribotricer什么的，也可以用来给wget并行下载什么的
