@@ -149,6 +149,27 @@ p+scale_fill_manual(values=c(colors))
 rgb(red=170, green=197, blue=226, alpha=255, max=255)#得颜色编号
 
 
+#############绘图代码应该多记录，因为一时的懒散而要花费更多的精力显得有点呆######
+#############这是一个横向的柱状图，我还挺喜欢的没用来代替一直想画却没有好效果的饼图####
+#############但是想用这个画cellline还是很丑######
+library(scales)
+platform<-platform[order(platform$Freq,decreasing = T),]
+platform$Var1<-as.factor(platform$Var1)
 
+pdf("platform-type3.pdf",width = 8,height = 6)
+ggplot(data = platform, aes(x = reorder(Var1,-Freq), y = Freq)) + #####这里有一个reorder函数，可以对元素进行排序，这里使用y轴值进行了重新排列
+  geom_col(aes(fill = Var1) , show.legend = FALSE) +
+  ggtitle(paste("Platform")) +
+  coord_flip() +
+  geom_label(aes(label = paste(Freq, percent(Freq/sum(Freq)), sep = "\n"),
+                 y = -20, fill = Var1),
+             show.legend = FALSE,
+             size = 3, label.padding = unit(0.1, "lines")) +
+  expand_limits(y = -20) +
+  labs(y="Frequency",x='Platform')+
+  scale_fill_brewer(palette = "Set3", direction = -1) 
+dev.off()
 
+############plotly是个很有意思的东西，可以做一些互动交互的图，还挺厉害的######
+plot_ly(platform, labels = ~Var1, values = ~Freq, type = 'pie',textposition = 'outside',textinfo = 'label+percent') #####代码并没有画好这一张图，只是想强调一下plotly是个很厉害的东西
 
