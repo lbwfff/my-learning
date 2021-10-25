@@ -161,6 +161,7 @@ ggplot(data = platform, aes(x = reorder(Var1,-Freq), y = Freq)) + #####这里有
   geom_col(aes(fill = Var1) , show.legend = FALSE) +
   ggtitle(paste("Platform")) +
   coord_flip() +
+  theme_classic()+ ###把背景格抹掉
   geom_label(aes(label = paste(Freq, percent(Freq/sum(Freq)), sep = "\n"),
                  y = -20, fill = Var1),
              show.legend = FALSE,
