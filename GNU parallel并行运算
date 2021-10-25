@@ -11,7 +11,7 @@ cd parallel-20210922
 
 a=$(date +%H%M%S) #####记录时间的命令
 
-ls *.html | parallel -4 gzip --best
+ls *.html | parallel -j 4 gzip --best
 
 b=$(date +%H%M%S)
 
@@ -19,3 +19,6 @@ echo -e "startTime:\t$a"
 echo -e "endTime:\t$b"
 
 #####for循环和while循环，应该都可以适用？（没试过），主要针对一些只能单核跑的软件，比如ribocode，ribotricer什么的，也可以用来给wget并行下载什么的
+
+cat list.txt| while read id; do( sleep ${id});done  #####这是之前的写法，理论时间441秒
+cat list.txt| parallel -j 4 sleep ${id}  ####这是改过后的写法，时间：startTime:	112318 endTime:	112537，两分19秒，就是139秒，略多于理论时间的四分之一
