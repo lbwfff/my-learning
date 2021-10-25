@@ -30,3 +30,5 @@ cat list.txt| parallel -j 4 sleep ${id}  ####这是改过后的写法，时间�
   }     
   export -f doit   #####这样把许多行代码包装成了一个函数doit(),然后再用parallel并行运算
   cat list | parallel doit
+
+######while循环解决了，那么for循环呢？
