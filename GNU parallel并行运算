@@ -22,3 +22,11 @@ echo -e "endTime:\t$b"
 
 cat list.txt| while read id; do( sleep ${id});done  #####这是之前的写法，理论时间441秒，startTime:	112905，endTime:	113626，7分21秒，就是441秒，等于理论时间
 cat list.txt| parallel -j 4 sleep ${id}  ####这是改过后的写法，时间：startTime:	112318 endTime:	112537，两分19秒，就是139秒，略多于理论时间的四分之一，不过已经很厉害了。
+
+ doit() {
+    x=$1
+    do_something $x
+    [... 100 lines that do something with $x ...]
+  }     
+  export -f doit   #####这样把许多行代码包装成了一个函数doit(),然后再用parallel并行运算
+  cat list | parallel doit
