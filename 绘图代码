@@ -204,7 +204,7 @@ peak<-toGRanges('peak.bed',format=c('BED'))
 peak$sample <- c(rep("shNC",nrow(shNC)), rep("shTRA2A", nrow(shTRA2A)))
 meta<-metaGeneProfile(object = peak,annotation= 'gencode.v35.annotation.gff3',group = 'sample') #####这就是我说这个包呆的原因
 meta[[2]] + ggtitle("Meta Profile")+
-  theme(legend.position = "right") ######但优点是高度的可定制化
-  
-
+  theme(legend.position = "right")+
+  theme_classic()+
+  scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) ######但优点是高度的可定制化
 
