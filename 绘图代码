@@ -189,3 +189,22 @@ p+theme_classic(base_size = 12)+
   ggsave( file='RPF-PCA.pdf', width=5, height=4)
 pcaData <- plotPCA(rld, intgroup=c("condition"), returnData=TRUE)
 
+
+#########cliProfiler，这个包挺呆的，但是反而画出了想要的效果，emmmmmmm#######
+library(cliProfiler)
+library(ChIPpeakAnno)
+library(ggplot2)
+
+shNC <- read.table('uniqueshNC.bed')
+shTRA2A<-read.table('uniqueshTRA2A.bed')
+peak<-rbind(shNC,shTRA2A)
+write.table(peak, file = "peak.bed", sep = "\t", row.names = F, col.names = F, quote = F)
+peak<-toGRanges('peak.bed',format=c('BED'))
+
+peak$sample <- c(rep("shNC",nrow(shNC)), rep("shTRA2A", nrow(shTRA2A)))
+meta<-metaGeneProfile(object = peak,annotation= 'gencode.v35.annotation.gff3',group = 'sample') #####这就是我说这个包呆的原因
+meta[[2]] + ggtitle("Meta Profile")+
+  theme(legend.position = "right") ######但优点是高度的可定制化
+  
+
+
