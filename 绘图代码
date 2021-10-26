@@ -174,3 +174,18 @@ dev.off()
 ############plotly是个很有意思的东西，可以做一些互动交互的图，还挺厉害的######
 plot_ly(platform, labels = ~Var1, values = ~Freq, type = 'pie',textposition = 'outside',textinfo = 'label+percent') #####代码并没有画好这一张图，只是想强调一下plotly是个很厉害的东西
 
+
+###########PCA图##########
+###########我现在喜欢用DEseq包里的函数来画，因为自带标准化，后面也可以用ggplot来美化图片#######
+library(DESeq2)
+condition <- factor(group_list)
+dds <- DESeqDataSetFromMatrix(RPF, DataFrame(condition), design= ~ condition )
+dds
+rld <- rlogTransformation(dds)
+exprSet_new=assay(rld)
+p<-plotPCA(rld, intgroup=c('condition'))
+p+theme_classic(base_size = 12)+
+  scale_colour_manual(values=c(cols))+
+  ggsave( file='RPF-PCA.pdf', width=5, height=4)
+pcaData <- plotPCA(rld, intgroup=c("condition"), returnData=TRUE)
+
