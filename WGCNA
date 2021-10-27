@@ -226,3 +226,51 @@ if(T){
   dev.off()
 }
 
+
+#############关注感兴趣的模块
+table(moduleColors)
+group_g <- data.frame(gene=colnames(datExpr),
+                      group=moduleColors)
+write.csv(group_g,file = "group_g.csv",row.names = F) ## 导出的就是模块和基因的对应关系，可以做go分析什么的，不过这次就免了吧
+
+#############热图
+if(T){
+  #geneTree = net$dendrograms[[1]]
+  TOM=TOMsimilarityFromExpr(datExpr,power=20)
+  dissTOM=1-TOM
+  #plotTOM = dissTOM^7
+  #diag(plotTOM)=NA
+  #TOMplot(plotTOM,geneTree,moduleColors,main="Network heapmap plot of all genes")
+  nSelect =300 ####选取的基因数，数量越多需要运算的时间就越久，不过也会好看一些
+  set.seed(20)
+  select=sample(nGenes,size = nSelect)
+  selectTOM = dissTOM[select,select]
+  selectTree = hclust(as.dist(selectTOM),method = "average")
+  selectColors = moduleColors[select]
+  plotDiss=selectTOM^7
+  diag(plotDiss)=NA
+  pdf("step6_select_Network-heatmap.pdf",width = 8,height=6)
+  TOMplot(plotDiss,selectTree,selectColors,main="Network heapmap of selected gene")
+  dev.off()
+}
+
+#####指定模块基因的热图，这串代码会让我的rstudio卡死不知道为什么？
+if(T){
+  module="turquoise"
+  which.module=module
+  dat=datExpr[,moduleColors==which.module]
+  library(pheatmap)
+  pheatmap(dat,show_colnames = F,show_rownames = F)
+  n=scale(t(dat+1)) # 'scale'可以对log-ratio数值进行归一化
+  n[n>2]=2 
+  n[n< -2]= -2
+  n[1:4,1:4]
+  pheatmap(n,show_colnames =F,show_rownames = F)
+  group_list=datTraits$group
+  ac=data.frame(g=group_list)
+  rownames(ac)=colnames(n)
+  png("figures/step6-moduleGene-heatmap.png",width = 800,height = 600)
+  pheatmap(n,show_colnames =F,show_rownames = F,annotation_col =ac )
+  dev.off()
+}
+
