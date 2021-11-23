@@ -63,3 +63,9 @@ ggplot(mds.data, aes(x=X, y=Y, label=Sample,col=group_list)) +
 dev.off()
 
 ############pca图和删除含NA值的行的矩阵pca图几乎是一致的。
+
+############mice包###############
+
+library('mice')
+imputrexpmice<-mice(imputr)
+imputrexpmice2<-complete(imputrexpmice)#pca和上面几乎就没有区别，花里胡哨的的算了一会，感觉做了很多事情一样，就让人觉得很靠谱
