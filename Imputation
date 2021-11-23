@@ -1,0 +1,65 @@
+#########好久没有记录过代码了，记录一下Knn补全的代码#######
+install.packages('imputeLCMD')
+BiocManager::install("impute",force = TRUE) ##用到的是这个包，这包现在只能做Knn，不同的算法之间，用什么是正确的呢？需要找一下review之类的
+BiocManager::install("pcaMethods",force = TRUE)
+
+library('impute')
+imputr<-cache[,-3] #之前得到的质谱数据，使用POOL计算出的比值（这里没有归一化，不知道有没有什么影响）
+rownames(imputr)<-imputr[,1]
+imputr<-imputr[,-(1:2)]
+
+f<-function(x) sum(is.na(x))
+imputr$nanum<-apply(imputr,1,f)
+imputr<-imputr[imputr$nanum < 50 ,] ##我想补全矩阵中，NA值少于一半的蛋白的表达
+imputr<-imputr[,-101]
+
+imputeexp<-impute.knn(as.matrix(imputr),k=10,rowmax = 0.5) #函数很简单，这里的k应该如何选择呢？
+
+imputeexp$rng.seed
+imputeexp$rng.state
+
+imputeexp<-imputeexp$data #提取补全后的矩阵
+
+########补完之后再看一眼pca
+datExpr<-imputeexp
+
+log2.data.matrix <- as.data.frame(log2(datExpr+0.0001)) 
+log2.distance.matrix <- matrix(0,
+                               nrow=ncol(log2.data.matrix),
+                               ncol=ncol(log2.data.matrix),
+                               dimnames=list(colnames(log2.data.matrix),
+                                             
+                                             colnames(log2.data.matrix)))
+for(i in 1:ncol(log2.distance.matrix)) {
+  for(j in 1:i) {
+    log2.distance.matrix[i, j] <-
+      mean(abs(log2.data.matrix[,i] - log2.data.matrix[,j]))
+  }
+}
+
+mds.stuff <- cmdscale(as.dist(log2.distance.matrix),
+                      eig=TRUE,
+                      x.ret=TRUE)
+
+mds.var.per <- round(mds.stuff$eig/sum(mds.stuff$eig)*100, 1)
+mds.values <- mds.stuff$points
+mds.data <- data.frame(Sample=rownames(mds.values),
+                       X=mds.values[,1],
+                       Y=mds.values[,2])
+
+group<-c('Tum','Par')
+group_list<-rep(group,50)
+
+pdf("MDStest-4.pdf",width = 12,height = 12)
+ggplot(mds.data, aes(x=X, y=Y, label=Sample,col=group_list)) + 
+  geom_point(size = 10, alpha = 0.8) +
+  theme(panel.grid.minor = element_blank()) +
+  coord_fixed() + theme_bw()+
+  ggtitle("MDS plot using avg(logFC) as the distance")+
+  xlab(paste("Leading logFC dim1 ", mds.var.per[1], "%", sep="")) +
+  ylab(paste("Leading logFC dim2 ", mds.var.per[2], "%", sep="")) +
+  # coord_cartesian(xlim=c(-1.5,1.5),ylim=c(-0.8,0.8))+
+  ggtitle("MDS plot using avg(logFC) as the distance")
+dev.off()
+
+############pca图和删除含NA值的行的矩阵pca图几乎是一致的。
