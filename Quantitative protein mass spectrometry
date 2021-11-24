@@ -1,0 +1,108 @@
+#####################记录一下蛋白质质谱的后续数据分析方法###########
+center_scale <- function(x) {
+  scale(x,center = median(x), scale = FALSE)
+}
+
+#####################先合并矩阵，数据来自maxquant软件的结果###########
+#####################对于原始的报道离子强度数据，这里先进行了归一化，使用目标样本数据比上了POOL样本，之后再做中位数中心化###########
+list<-c('02','03','04','05','06','07','08','09','10')
+
+cache<-read.table('data/01.txt',sep = '\t',header = T)
+cache<-cache[-grep('CON_',cache$Protein.IDs),]
+cache<-cache[-grep('REV',cache$Protein.IDs),]
+cache<-cache[,c(1,2,19:29)]
+cache[,3:13]<-log2(cache[,3:13]+0.0001)
+cache[,4:13]<-(cache[,4:13]-cache[,3])#####归一化后比上POOL样本，这里POOL作为全局内参存在，用以矫正误差
+cache[,3:13]<-apply(cache[,3:13],2,center_scale) ####中位数中心化
+
+for (i in list){
+  path<-paste0('data/',i,'.txt')
+  cache2<-read.table(path,sep = '\t',header = T)
+  cache2<-cache2[,c(1,2,19:29)]
+  cache2[,3:13]<-log2(cache2[,3:13]+0.0001)
+  cache2[,4:13]<-(cache2[,4:13]-cache2[,3])
+  cache2[,3:13]<-apply(cache2[,3:13],2,center_scale)
+  cache2<-cache2[match(cache$Majority.protein.IDs,cache2$Majority.protein.IDs),]
+  cache<-cbind(cache,cache2[,4:13])
+}
+
+midexp2<-cache[,-(1:3)]
+rownames(midexp2)<-cache$Protein.IDs
+midexp2<-na.omit(midexp2)
+
+#########################################之后画了张pca，可以看到聚类要比直接用报道离子强度开始做要舒服得多
+colnames(midexp2)<-meta
+datExpr<-midexp2
+log2.data.matrix <- as.data.frame(datExpr) 
+log2.distance.matrix <- matrix(0,
+                               nrow=ncol(log2.data.matrix),
+                               ncol=ncol(log2.data.matrix),
+                               dimnames=list(colnames(log2.data.matrix),
+                                             
+                                             colnames(log2.data.matrix)))
+for(i in 1:ncol(log2.distance.matrix)) {
+  for(j in 1:i) {
+    log2.distance.matrix[i, j] <-
+      mean(abs(log2.data.matrix[,i] - log2.data.matrix[,j]))
+  }
+}
+
+mds.stuff <- cmdscale(as.dist(log2.distance.matrix),
+                      eig=TRUE,
+                      x.ret=TRUE)
+
+mds.var.per <- round(mds.stuff$eig/sum(mds.stuff$eig)*100, 1)
+mds.values <- mds.stuff$points
+mds.data <- data.frame(Sample=rownames(mds.values),
+                       X=mds.values[,1],
+                       Y=mds.values[,2])
+
+group<-c('Tum','Par')
+group_list<-rep(group,50)
+
+pdf("MDStest-30.pdf",width = 12,height = 12)
+ggplot(mds.data, aes(x=X, y=Y, label=Sample,col=group_list)) + 
+  geom_point(size = 10, alpha = 0.8) +
+  theme(panel.grid.minor = element_blank()) +
+  coord_fixed() + theme_bw()+
+  ggtitle("MDS plot using avg(logFC) as the distance")+
+  xlab(paste("Leading logFC dim1 ", mds.var.per[1], "%", sep="")) +
+  ylab(paste("Leading logFC dim2 ", mds.var.per[2], "%", sep="")) +
+  # coord_cartesian(xlim=c(-1.5,1.5),ylim=c(-0.8,0.8))+
+  ggtitle("MDS plot using avg(logFC) as the distance")
+dev.off()
+
+################################用limma做差异分析，得到和作者提供的表达矩阵一致的结果，如果不做中位数中心化的话，无论是用报道离子强度还是用log ratio做分析都会让上调远大于下调
+tum<-midexp2[,grep('T',colnames(midexp2))]
+nor<-midexp2[,grep('P',colnames(midexp2))]
+
+midexp2<-cbind(nor[,1:50],tum[,1:50])
+group_list2<-c(rep('Paratumor',50),rep('Tumor',50))
+group_list2<-as.factor(group_list2)
+design <- model.matrix(~0+factor(group_list2))
+colnames(design)=levels(factor(group_list2))
+rownames(design)=colnames(midexp2)
+design
+contrast.matrix<-makeContrasts(Tumor-Paratumor,levels = design)
+contrast.matrix 
+
+fit <- lmFit(midexp2,design)
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit2 <- eBayes(fit2)  #default no trend !!!
+tempOutput = topTable(fit2, coef=1, n=Inf)
+nrDEG2 = na.omit(tempOutput) 
+head(nrDEG2)
+
+Dat<-nrDEG2
+Dat$threshold = factor(ifelse(Dat$adj.P.Val < 0.01 & abs(Dat$logFC) >= 0.75, ifelse(Dat$logFC>= 0.75 ,'Up','Down'),'NoSignifi'),levels=c('Up','Down','NoSignifi'))
+ggplot(Dat,aes(x=logFC,y=-log10(adj.P.Val),color=threshold))+
+  geom_point()+
+  scale_color_manual(values=c("#DC143C","#00008B","#808080"))+
+  #geom_text_repel(data = Dat[Dat$X %in% ncRNA2$X,],aes(label = substr(X,1,15)),size = 3,segment.color = "black", show.legend = FALSE )+
+  theme_bw()+
+  #theme(legend.title = element_blank())+
+  coord_cartesian(xlim = c(-3,3))+
+  ylab('-log10 (pvalue)')+
+  xlab('log2 (FoldChange)')+
+  geom_vline(xintercept=c(-0.75,0.75),lty=3,col="black",lwd=0.5) +
+  geom_hline(yintercept = -log10(0.01),lty=3,col="black",lwd=0.5)
