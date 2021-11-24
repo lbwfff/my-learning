@@ -208,3 +208,22 @@ meta[[2]] + ggtitle("Meta Profile")+
   theme_classic()+
   scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) ######但优点是高度的可定制化
 
+###########祖传火山图，陪伴我整个生涯的代码，颜色还需要优化一下，其他的地方暂时没什么不满意的#########
+library('ggrepel')
+Dat$x<-rownames(Dat)
+Dat$threshold = factor(ifelse(Dat$adj.P.Val < 0.01 & abs(Dat$logFC) >= 0.75, ifelse(Dat$logFC>= 0.75 ,'Up','Down'),'NoSignifi'),levels=c('Up','Down','NoSignifi')) #这里现在差异分析结果里加入了threshold这一列，后续就不用写很长的代码来区分点了。
+ggplot(Dat,aes(x=logFC,y=-log10(adj.P.Val),color=threshold))+
+  geom_point()+
+  geom_point(data = Dat[Dat$x %in% rownames(lncRNA),],color='#664365')+ #这里吗属于lncRNA这个数据里的点给单独用了一种颜色
+  scale_color_manual(values=c("#365371","#96345A74","#808080"))+
+  #geom_text_repel(data = Dat[Dat$x %in% rownames(lncRNA),],aes(label = substr(x,1,15)),
+  #               size = 3,segment.color = "black", show.legend = FALSE )+ #这里可以给属于lncRNA数据的点加上标签，因为前面给了单独的颜色所有没用这行代码
+  theme_bw()+
+  theme_classic()+ #去掉背景网格
+  #theme(legend.title = element_blank())+
+  coord_cartesian(xlim = c(-3,3))+
+  ylab('-log10 (pvalue)')+
+  xlab('log2 (FoldChange)')+
+  geom_vline(xintercept=c(-0.75,0.75),lty=3,col="black",lwd=0.5) +
+  geom_hline(yintercept = -log10(0.01),lty=3,col="black",lwd=0.5)
+
