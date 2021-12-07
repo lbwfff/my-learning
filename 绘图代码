@@ -236,3 +236,28 @@ dotplot(downbp_pannzer,color = "pvalue")+
   aes(shape=pvalue > 0.01)+ #小于0.01的点换成三角形
   scale_y_discrete(labels = function(x) str_wrap(x, width = 30))#给太长的词条换行
 
+################3D的PCA图##################
+library('scatterplot3d')
+miceimpexp3<-as.matrix(t(miceimpexp2))
+miceimpexp_cov <- cov(miceimpexp3)
+miceimpexp_cov_eigen <- eigen(miceimpexp_cov)
+pc_select = 3
+label = paste0("PC",c(1:pc_select))
+miceimpexp_new <- miceimpexp3 %*% miceimpexp_cov_eigen$vectors[,1:3]
+colnames(miceimpexp_new) <- label
+miceimpexp_new<-as.data.frame(miceimpexp_new)
+miceimpexp_new$group<-c(rep(1,50),rep(2,50))
+miceimpexp_new$group2<-group_list
+
+colors.lib <- c("green3", "#56B4E9")
+colors <- colors.lib[as.numeric(miceimpexp_new$group)]
+mycolors<-c(rep('magenta',50),rep('green3',50))
+shapes.lib = c(16)
+shapes <- shapes.lib[as.numeric(miceimpexp_new$group)]
+
+
+pdf("test.pdf",width = 8,height = 8)
+scatterplot3d(miceimpexp_new[,(1:3)],angle=55,color=colors,
+              pch=16, main="PCA for test")
+legend("topright",legend = levels(miceimpexp_new$group2),col = colors.lib,pch = shapes.lib,inset = -0.08,xpd = T,horiz = F)
+dev.off() 
