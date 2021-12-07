@@ -1,0 +1,67 @@
+#############记录一下学习caret包的过程吧，想用机器学习来做当前project的收尾，不过暂时自己能做的还比较少，总之一边学习一边思考吧########
+#############参考自https://topepo.github.io/caret/index.html################
+
+library('caret')
+library(doParallel)
+cl <- makePSOCKcluster(16)
+registerDoParallel(cl) #并行运算非常重要，否则真是等到天昏地暗
+# stopCluster(cl) 
+
+##############可视化########################
+#他这里介绍的可视化是feature的可视化，我们针对转录组蛋白组数据做的话可能不大有意义，所以直接跳过了
+
+##############前处理########################
+#第一条是创建虚拟变量
+data(etitanic)
+head(model.matrix(survived ~ ., data = etitanic))#虽然不属于caret包，但是model.matrix这个函数非常有意思
+dummies <- dummyVars(survived ~ ., data = etitanic)#和model.matrix结果不同的在性别这一列，除此之外在colname的处理上更好一些？survived因为是想要预测的结果所以没有做处理吗？不大明白
+
+#去除0和0变异
+nzv <- nearZeroVar(mdrrDescr)#默认saveMetrics= F
+filteredDescr <- mdrrDescr[, -nzv]#去除了矩阵里的零变异变量
+dim(filteredDescr)
+
+#降低变量之间的相关性
+descrCor <- cor(filteredDescr)
+summary(descrCor[upper.tri(descrCor)])
+highlyCorDescr <- findCorrelation(descrCor, cutoff = .75)
+filteredDescr <- filteredDescr[,-highlyCorDescr] #去除了高相关的，为什么要这么做呢？
+descrCor2 <- cor(filteredDescr)
+summary(descrCor2[upper.tri(descrCor2)])
+
+#去除线性依赖
+comboInfo <- findLinearCombos(ltfrDesign)
+ltfrDesign[, -comboInfo$remove]
+
+#中心化和缩放，补全
+preProcValues <- preProcess(training, method = c("center", "scale"))#这个我熟
+
+#特征变量转化
+transformed <- spatialSign(plotSubset)
+transformed <- as.data.frame(transformed)
+
+preProcValues2 <- preProcess(training, method = "BoxCox")#给了两种方法，完全没懂在做什么
+
+#All Together
+pp_no_nzv <- preProcess(schedulingData[, -8], method = c("center", "scale", "YeoJohnson", "nzv"))#往method里加就可以了
+
+#Class Distance Calculations#这个我完全没懂就没放上来了，之后理解了再说吧
+
+
+################数据分离#######################
+
+#1，基于结果，如下基于Species结果做的分离
+trainIndex <- createDataPartition(iris$Species, p = .8, list = FALSE, times = 1)
+irisTrain <- iris[ trainIndex,]
+irisTest  <- iris[-trainIndex,]
+
+#2
+
+
+
+
+
+
+
+
+
