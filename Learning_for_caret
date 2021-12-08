@@ -153,4 +153,43 @@ whichTwoPct <- tolerance(gbmFit3$results, metric = "ROC",
                          tol = 2, maximize = TRUE)  #tol选项让我们可以寻找less complex model，For example, to select parameter values based on a 2% loss of performance
 gbmFit3$results[whichTwoPct,1:6]
 
-################
+################提取预测和类别概率############
+predict(gbmFit3, newdata = head(testing))
+predict(gbmFit3, newdata = head(testing), type = "prob")
+
+###############探索和比较Resampling Distributions########3
+densityplot(gbmFit3, pch = "|")
+
+#不同模型
+svmFit <- train(Class ~ ., data = training, method = "svmRadial", trControl = fitControl, 
+                 preProc = c("center", "scale"),tuneLength = 8,metric = "ROC")
+
+rdaFit <- train(Class ~ ., data = training, method = "rda", trControl = fitControl, 
+                 tuneLength = 4,metric = "ROC")
+                 
+resamps <- resamples(list(GBM = gbmFit3,SVM = svmFit,RDA = rdaFit))
+summary(resamps)
+
+#已知合适参数，不需要重采样
+fitControl <- trainControl(method = "none", classProbs = TRUE)
+gbmFit4 <- train(Class ~ ., data = training, method = "gbm", trControl = fitControl, verbose = FALSE, 
+                 tuneGrid = data.frame(interaction.depth = 4, n.trees = 100,shrinkage = .1,n.minobsinnode = 20),
+                 metric = "ROC")
+predict(gbmFit4, newdata = head(testing))
+predict(gbmFit4, newdata = head(testing), type = "prob")
+
+#######################之后全是在介绍每个模型，面向的应用和调整的参数什么的##########
+
+
+
+
+
+
+
+
+
+
+
+
+
+
