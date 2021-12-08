@@ -13,3 +13,7 @@ bl <- blast(db='~/biodata/index/protein/humanuniport.fasta',type = 'blastp')#注
 bl
 output <- predict(bl, test) #进行运算
 
+#我上面把环境位置改了，我发现不改回来的话，会没法装包，所以用完记得把环境改回来
+Sys.setenv(PATH ='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/lib/rstudio-server/bin/postback:/usr/lib/rstudio-server/bin/postback')
+
+
