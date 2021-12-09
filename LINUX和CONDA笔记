@@ -2,6 +2,9 @@ locate libcom_err.so.3
 sudo ln -s /home/leelee/miniconda3/lib/libcom_err.so.3.0 /usr/lib/x86_64-linux-gnu/libcom_err.so.3
 ####究极有用的两句话，用于r语言的奇怪报错
 
+#bedGraph转bw
+LC_COLLATE=C sort -k1,1 -k2,2n ./genome/SRR10441364Aligned.sortedByCoord.out.bam_coverage_plus.bedgraph > ./bw/SRR104413644.plus.sorted.bedGraph
+bedGraphToBigWig ./bw/SRR104413644.plus.sorted.bedGraph ~/biodata/index/GRCh38/GRCh38.info.txt ./bw/SRR104413644.plus.bw
 
 ctrl+c终结进程
 rm 删除
