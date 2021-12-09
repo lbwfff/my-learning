@@ -6,3 +6,10 @@ countdata<-exp[,1:6]
 rpk<-countdata/kb
 fpkm<-t(t(rpk)/colSums(countdata)*10^6)
 fpkm=as.data.frame(fpkm)
+
+#####FPKM转TPM
+
+FPKM2TPM <- function(fpkm){
+  exp(log(fpkm) - log(sum(fpkm)) + log(1e6))
+}
+TPMs <- apply(GBM,2,FPKM2TPM)
