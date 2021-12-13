@@ -94,7 +94,7 @@ list2$plate <-apply(list2,1,f)
 diff$change = ifelse((diff$V1==0 & diff$V2==0)|(diff$V1=='translating' & diff$V2=='translating'),'no change',ifelse(diff$V1==0 & diff$V2=='translating','turn-on','turn-off'))
 
 ########我一直想写一个自动画图的function，以下为第一次尝试##########
-plot <- function(data,gene,group,label_1,label_2){
+plot <- function(data,gene,group,label_1){
   data2<-as.data.frame(t(data[gene,]))
   colnames(data2)<-c('exp')
   data2$group<-group
@@ -104,6 +104,7 @@ plot <- function(data,gene,group,label_1,label_2){
   library(ggpubr)
   ptext<-paste0("t.test, p=",compare_means(exp~group,data2,method = "t.test")[[5]])
   dat_text <- data.frame(label = ptext)
+  dat_text[1,1]<-c(paste0(dat_text[1,1],'\n Tumor N=157 \n Paratumor N=157'))
   colors<-c('#36537155', "#96345A74")
   
   dp <- ggplot(data2, aes(x=group, y=exp,fill=group))+
@@ -117,18 +118,12 @@ plot <- function(data,gene,group,label_1,label_2){
     scale_colour_manual(values=c(colors))+
     scale_fill_manual(values=c(colors))+
     theme(legend.position = "none")+
-    theme(axis.text=element_text(size=18),
-          axis.title=element_text(size=22))+
-    annotate('text',x=0.8,y=label_1,label=dat_text,colour = "black",size=6)+
-    annotate('text',x=0.8,y=label_2,label='Tumor N=157
-Paratumor N=157',colour = "black",size=6))
-  dev.off()
-}
+    theme(axis.text=element_text(size=18),axis.title=element_text(size=22))+
+    annotate('text',x=0.8,y=label_1,label=dat_text,colour = "black",size=6))
+  dev.off()}
 
-plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_list,label_1 =1.2 ,label_2 = 1.6) #你要说省力了吗？确实是省力了，但就感觉，还是好麻烦。
-#最大的麻烦就是P值和样本量的label，如果不要这两个东西就好了。
-
-
+plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_list,label_1 =1.4)
+#改了一下，我觉得好歹算个半自动画图函数，主要在文本的地方改了一下，现在不要老去调两个文本的位置了，方便了很多。针对不同的矩阵，还是需要调整许多地方，但是这种程度的调整的话，都还能接受吧。
 
 
 
