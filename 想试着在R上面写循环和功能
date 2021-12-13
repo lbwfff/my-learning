@@ -126,6 +126,7 @@ Paratumor N=157',colour = "black",size=6))
 }
 
 plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_list,label_1 =1.2 ,label_2 = 1.6) #你要说省力了吗？确实是省力了，但就感觉，还是好麻烦。
+#最大的麻烦就是P值和样本量的label，如果不要这两个东西就好了。
 
 
 
