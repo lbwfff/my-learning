@@ -93,3 +93,41 @@ list2$plate <-apply(list2,1,f)
 #####需要解释的是此处的0原先为na，但是我发现如果用na进行判断则会使逻辑变得更加复杂，所以将na改为了0进行简化######
 diff$change = ifelse((diff$V1==0 & diff$V2==0)|(diff$V1=='translating' & diff$V2=='translating'),'no change',ifelse(diff$V1==0 & diff$V2=='translating','turn-on','turn-off'))
 
+########我一直想写一个自动画图的function，以下为第一次尝试##########
+plot <- function(data,gene,group,label_1,label_2){
+  data2<-as.data.frame(t(data[gene,]))
+  colnames(data2)<-c('exp')
+  data2$group<-group
+  data2$group<- factor(data2$group,levels = c("normal", "tumor"))
+  library(ggsignif)
+  library(ggsci)
+  library(ggpubr)
+  ptext<-paste0("t.test, p=",compare_means(exp~group,data2,method = "t.test")[[5]])
+  dat_text <- data.frame(label = ptext)
+  colors<-c('#36537155', "#96345A74")
+  
+  dp <- ggplot(data2, aes(x=group, y=exp,fill=group))+
+    geom_violin(aes(colour=group),fill='#DDDDDD50',trim=FALSE,show.legend=FALSE,size=0.7)+
+    geom_jitter(aes(fill=group),width =0.2,shape = 21,size=4,colour='NA',alpha = 0.4)+
+    geom_boxplot(fill='white',width=0.12,,outlier.shape = NA,size=0.8)+
+    labs(y="log2(FPKM)")
+  path<-c(paste0(gene,'.pdf'))
+  pdf(path,width = 8,height = 7)
+  print(dp + theme_classic(base_size = 22)+ 
+    scale_colour_manual(values=c(colors))+
+    scale_fill_manual(values=c(colors))+
+    theme(legend.position = "none")+
+    theme(axis.text=element_text(size=18),
+          axis.title=element_text(size=22))+
+    annotate('text',x=0.8,y=label_1,label=dat_text,colour = "black",size=6)+
+    annotate('text',x=0.8,y=label_2,label='Tumor N=157
+Paratumor N=157',colour = "black",size=6))
+  dev.off()
+}
+
+plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_list,label_1 =1.2 ,label_2 = 1.6) #你要说省力了吗？确实是省力了，但就感觉，还是好麻烦。
+
+
+
+
+
