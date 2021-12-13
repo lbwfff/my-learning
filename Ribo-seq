@@ -139,7 +139,18 @@ path<-paste0('~/biodata/hcc-ribo/',rownames(classlabel),'_RPF.sort.bam')
 result.pst <- RiboDiPA(path, '~/biodata/annotation/gencode.v35.annotation.sorted.gtf', classlabel, cores = 15)
 save(result.pst,file =('~/biodata/hcc-ribo/ribodipa.RData'))
 
-
+#上面那一段我没有跑出来，可能是内存不够还是什么？不大明白，但是下面这一段是没有问题的。
+library('RiboDiPA')
+list<-c('~/share/mapping/genome/SRR10441364Aligned.sortedByCoord.out.bam',
+	        '~/share/mapping/genome/SRR10441365Aligned.sortedByCoord.out.bam')
+data.psite <- psiteMapping(bam_file_list = list, 
+			   '~/biodata/annotation/gencode.v35.annotation.sorted.gtf', psite.mapping = "auto", cores = 2) #跑这个特别慢，最好还是挂在后台
+save(data.psite,file = 'test.RData')
+load('../for_ribodipa/test.RData')
+data.psite$psite.mapping
+plotTrack(data = data.psite, genes.list = c("ENSG00000023909.10", "ENSG00000035687.10"),
+	            replicates = NULL, exons = FALSE) #然后就可以画track，结果应该是矫正off-set的，不过好像，不大好加注释？
+             
 ########################仔细比较以下自己的pipi和ribocode1的pip
 cutadapt -m 20 --match-read-wildcards -a (Adapter sequence) -o <Trimmed fastq file> <Input fastq file>
 
