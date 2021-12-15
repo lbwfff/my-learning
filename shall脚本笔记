@@ -21,3 +21,6 @@ do
 hisat2 -p 18 --dta -t -x /home/leelee/biodata/index/GRCH38/genome -1 "$i"-trimmed.derRNA.fq.1.gz -2 "$i"-trimmed.derRNA.fq.2.gz -S "$i".sam
 done
 也很好理解，不过多打了几个字，感觉麻烦了一些，这种好像更加能适应不同的应用环境一些
+
+#好像自己很少用命令行来做文本处理，不过某些命令还是挺方便的，比如awk
+awk '{if($7!=".")print}' NONCODEv6_human_hg38_lncRNA.gtf >test
