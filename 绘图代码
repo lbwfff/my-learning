@@ -40,6 +40,20 @@ ggplot(data = cor,aes(x=METTL3,y=TRA2A))+
   annotate('text',x=0.7,y=2.2,label=ptext,colour = "black",size=6)+
   ggsave(file='TOTAL-cor-CAPTAC.PDF',width = 10,height = 8)
 
+#############密度散点图，在上面那一段的基础上改的################
+library(ggpointdensity)
+library(viridis)
+pdf("SODR2P_cor.pdf",width = 8,height = 6)
+ggplot(data = cortest,aes(x=log2(cortest[,1]),y=cortest[,2]))+
+  geom_pointdensity(adjust = 4,show.legend =F)+
+  scale_color_viridis()+ #点密度的颜色，暂时不知道怎么自定义这个颜色
+  stat_smooth(method = lm)+
+  theme_classic()+
+  ylab('Peptide expression')+
+  xlab('RNA expression')+
+  coord_cartesian(xlim=c(5,12))+
+  annotate('text',x=6.4,y=2.2,label=ptext,colour = "black",size=6) #
+dev.off()
 
 ##########2###############
 forcor<-t(LUADIWANT)
