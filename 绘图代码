@@ -250,7 +250,7 @@ dotplot(downbp_pannzer,color = "pvalue")+
   aes(shape=pvalue > 0.01)+ #小于0.01的点换成三角形
   scale_y_discrete(labels = function(x) str_wrap(x, width = 30))#给太长的词条换行
 
-################3D的PCA图##################
+################3D的PCA图，具体的美化之后还需要多做调整##################
 library('scatterplot3d')
 miceimpexp3<-as.matrix(t(miceimpexp2))
 miceimpexp_cov <- cov(miceimpexp3)
@@ -275,3 +275,24 @@ scatterplot3d(miceimpexp_new[,(1:3)],angle=55,color=colors,
               pch=16, main="PCA for test")
 legend("topright",legend = levels(miceimpexp_new$group2),col = colors.lib,pch = shapes.lib,inset = -0.08,xpd = T,horiz = F)
 dev.off() 
+
+##############2DPCA（散点图）###############
+library('ggplot2')
+library('MetBrewer')
+pdf("MDS-diff.pdf",width = 8,height = 6)
+ggplot(mds.data, aes(x=X, y=Y, label=Sample,col=group_list)) + 
+  geom_point(size = 6, alpha = 0.8) +
+  theme(panel.grid.minor = element_blank()) + #我暂时还没有找到要如何去调整坐标轴的大小的方法
+  #coord_fixed() + 
+  theme_bw()+
+  stat_ellipse(level = 0.95)+ #加分组加椭圆
+  scale_color_manual(values=met.brewer("VanGogh1", 3,type ='discrete'))+#新的调色板非常专业
+  theme_classic()+
+  xlab(paste("Leading logFC dim1 ", mds.var.per[1], "%", sep="")) +
+  ylab(paste("Leading logFC dim2 ", mds.var.per[2], "%", sep="")) +
+  coord_cartesian(xlim=c(-0.6,0.9),ylim=c(-0.6,0.6))+
+  ggtitle("MDS plot using avg(logFC) as the distance")
+dev.off()
+
+
+
