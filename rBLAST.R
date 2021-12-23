@@ -17,4 +17,5 @@ output <- predict(bl, test) #进行运算
 Sys.setenv(PATH ='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/lib/rstudio-server/bin/postback:/usr/lib/rstudio-server/bin/postback')
 
 #不在R上做的话#
+makeblastdb -in uniprot_sprot.fasta -dbtype prot -out Swiss-Prot #创建索引
 blastp -query test.fasta -outfmt 7 -out test.blast -db ~/biodata/index/protein/humanuniport.fasta #outfmt代表控制文件的格式
