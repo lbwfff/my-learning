@@ -274,3 +274,39 @@ if(T){
   dev.off()
 }
 
+
+
+
+
+###############没完全懂，但是完全会了，以下为非常重要的两段###########
+table(net$colors)
+moduleLabels = net$colors
+moduleColors = labels2colors(net$colors)
+MEs = net$MEs #想要做相关性的话，可以用这个
+geneTree = net$dendrograms[[1]]
+
+####1####
+nGenes = ncol(datExpr)
+nSamples = nrow(datExpr)
+
+MEs0 = moduleEigengenes(datExpr, moduleColors)$eigengenes
+MEs = orderMEs(MEs0)
+moduleTraitCor = cor(MEs, datTraits, use = "p") #在这里对datTraits进行修改，可以引入更多的元素（连续型）
+moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
+
+####2####
+nGenes = ncol(datExpr)
+nSamples = nrow(datExpr)
+
+design <- model.matrix(~0+datTraits$group)
+datTraits$group=as.factor(datTraits$group)
+colnames(design)= levels(datTraits$group) #这里的design可以修改为任何元素（离散型），虽然我不大理解这里使用离散型变量的话R值和P值都代表什么？
+MES0 <- moduleEigengenes(datExpr,moduleColors)$eigengenes
+MEs = orderMEs(MES0)
+moduleTraitCor <- cor(MEs,design,use = "p")
+moduleTraitPvalue <- corPvalueStudent(moduleTraitCor,nSamples)
+
+
+
+
+
