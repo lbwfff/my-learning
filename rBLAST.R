@@ -19,3 +19,14 @@ Sys.setenv(PATH ='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/
 #不在R上做的话#
 makeblastdb -in uniprot_sprot.fasta -dbtype prot -out Swiss-Prot #创建索引
 blastp -query test.fasta -outfmt 7 -out test.blast -db ~/biodata/index/protein/humanuniport.fasta #outfmt代表控制文件的格式
+
+
+
+#记录一下怎么创建一个fasta文件（在R上）
+whatever<-read.csv('ALL_MY_PEPTIDE_EXP_2.CSV')
+library('seqinr')
+seq<-whatever[,c('name','Sequence')] #名字列和序列列
+characters<-seq[,c("Sequence")]
+list<-as.list(characters) #需要有这么一个转换才能输出fasta文件的序列
+write.fasta(sequences=list, names=seq$name, file.out='pep_to_blast.fasta', open='w', nbchar=60)
+detach("package:seqinr", unload = TRUE)
