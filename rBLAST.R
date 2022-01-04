@@ -29,4 +29,4 @@ seq<-whatever[,c('name','Sequence')] #名字列和序列列
 characters<-seq[,c("Sequence")]
 list<-as.list(characters) #需要有这么一个转换才能输出fasta文件的序列
 write.fasta(sequences=list, names=seq$name, file.out='pep_to_blast.fasta', open='w', nbchar=60)
-detach("package:seqinr", unload = TRUE)
+detach("package:seqinr", unload = TRUE) #seqinr某个函数和Biostrings重名了，使用的时候会有冲突，我习惯用完之后detach seqinr
