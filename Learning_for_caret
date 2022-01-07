@@ -181,7 +181,27 @@ predict(gbmFit4, newdata = head(testing), type = "prob")
 #######################之后全是在介绍每个模型，面向的应用和调整的参数什么的##########
 
 
+############对于CARTE的学习，拿起了又放下，拿起来又放下，持续的学习吧######33
+library(mlbench)
+data(Sonar)
+str(Sonar[, 1:10])
+set.seed(998)
+colnames(Sonar)[60]<-c('test')# 瞎改一下做一个回归模型
+Sonar<-Sonar[,-61]
+inTraining <- createDataPartition(Sonar$test, p = .75, list = FALSE)
+training <- Sonar[ inTraining,]
+testing  <- Sonar[-inTraining,]
 
+lm_fit <- train(test ~ .,
+                data = training, 
+                trControl = trainControl(method = "repeatedcv",
+                                         number = 10,
+                                         repeats = 10),
+                method = "brnn")
+                
+test <- predict(lm_fit, testing)
+postResample(pred = test, obs = testing$test) #之前不是一直不会做回归吗，其实也不会有太多的不一样，回归模型的评价指标是R^2,和平均方差什么的，ROC,AUC只有分类模型才有。
+                                              #predict对测试集做一个运算，postResample则对模型在测试集上的表现做了一个评估，和训练集的表现比较还是存在挺大差异的。
 
 
 
