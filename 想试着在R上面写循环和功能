@@ -126,4 +126,15 @@ plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_
 #改了一下，我觉得好歹算个半自动画图函数，主要在文本的地方改了一下，现在不要老去调两个文本的位置了，方便了很多。针对不同的矩阵，还是需要调整许多地方，但是这种程度的调整的话，都还能接受吧。
 
 
+########双循环和if的判断############3
+for (i in 1:nrow(cortest)){
+  for (j in 1:ncol(cortest)){
+    if(fdr[i,j]< 0.05) {cortest[i,j]<-cortest[i,j]} else {cortest[i,j]<-c(0)}
+  }
+}
 
+for (i in 1:nrow(cortest)){
+  for (j in 1:ncol(cortest)){
+    if(abs(cortest[i,j])> 0.3) {cortest[i,j]<-cortest[i,j]} else {cortest[i,j]<-c(0)}
+  }
+}           #写得很丑，for循环里面叠一个for循环就是很呆的写法，但是暂时管不了那么多了，随便吧。if的判断倒是之前没写过的代码，其实还挺容易理解的。
