@@ -92,6 +92,8 @@ list2$plate <-apply(list2,1,f)
 #####此处的应用是，对于diff矩阵，如果v1，v2同时为0或同时为翻译，则输出‘no change’，若不则进行下一步的判断。在下一步的判断中，若v1为0，v2为翻译，则输出‘turn-on’，否则输出‘turn-off’########
 #####需要解释的是此处的0原先为na，但是我发现如果用na进行判断则会使逻辑变得更加复杂，所以将na改为了0进行简化######
 diff$change = ifelse((diff$V1==0 & diff$V2==0)|(diff$V1=='translating' & diff$V2=='translating'),'no change',ifelse(diff$V1==0 & diff$V2=='translating','turn-on','turn-off'))
+tra2a$Grade<-ifelse(rownames(tra2a) %in% who1$CGGA_ID,'WHO II',
+                ifelse(rownames(tra2a) %in% who2$CGGA_ID,'WHO III','WHO IV')) #活用可以精简代码，可以节省体力
 
 ########我一直想写一个自动画图的function，以下为第一次尝试##########
 plot <- function(data,gene,group,label_1){
