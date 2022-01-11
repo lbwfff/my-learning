@@ -295,4 +295,28 @@ ggplot(mds.data, aes(x=X, y=Y, label=Sample,col=group_list)) +
 dev.off()
 
 
+######################热图#############################
+library(pheatmap)#目前用得最习惯的还是pheatmap这个包
 
+p=pheatmap(cortest,cluster_rows = T,cluster_cols = T,
+           # annotation_col =annotation_b, annotation_legend=TRUE, #如果需要对纵轴进行注释的话
+           scale = "row", #标准化，可以选行，列，或是不进行标准化
+           color = color, #颜色，目前用的是color = colorRampPalette(rev(brewer.pal(n = 7, name ="RdYlBu")))(100)
+           show_rownames = T,show_colnames = F,
+           breaks = seq(-1,1,length.out = 100)) #我在想这个length.out是指颜色有一百个刻度吗？可是试着改一下
+           
+           
+library('ComplexHeatmap') #pheatmap简单好用，但是为了解决更多乱七八糟的需求，你需要学习ComplexHeatmap
+library('circlize')
+
+ht1 <- Heatmap(blue_1,show_row_names = F,show_column_names = F)
+ht2 <- Heatmap(blue_2,show_row_names = F,show_column_names = F)
+draw(ht1 + ht2) #可以对ht1和ht2进行一个组合，默认是竖向的一个整合，需要横轴的数量，元素一致
+
+ht_list = ht1 %v% ht2 #我更加想要的是一个横向的整合，比竖向多一个步骤就好了。
+draw(ht_list)
+
+ht2 <- ComplexHeatmap::pheatmap(blue_2,scale = 'column',
+                                show_rownames = F,show_colnames = F,
+                                color = colorRampPalette(rev(brewer.pal(n = 7, name ="RdYlBu")))(100),
+                                legend = T,breaks = seq(-1,1,length.out = 100)) #ComplexHeatmap也可以用pheatmap的参数进行一个绘制，这很贴心，虽然试用下来感觉还是有一些不一样，不过依然很走心了。
