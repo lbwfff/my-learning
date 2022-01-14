@@ -207,7 +207,19 @@ postResample(pred = test, obs = testing$test) #之前不是一直不会做回归
 
 
 
+#############另一次尝试#################
+fitControl <- trainControl(method = "repeatedcv", #summaryFunction = multiClassSummary, 
+                           number = 10,repeats =10,
+                           classProbs = TRUE)
+rfFit <- train(group ~ ., data = Train, method = "rf", trControl = fitControl, 
+                tuneLength = 4,metric = "ROC") #随机森林模型，然而折腾了这么久还是画不出AUC来，或许我该换个小的数据集尝试
 
+importance = varImp(rfFit,scale = FALSE) #可以看到在模型里具体因素所占的比重，这个非常有意思
+importance
+
+rf.probs = predict(rfFit,Test) #type = "prob"，不用prob得到的预测结果就是分类的结果，如果用prob，得到的结果就是分类的可能性（？）
+rf.probs = predict(rfFit,Test,type = "prob")
+postResample(pred = rf.probs, obs = Test$group) #看模型在测试集上的表现
 
 
 
