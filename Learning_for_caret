@@ -235,10 +235,13 @@ rfFit <- train(group ~ ., data = Train, method = "rf", trControl = fitControl,
 
 rf.probs = predict(rfFit,Test,type = "prob")
 postResample(pred = rf.probs, obs = Test$group)
+library('pROC')
 rf.ROC = roc(response = Test$group,
               predictor = rf.probs$poor, #选哪根好像都没有区别
               levels = levels(Test$group))
 plot(rf.ROC,type = "S",col = "red")
 plot(rf.ROC,type = "S",col = "blue") #这样就可以把AUC画出来了，不过这个图是不是有点丑？
 
-vg <- ggroc(rf.ROC) #之后可以接ggplot进行美化，这个函数对于美学非常有意义
+g <- ggroc(rf.ROC) #之后可以接ggplot进行美化，这个函数对于美学非常有意义
+roc.list <- roc(outcome ~ s100b + ndka + wfns, data = aSAH) #也可以对list绘图，此处为示例
+g.list <- ggroc(roc.list)
