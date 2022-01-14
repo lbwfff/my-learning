@@ -221,7 +221,10 @@ rf.probs = predict(rfFit,Test) #type = "prob"，不用prob得到的预测结果�
 rf.probs = predict(rfFit,Test,type = "prob")
 postResample(pred = rf.probs, obs = Test$group) #看模型在测试集上的表现
 
-
-
+#我的理解不一定对，我也想记录一下
+#首先回归模型是没有AUC的，这不是回归模型的评价指标之一，这很好理解。
+#其次对于多个结论的分类，默认就是Accuracy和Kappa两个指标，因为twoClassSummary是没法用的，它是针对两个结论的模型适用的评价。
+#可是想要求AUC什么的，也是可以做到的，比如https://github.com/topepo/caret/issues/107提供了multiClassSummary，使用multiClassSummary 就可以计算很多东西，包括ROC，F1等等，极大的扩展了评价指标。
+#可是想要画图我还是没搞懂要怎么画AUC，roc函数就要求你两水平的结果，那我想做多水平的结果画AUC是否适用？就是一个很纯粹的数学问题了，我不大明白。
 
 
