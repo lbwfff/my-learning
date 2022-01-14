@@ -227,4 +227,17 @@ postResample(pred = rf.probs, obs = Test$group) #看模型在测试集上的表�
 #可是想要求AUC什么的，也是可以做到的，比如https://github.com/topepo/caret/issues/107提供了multiClassSummary，使用multiClassSummary 就可以计算很多东西，包括ROC，F1等等，极大的扩展了评价指标。
 #可是想要画图我还是没搞懂要怎么画AUC，roc函数就要求你两水平的结果，那我想做多水平的结果画AUC是否适用？就是一个很纯粹的数学问题了，我不大明白。
 
+fitControl <- trainControl(method = "repeatedcv", summaryFunction =twoClassSummary ,#multiClassSummary,
+                           number = 10,repeats =10,
+                           classProbs = TRUE)
+rfFit <- train(group ~ ., data = Train, method = "rf", trControl = fitControl, 
+                tuneLength = 4,metric = "ROC") #我把group换成了两种状况的
+
+rf.probs = predict(rfFit,Test,type = "prob")
+postResample(pred = rf.probs, obs = Test$group)
+rf.ROC = roc(response = Test$group,
+              predictor = rf.probs$poor, #选哪根好像都没有区别
+              levels = levels(Test$group))
+plot(rf.ROC,type = "S",col = "red")
+plot(rf.ROC,type = "S",col = "blue") #这样就可以把AUC画出来了，不过这个图是不是有点丑？
 
