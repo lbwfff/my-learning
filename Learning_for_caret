@@ -241,3 +241,4 @@ rf.ROC = roc(response = Test$group,
 plot(rf.ROC,type = "S",col = "red")
 plot(rf.ROC,type = "S",col = "blue") #这样就可以把AUC画出来了，不过这个图是不是有点丑？
 
+vg <- ggroc(rf.ROC) #之后可以接ggplot进行美化，这个函数对于美学非常有意义
