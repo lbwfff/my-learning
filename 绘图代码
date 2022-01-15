@@ -320,3 +320,26 @@ ht2 <- ComplexHeatmap::pheatmap(blue_2,scale = 'column',
                                 show_rownames = F,show_colnames = F,
                                 color = colorRampPalette(rev(brewer.pal(n = 7, name ="RdYlBu")))(100),
                                 legend = T,breaks = seq(-1,1,length.out = 100)) #ComplexHeatmap也可以用pheatmap的参数进行一个绘制，这很贴心，虽然试用下来感觉还是有一些不一样，不过依然很走心了。
+
+
+####################批量出差异分析的图##############
+library('ggplot2')
+library('ggpubr')
+library('MetBrewer')
+
+p=list() #创建一个list名字叫p
+for (i in 1:(ncol(test)-1)){
+  p[[i]]=ggplot(data=test,aes_string(x="group",y=colnames(test)[i]))+   #很好理解，就是往p这个list里面加ggplot对象就行了
+    geom_boxplot(aes(color=group)) + theme_classic()+
+    geom_jitter(aes(color=group)) +
+    scale_color_manual(values=met.brewer(name="VanGogh1",n=7,type="discrete")[c(6,3)])+
+    geom_signif(comparisons = list(c("tumor", "paratumor")),map_signif_level=TRUE,vjust=1.5)  #差异分析的线，对于批量的小图我想用这种方式可能会好一些
+}
+
+pdf("DEG_plot-down.pdf",width = 8,height = 6)
+wrap_plots(p,nrow=2, guides="collect") 
+dev.off()
+
+
+
+
