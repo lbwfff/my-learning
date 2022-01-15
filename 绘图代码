@@ -304,7 +304,11 @@ p=pheatmap(cortest,cluster_rows = T,cluster_cols = T,
            color = color, #颜色，目前用的是color = colorRampPalette(rev(brewer.pal(n = 7, name ="RdYlBu")))(100)
            show_rownames = T,show_colnames = F,
            breaks = seq(-1,1,length.out = 100)) #我在想这个length.out是指颜色有一百个刻度吗？可是试着改一下
-           
+#关于热图的配色
+color<-c(met.brewer("Wissing")[2],met.brewer("Signac")[4],'white','white',met.brewer("Homer1")[7],met.brewer("Nizami")[8]) #从包里面取了四个色
+pal<-colorRampPalette(color)
+image(x=1:20,y=1,z=as.matrix(1:20),col=pal(20)) #扩成了20个色
+colors = pal(20)#这个效果我还挺喜欢的
            
 library('ComplexHeatmap') #pheatmap简单好用，但是为了解决更多乱七八糟的需求，你需要学习ComplexHeatmap
 library('circlize')
