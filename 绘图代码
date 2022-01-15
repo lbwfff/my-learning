@@ -336,6 +336,7 @@ for (i in 1:(ncol(test)-1)){
     geom_signif(comparisons = list(c("tumor", "paratumor")),map_signif_level=TRUE,vjust=1.5)  #差异分析的线，对于批量的小图我想用这种方式可能会好一些
 }
 
+library(patchwork)
 pdf("DEG_plot-down.pdf",width = 8,height = 6)
 wrap_plots(p,nrow=2, guides="collect") 
 dev.off()
