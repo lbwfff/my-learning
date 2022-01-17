@@ -257,7 +257,7 @@ g.list <- ggroc(roc.list)
 
 
 
-################附件：multiClassSummary，这个我用着感觉还不错，虽然后面好像出了花里胡哨的更新的版本，没有数学功底的人想写这么个东西几乎是不可能的#################
+################附件一：multiClassSummary，这个我用着感觉还不错，虽然后面好像出了花里胡哨的更新的版本，没有数学功底的人想写这么个东西几乎是不可能的#################
 
 multiClassSummary <- function (data, lev = NULL, model = NULL){
   
@@ -307,5 +307,26 @@ multiClassSummary <- function (data, lev = NULL, model = NULL){
   return(stats)
   
 }
+
+################附件二：keras in R，caret拥有模型其实并不全面，比如积卷神经网络，就没有，幸运的是现在keras已经有R语言的接口的（对于自己这样的菜鸡能不在python上折腾实在太好了）#####333
+################虽然又是个大坑，不过，有好的工具能有什么不满意的呢？######3
+install.packages('keras')
+library(keras) 
+library(tensorflow) #我安装keras的方法有点玄学，我自己都不确定再装一次能不能成功，先是装包
+
+conda create --name r-tensorflow keras tensorflow #然后在服务器上我新建了虚拟环境
+
+#之后我在R-serves的设置里修改了python位置，改为了r-tensorflow这个环境的python位置（envs/r-tensorflow/bin/python）
+#然后就可以正常运行了（起码我看起来挺正常的）
+
+
+
+
+
+
+
+
+
+
 
 
