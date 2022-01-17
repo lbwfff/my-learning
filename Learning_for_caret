@@ -318,6 +318,7 @@ conda create --name r-tensorflow keras tensorflow #然后在服务器上我新�
 
 #之后我在R-serves的设置里修改了python位置，改为了r-tensorflow这个环境的python位置（envs/r-tensorflow/bin/python）
 #然后就可以正常运行了（起码我看起来挺正常的）
+#我又用笔记本安装了一次，发现这种安装方式是正确的。话说为什么用笔记本跑比服务器快多了？我的笔记本有那么强吗？可以，我假期就折腾这个了。
 
 
 
