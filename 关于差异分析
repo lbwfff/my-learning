@@ -1,6 +1,8 @@
 #######################对于差异分析的方法做一个记录吧#########################
+####我用的比较多的是limma这个包，但是偶尔也会用到DESEQ2什么的，包括还有其它什么的，我都会做一个记录，不过看时间吧###########
 
-####我用的比较多的是limma这个包
+######limma
+
 library(limma)
 design <- model.matrix(~0+factor(test$group))
 colnames(design)=levels(factor(test$group))
@@ -17,8 +19,8 @@ fit2 <- eBayes(fit2)
 tempOutput = topTable(fit2, coef=1, n=Inf)
 nrDEG = na.omit(tempOutput) 
 
-#对于limma我做过了实验，中位数中心化与否并不影响limma差异分析的logFC和P值，但归一化会有影响，降低logFC增大P值。
-#我算了好久没有算明白这个结果里logFC是怎么算的，whatever，我这相对于做了两次的归一化，这是合适的吗？
+#对于limma我做过了实验，中位数中心化与否并不影响limma差异分析的logFC和P值（虽然不知道它是怎么处理正负值的）。但归一化与否会影响差异分析的结果，一般是降低logFC增大P值。
+#我算了好久没有算明白这个结果里logFC是怎么算的，whatever，我这相当于是做了两次的归一化，这是合适的吗？
 
 
 
