@@ -1,0 +1,44 @@
+#######################对于差异分析的方法做一个记录吧#########################
+
+####我用的比较多的是limma这个包
+library(limma)
+design <- model.matrix(~0+factor(test$group))
+colnames(design)=levels(factor(test$group))
+rownames(design)=colnames(test)
+design
+
+contrast.matrix<-makeContrasts(A-B,levels = design)
+contrast.matrix 
+
+fit <- lmFit(dat,design)
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit2 <- eBayes(fit2)
+
+tempOutput = topTable(fit2, coef=1, n=Inf)
+nrDEG = na.omit(tempOutput) 
+
+#对于limma我做过了实验，中位数中心化与否并不影响limma差异分析的logFC和P值，但归一化会有影响，降低logFC增大P值。
+#我算了好久没有算明白这个结果里logFC是怎么算的，whatever，我这相对于做了两次的归一化，这是合适的吗？
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
