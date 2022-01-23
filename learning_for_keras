@@ -20,33 +20,30 @@ mnist$train$x <- mnist$train$x/255 #把数据都改为了0到1之间，观察一
 #那么我们要如何创造一个三维的矩阵呢？z<-array(1:24,c(2,3,4),dimnames=list(dim1,dim2,dim3))，1：24为array内具体数值，2，3，4为三个轴的长度，dimnames是三个轴的名字（类比于rownames，colnames）
 mnist$test$x <- mnist$test$x/255 #
 
-model <- keras_model_sequential() %>% 
-  layer_flatten(input_shape = c(28, 28)) %>% 
-  layer_dense(units = 128, activation = "relu") %>% 
-  layer_dropout(0.2) %>% 
-  layer_dense(10, activation = "softmax") #定义模型
+model <- keras_model_sequential() %>%  #然后我们具体看一下模型
+  layer_flatten(input_shape = c(28, 28)) %>% #input_shape，我们输入的数据的维度，28x28，没有问题
+  layer_dense(units = 128, activation = "relu") %>% #units，需要一个正整数，代表输出空间的维数（没懂），activation，要使用的激活函数的名称，relu,整流线性单位函数,好像是个人工神经网络中常用的函数
+  layer_dropout(0.2) %>% #这里的0.2指的应该是Fraction of the input units to drop，
+  layer_dense(10, activation = "softmax") #没懂
 
 summary(model)
 
 model %>% 
-  compile(
-    loss = "sparse_categorical_crossentropy",
-    optimizer = "adam",
-    metrics = "accuracy"
-  )
+  compile(loss = "sparse_categorical_crossentropy", #损失函数
+    optimizer = "adam", #优化算法，默认是rmsprop，这里选的adam（全不认识是什么）
+    metrics = "accuracy") #优化的度量
 
 model %>% 
-  fit(
-    x = mnist$train$x, y = mnist$train$y,
-    epochs = 5,
+  fit(x = mnist$train$x, y = mnist$train$y,
+    epochs = 5, #这里的epoch好像代表了调参的次数，我暂时把它理解为caret中的tuneLength
     validation_split = 0.3,
-    verbose = 2) #开始调参，熟悉的感觉
+    verbose = 2) #调参
 
 predictions <- predict(model, mnist$test$x)
 head(predictions, 2)
 
 model %>% 
-  evaluate(mnist$test$x, mnist$test$y, verbose = 0)#我结果还和他不一样，是因为没有设置种子吗
+  evaluate(mnist$test$x, mnist$test$y, verbose = 0) #对模型进行评估
 
 save_model_tf(object = model, filepath = "model") #保存模型
 
