@@ -52,7 +52,224 @@ all.equal(predict(model, mnist$test$x), predict(reloaded_model, mnist$test$x))
 
 
 
+######################一个经典的ai识别图像案例############
+fashion_mnist <- dataset_fashion_mnist() #60000x28x28的训练数据，上面那个数据好像也是个影像数据集
 
+c(train_images, train_labels) %<-% fashion_mnist$train #把train这个list单独拿出来了，给x，y改了名（train_images, train_labels）
+c(test_images, test_labels) %<-% fashion_mnist$test
+
+class_names = c('T-shirt/top','Trouser','Pullover',
+                'Dress','Coat', 'Sandal','Shirt',
+                'Sneaker','Bag','Ankle boot')
+dim(train_images)
+dim(train_labels)
+train_labels[1:20]
+dim(test_images)
+dim(test_labels)
+
+library(tidyr)
+library(ggplot2)
+
+image_1 <- as.data.frame(train_images[1, , ]) #三维中的第一维为1是，为一个28x28的矩阵
+colnames(image_1) <- seq_len(ncol(image_1))
+image_1$y <- seq_len(nrow(image_1))
+image_1 <- gather(image_1, "x", "value", -y)
+image_1$x <- as.integer(image_1$x) #这一段都是为了让ggplot画出来做的一个矩阵的调整
+
+ggplot(image_1, aes(x = x, y = y, fill = value)) +geom_tile() +
+  scale_fill_gradient(low = "white", high = "black", na.value = NA) +
+  scale_y_reverse() +theme_minimal() +
+  theme(panel.grid = element_blank())   +
+  theme(aspect.ratio = 1) +xlab("") +ylab("") #可以看到的是28x28矩阵中的值代表的是图片中黑色的深度（或者是灰度什么的？）28x28指的是图片的像素（？）
+
+train_images <- train_images / 255
+test_images <- test_images / 255 #也是把值给调到了0到1
+
+par(mfcol=c(5,5))
+par(mar=c(0, 0, 1.5, 0), xaxs='i', yaxs='i')
+for (i in 1:25) { 
+  img <- train_images[i, , ]
+  img <- t(apply(img, 2, rev)) 
+  image(1:28, 1:28, img, col = gray((0:255)/255), xaxt = 'n', yaxt = 'n',
+        main = paste(class_names[train_labels[i] + 1]))} #批量画了前25张
+
+model <- keras_model_sequential()
+model %>%
+  layer_flatten(input_shape = c(28, 28)) %>%
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dense(units = 10, activation = 'softmax') #用到的模型和上一个案例差不多
+
+model %>% compile(
+  optimizer = 'adam', 
+  loss = 'sparse_categorical_crossentropy',
+  metrics = c('accuracy'))
+
+model %>% fit(train_images, train_labels, epochs = 10, verbose = 2) #不设定随机种子的话，每一次运行表现都不一样
+
+score <- model %>% evaluate(test_images, test_labels, verbose = 0) #评估模型
+
+cat('Test loss:', score[1], "\n")
+cat('Test accuracy:', score[2], "\n")
+
+predictions <- model %>% predict(test_images)
+predictions[1, ]
+which.max(predictions[1, ])
+class_pred <- model %>% predict_classes(test_images)
+class_pred[1:20]
+test_labels[1]
+
+par(mfcol=c(5,5))
+par(mar=c(0, 0, 1.5, 0), xaxs='i', yaxs='i')
+for (i in 1:25) { 
+  img <- test_images[i, , ]
+  img <- t(apply(img, 2, rev)) 
+  # subtract 1 as labels go from 0 to 9
+  predicted_label <- which.max(predictions[i, ]) - 1
+  true_label <- test_labels[i]
+  if (predicted_label == true_label) {
+    color <- '#008800' 
+  } else {
+    color <- '#bb0000'
+  }
+  image(1:28, 1:28, img, col = gray((0:255)/255), xaxt = 'n', yaxt = 'n',
+        main = paste0(class_names[predicted_label + 1], " (",
+                      class_names[true_label + 1], ")"),
+        col.main = color)
+} #至于模型的具体表现，实属玄学
+
+img <- test_images[1, , , drop = FALSE]
+dim(img)
+predictions <- model %>% predict(img)
+predictions
+
+prediction <- predictions[1, ] - 1
+which.max(prediction)
+
+class_pred <- model %>% predict_classes(img)
+class_pred
+
+#############################一个回归案例#######################
+library(tfdatasets)
+
+boston_housing <- dataset_boston_housing() #403x13，一个更能理解的数据，训练级有403个样本，13个因素，可以试一下用caret的方法做出来怎么样。
+
+c(train_data, train_labels) %<-% boston_housing$train
+c(test_data, test_labels) %<-% boston_housing$test
+
+paste0("Training entries: ", length(train_data), ", labels: ", length(train_labels))
+train_data[1, ]
+
+library(dplyr)
+
+column_names <- c('CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 
+                  'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT')
+
+train_df <- train_data %>% 
+  as_tibble(.name_repair = "minimal") %>% 
+  setNames(column_names) %>% 
+  mutate(label = train_labels)
+
+test_df <- test_data %>% 
+  as_tibble(.name_repair = "minimal") %>% 
+  setNames(column_names) %>% 
+  mutate(label = test_labels)
+
+train_labels[1:10]
+
+spec <- feature_spec(train_df, label ~ . ) %>% 
+  step_numeric_column(all_numeric(), normalizer_fn = scaler_standard()) %>% 
+  fit()
+
+spec
+
+layer <- layer_dense_features(
+  feature_columns = dense_features(spec), 
+  dtype = tf$float32
+)
+layer(train_df)
+
+input <- layer_input_from_dataset(train_df %>% select(-label))
+
+output <- input %>% 
+  layer_dense_features(dense_features(spec)) %>% 
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1) 
+
+model <- keras_model(input, output)
+
+summary(model)
+
+model %>% 
+  compile(
+    loss = "mse",
+    optimizer = optimizer_rmsprop(),
+    metrics = list("mean_absolute_error")
+  )
+
+build_model <- function() {
+  input <- layer_input_from_dataset(train_df %>% select(-label))
+  
+  output <- input %>% 
+    layer_dense_features(dense_features(spec)) %>% 
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 1) 
+  
+  model <- keras_model(input, output)
+  
+  model %>% 
+    compile(
+      loss = "mse",
+      optimizer = optimizer_rmsprop(),
+      metrics = list("mean_absolute_error")
+    )
+  
+  model
+}
+
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n")
+    cat(".")
+  }
+)    
+
+model <- build_model()
+
+history <- model %>% fit(
+  x = train_df %>% select(-label),
+  y = train_df$label,
+  epochs = 500,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(print_dot_callback)
+)
+
+library(ggplot2)
+plot(history)
+
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 20)
+
+model <- build_model()
+
+history <- model %>% fit(
+  x = train_df %>% select(-label),
+  y = train_df$label,
+  epochs = 500,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(early_stop)
+)
+
+plot(history)
+
+c(loss, mae) %<-% (model %>% evaluate(test_df %>% select(-label), test_df$label, verbose = 0))
+
+paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000)) #没搞懂他在干什么，为什么要把mean_absolute_error乘一千倍？
+
+test_predictions <- model %>% predict(test_df %>% select(-label))
+test_predictions[ , 1]
 
 
 
