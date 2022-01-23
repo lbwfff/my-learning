@@ -1,0 +1,65 @@
+################keras in R，caret拥有模型其实并不全面，比如积卷神经网络，就没有，幸运的是现在keras已经有R语言的接口的（不需要在python上折腾）#####
+################虽然又是个大坑，不过，有好的工具能有什么不满意的呢？######
+install.packages('keras')
+library(keras) 
+library(tensorflow)
+
+conda create --name r-tensorflow keras tensorflow #然后在服务器上我新建了虚拟环境
+
+#之后我在R-serves的设置里修改了python位置，改为了r-tensorflow这个环境的python位置（envs/r-tensorflow/bin/python）
+#然后就可以正常运行了（起码我看起来挺正常的）
+
+
+################几个使用案例##############################
+library(caret)
+library(keras)
+library(tensorflow)
+
+mnist <- dataset_mnist()
+mnist$train$x <- mnist$train$x/255 #把数据都改为了0到1之间，观察一下这个数据本身很有意思，mnist$train下有x和y，y很好理解是我们需要预测的结果。x则很有意思是一个60000x28x28的double型变量，也就是说，他是三维的。
+#那么我们要如何创造一个三维的矩阵呢？z<-array(1:24,c(2,3,4),dimnames=list(dim1,dim2,dim3))，1：24为array内具体数值，2，3，4为三个轴的长度，dimnames是三个轴的名字（类比于rownames，colnames）
+mnist$test$x <- mnist$test$x/255 #
+
+model <- keras_model_sequential() %>% 
+  layer_flatten(input_shape = c(28, 28)) %>% 
+  layer_dense(units = 128, activation = "relu") %>% 
+  layer_dropout(0.2) %>% 
+  layer_dense(10, activation = "softmax") #定义模型
+
+summary(model)
+
+model %>% 
+  compile(
+    loss = "sparse_categorical_crossentropy",
+    optimizer = "adam",
+    metrics = "accuracy"
+  )
+
+model %>% 
+  fit(
+    x = mnist$train$x, y = mnist$train$y,
+    epochs = 5,
+    validation_split = 0.3,
+    verbose = 2) #开始调参，熟悉的感觉
+
+predictions <- predict(model, mnist$test$x)
+head(predictions, 2)
+
+model %>% 
+  evaluate(mnist$test$x, mnist$test$y, verbose = 0)#我结果还和他不一样，是因为没有设置种子吗
+
+save_model_tf(object = model, filepath = "model") #保存模型
+
+reloaded_model <- load_model_tf("model")
+all.equal(predict(model, mnist$test$x), predict(reloaded_model, mnist$test$x))
+
+
+
+
+
+
+
+
+
+
+
