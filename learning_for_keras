@@ -269,7 +269,11 @@ c(loss, mae) %<-% (model %>% evaluate(test_df %>% select(-label), test_df$label,
 paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000)) #没搞懂他在干什么，为什么要把mean_absolute_error乘一千倍？
 
 test_predictions <- model %>% predict(test_df %>% select(-label))
-test_predictions[ , 1]
+test_predictions[ , 1] 
+rqnc
+##我随手用caret的brnn模型做了一遍，对于测试集，mae=3.17，和我用kares做出来的模型差不多，但是比官方做出来的模型差。rqnc给了3.09
+##Quantile Random Forest做出来mae为2.45，惊了，Conditional Inference Random Forest的mae为2.6，Multivariate Adaptive Regression Spline2.46，看来模型也并不是越复杂越好。
+
 
 
 
