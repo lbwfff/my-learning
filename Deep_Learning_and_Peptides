@@ -1,0 +1,22 @@
+###############肽也好，核苷酸也好，什么乱七八糟的也好，他的难点在于，如何把它转换为特征？它的序列携带着信息，它的结构也很重要，它的可能位置，可能其它什么都携带着需要的信息#######
+
+library(Biostrings)
+library(seqinr)
+
+pep_example <- c("AMGIMNSFVNDIFER","LLYAIEETEGFGQE")
+
+stats <- sapply(pep_example, FUN=function(x) AAstat(s2c(x), plot=FALSE))
+prop_mean <- sapply(pep_example, FUN=function(x) c(lapply(aaindex, FUN=function(y) mean(y$I[aaa(s2c(x))], na.rm=TRUE)), Length=getLength(x), PMW=pmw(s2c(x)), PI=computePI(s2c(x)), unlist(stats["Prop",x])))
+
+#########在这里是怎样提取肽的特征的呢？这里有三个来源的特征############
+#########第一是手动计算的，长度（getLength(x)），蛋白分子重量（pmw(s2c(x))），理论等电点（computePI(s2c(x))）的信息##########
+#########第二是来自AAstat函数给出的信息AAstat(s2c(x), plot=FALSE))，unlist(stats["Prop",x])#######
+#########还有一个就是结合aaindex这个文件得到的信息，这个文件来自seqinr包，具体是什么我暂时也没有搞清楚###########3
+
+load("rfFit.rda")
+library(caret)
+prop_mean_rf <- prop_mean[predictors(rfFit),] #只取了其中106行的特征
+rfClasses <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x))
+rfProbs <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x, type="prob"))
+#########然后作者是用的caret中的随机森林模型做的训练（这个模型我最近发现表现确实比较优秀）##############
+
