@@ -10,8 +10,8 @@ prop_mean <- sapply(pep_example, FUN=function(x) c(lapply(aaindex, FUN=function(
 
 #########在这里是怎样提取肽的特征的呢？这里有三个来源的特征############
 #########第一是手动计算的，长度（getLength(x)），蛋白分子重量（pmw(s2c(x))），理论等电点（computePI(s2c(x))）的信息##########
-#########第二是来自AAstat函数给出的信息AAstat(s2c(x), plot=FALSE))，unlist(stats["Prop",x])#######
-#########还有一个就是结合aaindex这个文件得到的信息，这个文件来自seqinr包，具体是什么我暂时也没有搞清楚###########3
+#########第二是来自AAstat函数(来自seqinr包)给出的信息AAstat(s2c(x), plot=FALSE))，unlist(stats["Prop",x])#######
+  #########还有一个就是结合aaindex这个文件得到的信息，这个文件来自seqinr包，具体是什么我暂时也没有搞清楚###########3
 
 load("rfFit.rda")
 library(caret)
@@ -20,3 +20,4 @@ rfClasses <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x))
 rfProbs <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x, type="prob"))
 #########然后作者是用的caret中的随机森林模型做的训练（这个模型我最近发现表现确实比较优秀）##############
 
+#################之前做CAMP的时候，接触过许多的基于氨基酸序列预测二级结构的软件，使用那些软件给出的信息也可以给出很多的特征##########
