@@ -43,3 +43,7 @@ ok,搞定了这里，correction factors的话可以在type选项编辑具体的�
 FileConverter -in 01CPTAC_LSCC_W_BI_20190615_KL_f01.raw -out 01CPTAC_LSCC_W_BI_20190615_KL_f01.mzML -ini ./FileConverter.ini 
 #FileConverter.ini是一个参数文件，在此处主要是提供ThermoRaw_executable的位置，这行代码我是在maxquant环境里运行的，外环境好像缺少mono运行的相关软件。
 
+#合并文件
+FileMerger -in *mzML -in_type mzML -out 01CPTAC_LSCC_W_BI.mzML
+
+
