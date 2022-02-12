@@ -1,3 +1,4 @@
+####################MAXQUANT################
 #######简单使用#####
 使用方式，在图形化界面（my pc）选择好合适参数后，将mqpar.xml文件转移至linux服务器
 手动改变mqpar.xml中需要分析的文件以及index文件的所属位置（MaxQuantCmd.exe --changeFolder会报错，不知道为什么，现在只能手动的去改）
@@ -33,3 +34,12 @@ ok,搞定了这里，correction factors的话可以在type选项编辑具体的�
 但暂时还没有再跑一次，我只希望能够解决这个问题吧
 
 把从ncbi得到的蛋白索引替换为了uniprot下载的非冗余蛋白索引，终于是得到了理想的运行速度，看来索引确实是一个比较重要的点吧
+
+
+##############################OPENMS#####################
+#######最近在学着使用OPENMS，maxquant来做定量的话，固然是好的，但是对于我的项目来说仅做量上的分析总感觉少了些什么，OPENMS是一个整合工具，或许能帮我做点什么
+
+#先是文件转化
+FileConverter -in 01CPTAC_LSCC_W_BI_20190615_KL_f01.raw -out 01CPTAC_LSCC_W_BI_20190615_KL_f01.mzML -ini ./FileConverter.ini 
+#FileConverter.ini是一个参数文件，在此处主要是提供ThermoRaw_executable的位置，这行代码我是在maxquant环境里运行的，外环境好像缺少mono运行的相关软件。
+
