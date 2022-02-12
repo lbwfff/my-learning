@@ -46,4 +46,16 @@ FileConverter -in 01CPTAC_LSCC_W_BI_20190615_KL_f01.raw -out 01CPTAC_LSCC_W_BI_2
 #合并文件
 FileMerger -in *mzML -in_type mzML -out 01CPTAC_LSCC_W_BI.mzML
 
+#还不知道有什么用
+Resampler -in 01CPTAC_LSCC_W_BI.mzML -out 01CPTAC_LSCC_W_BI_resampler.mzML -threads 6
+
+#降噪
+NoiseFilterSGolay -in 01CPTAC_LSCC_W_BI.mzML -out 01CPTAC_LSCC_W_BI_filter.mzML -threads 6
+BaselineFilter -in 01CPTAC_LSCC_W_BI_filter.mzML -out 01CPTAC_LSCC_W_BI_filter2.mzML -threads 6
+PeakPickerHiRes -in 01CPTAC_LSCC_W_BI_filter2.mzML -out 01CPTAC_LSCC_W_BI_filter3.mzML -threads 6
+
+#MSGFPlus，在外环境运行的
+MSGFPlusAdapter -in 01CPTAC_LSCC_W_BI_filter3.mzML -out 01CPTAC_LSCC_W_BI_filter.idXML -database ~/biodata/index/protein/ncRNA-coding/NEW_fourway_filter-ADDVariant.fasta -threads 6 -ini MSGFPlusAdapter.ini
+
+
 
