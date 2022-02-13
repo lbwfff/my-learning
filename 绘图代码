@@ -188,6 +188,7 @@ dev.off()
 ############plotly是个很有意思的东西，可以做一些互动交互的图，还挺厉害的######
 plot_ly(platform, labels = ~Var1, values = ~Freq, type = 'pie',textposition = 'outside',textinfo = 'label+percent') #####代码并没有画好这一张图，只是想强调一下plotly是个很厉害的东西
 
+ggplotly(p=p) #可以将ggplot的对象转换为plotly的对象，利用plotly的可交互性，可以方便获取许多信息
 
 ###########PCA图##########
 ###########我现在喜欢用DEseq包里的函数来画，因为自带标准化，后面也可以用ggplot来美化图片#######
