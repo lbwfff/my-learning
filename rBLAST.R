@@ -19,6 +19,8 @@ Sys.setenv(PATH ='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/
 #不在R上做的话#
 makeblastdb -in uniprot_sprot.fasta -dbtype prot -out Swiss-Prot #创建索引
 blastp -query test.fasta -outfmt 7 -out test.blast -db ~/biodata/index/protein/humanuniport.fasta #outfmt代表控制文件的格式
+blastp -query allfour_newidex.fasta -out newindex.blast -db ~/biodata/index/protein/humanuniport.fasta -num_threads 16 -outfmt 6 &
+#不在R上做的话要快很多，因为可以并行，但rBLAST提供了一个接口，看自己怎么取舍吧
 
 
 
