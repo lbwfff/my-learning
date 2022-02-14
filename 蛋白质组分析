@@ -42,6 +42,18 @@ ok,搞定了这里，correction factors的话可以在type选项编辑具体的�
 #先是文件转化
 FileConverter -in 01CPTAC_LSCC_W_BI_20190615_KL_f01.raw -out 01CPTAC_LSCC_W_BI_20190615_KL_f01.mzML -ini ./FileConverter.ini 
 #FileConverter.ini是一个参数文件，在此处主要是提供ThermoRaw_executable的位置，这行代码我是在maxquant环境里运行的，外环境好像缺少mono运行的相关软件。
+#文件多的话写这个转化特别麻烦，下面是我在R上写的脚本
+filecon<-matrix(data=NA, nrow = 23, ncol = 7)
+filecon<-as.data.frame(filecon)
+filecon[,1]<-c('FileConverter')
+filecon[,2]<-c('-in')
+filecon[,3]<-c(paste0('~/biodata/Satpathy_Cell2021/01CPTAC_LSCC_Proteome_BI_raw/01CPTAC_LSCC_W_BI_20190615_KL_f',sprintf("%02d", 3:25),'.raw'))#重点是这一句，我把1转化为了01这样
+filecon[,4]<-c('-out')
+filecon[,5]<-c(paste0('01CPTAC_LSCC_W_BI_20190615_KL_f',sprintf("%02d", 3:25),'.mzML'))
+filecon[,6]<-c('-ini')
+filecon[,7]<-c('./FileConverter.ini')
+write.table(filecon,file = '~/share/whatever/test/FileConverter.sh',sep = ' ',row.names = F,col.names = F,quote = F)
+
 
 #合并文件
 FileMerger -in *mzML -in_type mzML -out 01CPTAC_LSCC_W_BI.mzML
