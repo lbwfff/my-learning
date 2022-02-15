@@ -347,5 +347,25 @@ wrap_plots(p,nrow=2, guides="collect")
 dev.off()
 
 
+##############基于染色体位置的韦恩图，主要的代码在Merip-seq分析的那一部分，这里仅展示美化。这个函数的能美化的地方还挺多的########
+makeVennDiagram(ol, NameOfPeaks =c('NONCODE','GENCODE','Smprot','CNC'),
+                fill=c(met.brewer('Hiroshige',n=4)),
+                col=c("#D55E00", "#0072B2","#009E73",'#2166AC'), 
+                cat.col=c(met.brewer('Hiroshige',n=4)),
+                cat.cex =1.2 ) 
+
+#############对于美学代码的固定，是我一直想做的一件事情########
+pdf("orf_chr_dis_new.pdf",width = 8,height = 6)
+ggplot(chr_inf, aes(x=reorder(Var1,Freq), weight = Freq, fill = group))+
+  geom_bar( position = "stack")+ 
+  theme_minimal()+theme_classic()+
+  labs(y="Frequency",x='chromosome')+
+  theme_classic(base_size = 18)+   #例如在这一部分代码中theme有关的这一部分其实是我一直想固定下来的代码
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16))+
+  theme(axis.text.x = element_text(size=12,angle=45,hjust=0.9))+
+  theme(legend.text = element_text(size=8))+
+  scale_fill_manual(values=met.brewer('Hiroshige',n=4))
+dev.off()
 
 
