@@ -72,6 +72,8 @@ FileFilter
 #MSGFPlus，在外环境运行的
 MSGFPlusAdapter -in 01CPTAC_LSCC_W_BI_filter3.mzML -out 01CPTAC_LSCC_W_BI_filter.idXML -database ~/biodata/index/protein/ncRNA-coding/NEW_fourway_filter-ADDVariant.fasta -threads 6 -ini MSGFPlusAdapter.ini
 #MSGPlus写好修饰是非常重要的，ini文件中的修饰要这样写<LISTITEM value="Oxidation (M)"/><LISTITEM value="TMT (N-term)"/><LISTITEM value="TMT (K)"/>才能有效
+java -Xmx8500M -jar ~/tools/msgfplus/MSGFPlus.jar -s 01CPTAC_LSCC_W_BI_20190615_KL_f24_filter_sort.mzML -d ~/biodata/index/protein/ncRNA-coding/NEW_fourway_filter-ADDVariant.fasta -o test_msgfplus.mzid -thread 16 -tasks 16 -protocol 4 -conf MSGFPlus_TMT.txt
+#也可以用这个
 
 #定量
 IsobaricAnalyzer
