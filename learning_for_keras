@@ -18,12 +18,12 @@ library(tensorflow)
 mnist <- dataset_mnist()
 mnist$train$x <- mnist$train$x/255 #把数据都改为了0到1之间，观察一下这个数据本身很有意思，mnist$train下有x和y，y很好理解是我们需要预测的结果。x则很有意思是一个60000x28x28的double型变量，也就是说，他是三维的。
 #那么我们要如何创造一个三维的矩阵呢？z<-array(1:24,c(2,3,4),dimnames=list(dim1,dim2,dim3))，1：24为array内具体数值，2，3，4为三个轴的长度，dimnames是三个轴的名字（类比于rownames，colnames）
-mnist$test$x <- mnist$test$x/255 #
+mnist$test$x <- mnist$test$x/255 #为什么直接除255会比用log（）归一化效果好呢？
 
 model <- keras_model_sequential() %>%  #然后我们具体看一下模型
   layer_flatten(input_shape = c(28, 28)) %>% #input_shape，我们输入的数据的维度，28x28，没有问题
   layer_dense(units = 128, activation = "relu") %>% #units，需要一个正整数，代表输出空间的维数（没懂），activation，要使用的激活函数的名称，relu,整流线性单位函数,好像是个人工神经网络中常用的函数
-  layer_dropout(0.2) %>% #这里的0.2指的应该是Fraction of the input units to drop，
+  layer_dropout(0.2) %>% #这里的0.2指的应该是Fraction of the input units to drop，神经网络中丢弃部分神经元，据说防止过拟合降低时耗
   layer_dense(10, activation = "softmax") #没懂
 
 summary(model)
