@@ -277,6 +277,8 @@ rqnc
 
 
 ###########################kares，多输入模型##################
+#突然发现kares这个R接口写得真是，挺好用的
+
 mnist <- dataset_mnist() #还是使用经典数据集
 mnist$train$x <- mnist$train$x/255
 mnist$test$x <- mnist$test$x/255
