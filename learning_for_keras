@@ -276,6 +276,52 @@ rqnc
 
 
 
+###########################kares，多输入模型##################
+mnist <- dataset_mnist() #还是使用经典数据集
+mnist$train$x <- mnist$train$x/255
+mnist$test$x <- mnist$test$x/255
+train_multi<-(mnist$train$y+rnorm(1,mean = 0,sd=2)) #我们测试一个新特征，用结果的代表值加上一个正态分布的随机数
+test_multi<-(mnist$test$y+rnorm(1,mean = 0,sd=2))
+
+main_input <- layer_input(shape = c(28,28)) #设计输入层
+test_input <- layer_input(shape = c(1))
+
+main_cnn <- main_input %>%  #把主输入层进行积卷，池化，扁平
+  layer_conv_1d(input_shape = c(28, 28),filters = 64, kernel_size = c(3), activation = "relu")%>%
+  layer_max_pooling_1d(pool_size = c(2)) %>% 
+  layer_flatten()
+
+main_output <- layer_concatenate(c(main_cnn, test_input)) %>% #将主输入层和测试输入层合在一起
+  layer_dense(units = 256, activation = "relu") %>% 
+  layer_dropout(0.2) %>%
+  layer_dense(10, activation = "softmax")
+
+model <- keras_model(
+  inputs = c(main_input, test_input), 
+  outputs = c(main_output)
+)
+
+summary(model)
+
+model %>% 
+  compile(
+    loss = "sparse_categorical_crossentropy",
+    optimizer = "adam",
+    metrics = "accuracy"
+  )
+
+model %>% 
+  fit(x = list(mnist$train$x,train_multi),
+      y = mnist$train$y,
+      epochs = 20,
+      validation_split = 0.3,
+      verbose = 2)
+
+predictions <- predict(model, list(mnist$test$x,test_multi))
+head(predictions, 2)
+
+model %>% 
+  evaluate(list(mnist$test$x,test_multi), mnist$test$y, verbose = 0) #查看在测试集上的效果。
 
 
 
