@@ -21,3 +21,6 @@ rfProbs <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x, ty
 #########然后作者是用的caret中的随机森林模型做的训练（这个模型我最近发现表现确实比较优秀）##############
 
 #################之前做CAMP的时候，接触过许多的基于氨基酸序列预测二级结构的软件，使用那些软件给出的信息也可以给出很多的特征##########
+
+#################ipc2等电点计算器##############
+python ./scripts/ipc2_peptide_conv2d_channels_predictor.py ./models/IPC2_peptide_IPC2.peptide.SepConv2D_Adam_selu.selu.selu.64.22_5.50.3_3.400.22x60 ./models/aaindex_feature_sel_2020_IPC2_peptide_75.csv ./models/IPC2_peptide_75_SVR_19.pickle ./test.csv ./test.out.csv
