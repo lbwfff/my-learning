@@ -1,3 +1,12 @@
+
+################除了antigen.garnish做的几个预测外，再添加几个feature##############################
+./netMHC -p ./test/test.pep -xls -xlsfile ./my_NetMHCpan_out.xls
+#和一类MHC的亲和性
+./netMHCstabpan -f ./test/test.pep -xls -ia -p -xlsfile ./my_NetMHCstapan_out.xls
+#和一类MHC结合的稳定性，这个input文件还有点奇怪
+#然后可以再补一个二类MHC的亲和性之类的？
+
+###############################################################################################
 library(antigen.garnish) #使用这个包，做一个肽的免疫原性的预测
 list<-read.csv('~/tools/antigen.garnish/pnas.1500973112.sd01.csv') #训练数据
 list<-list[!duplicated(list$Epitope),] #它的数据里有一些序列一致的肽，但是有着不同的免疫性，这个我不是太理解为什么。
