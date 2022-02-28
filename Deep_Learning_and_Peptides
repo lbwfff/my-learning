@@ -11,7 +11,7 @@ prop_mean <- sapply(pep_example, FUN=function(x) c(lapply(aaindex, FUN=function(
 #########在这里是怎样提取肽的特征的呢？这里有三个来源的特征############
 #########第一是手动计算的，长度（getLength(x)），蛋白分子重量（pmw(s2c(x))），理论等电点（computePI(s2c(x))）的信息##########
 #########第二是来自AAstat函数(来自seqinr包)给出的信息AAstat(s2c(x), plot=FALSE))，unlist(stats["Prop",x])#######
-  #########还有一个就是结合aaindex这个文件得到的信息，这个文件来自seqinr包，具体是什么我暂时也没有搞清楚###########3
+#########还有一个就是结合aaindex这个文件得到的信息，这个文件来自seqinr包，具体是什么我暂时也没有搞清楚###########3
 
 load("rfFit.rda")
 library(caret)
@@ -24,3 +24,7 @@ rfProbs <- apply(prop_mean_rf, 2, FUN=function(x) predict(rfFit, newdata = x, ty
 
 #################ipc2等电点计算器##############
 python ./scripts/ipc2_peptide_conv2d_channels_predictor.py ./models/IPC2_peptide_IPC2.peptide.SepConv2D_Adam_selu.selu.selu.64.22_5.50.3_3.400.22x60 ./models/aaindex_feature_sel_2020_IPC2_peptide_75.csv ./models/IPC2_peptide_75_SVR_19.pickle ./test.csv ./test.out.csv
+
+#################iLearn提取特征##############
+python iLearn-protein-basic.py --file ./CPP/all_cpp.fasta --method TPC --format csv --out ./CPP/TPC.csv
+
