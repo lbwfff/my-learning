@@ -1,3 +1,6 @@
+cut -f1-17 SRR8590813.ribotricer_translating_ORFs.tsv > test
+#使用cut分割‘\t’分割符的文件，比如输出1到17列
+
 locate libcom_err.so.3
 sudo ln -s /home/leelee/miniconda3/lib/libcom_err.so.3.0 /usr/lib/x86_64-linux-gnu/libcom_err.so.3
 ####究极有用的两句话，用于r语言的奇怪报错
