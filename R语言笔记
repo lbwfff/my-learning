@@ -1,3 +1,5 @@
+我今天才知道在rstudio中，ctrl加Z可以撤销对于代码的修改，明明应该是一开始就需要学会的技巧。
+
 DESeq2差异表达：#这串代码跑DESeq2需要数值为整数
 
 library(tidyverse)
