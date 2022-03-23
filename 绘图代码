@@ -310,6 +310,17 @@ color<-c(met.brewer("Wissing")[2],met.brewer("Signac")[4],'white','white',met.br
 pal<-colorRampPalette(color)
 image(x=1:20,y=1,z=as.matrix(1:20),col=pal(20)) #扩成了20个色
 colors = pal(20)#这个效果我还挺喜欢的
+
+##################热图的拼接##############
+library('cowplot')
+library('ggplotify')
+p5<-as.ggplot(p) #cowplot没法直接拼接，需要转化为ggplot对象
+p6<-as.ggplot(p2)
+
+pdf("pheatmap_adjust.pdf",width = 6,height = 6)
+plot_grid(p5, p6, ncol=2)
+dev.off() 
+#########################################
            
 library('ComplexHeatmap') #pheatmap简单好用，但是为了解决更多乱七八糟的需求，你需要学习ComplexHeatmap
 library('circlize')
