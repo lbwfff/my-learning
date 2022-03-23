@@ -245,11 +245,36 @@ ggplot(Dat,aes(x=logFC,y=-log10(adj.P.Val),color=threshold))+
 ############dotplot，我总觉得自己应该抛弃dotplot这个函数，因为感觉每次画出来的一批图，从来没有结构一致的，注释信息到处跑，图的大小从来没有一致过######
 library('ggplot2')
 library('stringr')
-
+#GO的dot_plot
 dotplot(downbp_pannzer,color = "pvalue")+
   scale_color_continuous(low='#1C86EE', high='#BEBEBE')+ #调了好久的颜色
   aes(shape=pvalue > 0.01)+ #小于0.01的点换成三角形
   scale_y_discrete(labels = function(x) str_wrap(x, width = 30))#给太长的词条换行
+ 
+ #GO的bar_plot
+ p1<-ggplot(data = CC, aes(x = reorder(Term,-FDR), y = -log2(FDR))) + #reorder函数，对元素进行排序
+  geom_col(aes(fill='#d8443c',colour='#d8443c'),show.legend = FALSE,width=0.8) +
+  ggtitle(paste("GO_CC")) +
+  coord_flip() +
+  theme_classic(base_size = 26)+ 
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank(),
+        text = element_text(size=30,face='bold'))+
+  labs(y="-log2(FDR)",x='Term')+
+  scale_fill_manual(values = c("#d8443c"))+
+  scale_colour_manual(values = c("black"))+
+  scale_y_continuous(expand = c(0,0)) 
+  #scale_x_discrete(labels = function(x) str_wrap(x, width = 30))
+  
+#我现在能想到的，让绘图区域大小一致的方法，就是用cowplot把几个图片组合起来，现在倒还是个办法，虽然还是挺麻烦的。
+library(cowplot)
+pdf("GO_A_VS_B.pdf",width = 12,height = 20)
+plot_grid(p2, p1,p3, ncol=1, align="v") 
+dev.off() 
+
 
 ################3D的PCA图，具体的美化之后还需要多做调整##################
 library('scatterplot3d')
@@ -306,10 +331,10 @@ p=pheatmap(cortest,cluster_rows = T,cluster_cols = T,
            show_rownames = T,show_colnames = F,
            breaks = seq(-1,1,length.out = 100)) #我在想这个length.out是指颜色有一百个刻度吗？可是试着改一下
 #关于热图的配色
-color<-c(met.brewer("Wissing")[2],met.brewer("Signac")[4],'white','white',met.brewer("Homer1")[7],met.brewer("Nizami")[8]) #从包里面取了四个色
+color<-c(met.brewer("Wissing")[2],met.brewer("Signac")[4],'white',met.brewer("Homer1")[7],met.brewer("Nizami")[8]) #从包里面取了四个色
 pal<-colorRampPalette(color)
-image(x=1:20,y=1,z=as.matrix(1:20),col=pal(20)) #扩成了20个色
-colors = pal(20)#这个效果我还挺喜欢的
+image(x=1:100,y=1,z=as.matrix(1:100),col=pal(100))
+colors = pal(100) #这个配色，也说不上完全满意，高表达的红色总感觉有点老，不过暂时先用着这个吧
 
 ##################热图的拼接##############
 library('cowplot')
