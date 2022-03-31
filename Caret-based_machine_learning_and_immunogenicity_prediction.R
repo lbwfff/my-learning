@@ -7,6 +7,8 @@
 #然后可以再补一个二类MHC的亲和性之类的？
 
 python anticp2.py -i ./peptide.fa -o test.csv #这个在p3环境下能跑，随手记录一下，和上下都没有关系
+python3 ./scripts/ipc2_peptide_conv2d_channels_predictor.py ./models/IPC2_peptide_IPC2.peptide.SepConv2D_Adam_selu.selu.selu.64.22_5.50.3_3.400.22x60 ./models/aaindex_feature_sel_2020_IPC2_peptide_75.csv ./models/IPC2_peptide_75_SVR_19.pickle ./ms_ipc.csv ./ms_ipc_pre.csv
+#再记一下ipc2的使用
 
 ###############################################################################################
 library(antigen.garnish) #使用这个包，做一个肽的免疫原性的预测
