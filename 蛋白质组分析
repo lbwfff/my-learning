@@ -1,3 +1,6 @@
+
+docker run -it --rm -e WINEDEBUG=-all -v /home/leelee/share/CNHPP_HCC/L091/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert /data/CNHPP_HCC_LC_profiling_L091_P_F1.raw
+
 ####################MAXQUANT################
 #######简单使用#####
 使用方式，在图形化界面（my pc）选择好合适参数后，将mqpar.xml文件转移至linux服务器
