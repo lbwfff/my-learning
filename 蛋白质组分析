@@ -1,5 +1,6 @@
-
+./ORFfinder -in circ_seq.fasta -c t -s 1 -ml 30 -out ribo_crc_orf.fasta -outfmt 1 #ORFfinder的使用
 docker run -it --rm -e WINEDEBUG=-all -v /home/leelee/share/CNHPP_HCC/L091/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert /data/CNHPP_HCC_LC_profiling_L091_P_F1.raw
+#msconvert的使用
 
 ####################MAXQUANT################
 #######简单使用#####
@@ -42,7 +43,7 @@ ok,搞定了这里，correction factors的话可以在type选项编辑具体的�
 ##############################OPENMS#####################
 #######最近在学着使用OPENMS，maxquant来做定量的话，固然是好的，但是对于我的项目来说仅做量上的分析总感觉少了些什么，OPENMS是一个整合工具，或许能帮我做点什么######
 #######最近对于OpenMS的使用让我有些灰心，首先它很麻烦，需要手动的去调整许多的步骤，你也不知道在这些中间步骤中会存在多少的问题#######
-#######其次我用Msgf+做出来，并没有得到我想要的东西，我想在TMT的数据中，是没法找到所谓的，贴别的蛋白的。或许我应该选择Label-free的数据能够做到这件事？########
+#######其次我用Msgf+做出来，并没有得到我想要的东西，我想在TMT的数据中，是没法找到所谓的，独特的蛋白的。或许我应该选择Label-free的数据能够做到这件事？########
 
 #先是文件转化
 FileConverter -in 01CPTAC_LSCC_W_BI_20190615_KL_f01.raw -out 01CPTAC_LSCC_W_BI_20190615_KL_f01.mzML -ini ./FileConverter.ini 
@@ -59,34 +60,29 @@ filecon[,6]<-c('-ini')
 filecon[,7]<-c('./FileConverter.ini')
 write.table(filecon,file = '~/share/whatever/test/FileConverter.sh',sep = ' ',row.names = F,col.names = F,quote = F)
 
-
 #合并文件
 FileMerger -in *mzML -in_type mzML -out 01CPTAC_LSCC_W_BI.mzML
-
 #这似乎对于TMT来说是必要的
 Resampler -in 01CPTAC_LSCC_W_BI.mzML -out 01CPTAC_LSCC_W_BI_resampler.mzML -threads 6
-
 #降噪
 NoiseFilterGaussian -in 01CPTAC_LSCC_W_BI.mzML -out 01CPTAC_LSCC_W_BI_filter.mzML -threads 6
 BaselineFilter -in 01CPTAC_LSCC_W_BI_filter.mzML -out 01CPTAC_LSCC_W_BI_filter2.mzML -threads 6
 PeakPickerHiRes -in 01CPTAC_LSCC_W_BI_filter2.mzML -out 01CPTAC_LSCC_W_BI_filter3.mzML -threads 6
-
 #排序
 FileFilter 
-
 #MSGFPlus，在外环境运行的
 MSGFPlusAdapter -in 01CPTAC_LSCC_W_BI_filter3.mzML -out 01CPTAC_LSCC_W_BI_filter.idXML -database ~/biodata/index/protein/ncRNA-coding/NEW_fourway_filter-ADDVariant.fasta -threads 6 -ini MSGFPlusAdapter.ini
 #MSGPlus写好修饰是非常重要的，ini文件中的修饰要这样写<LISTITEM value="Oxidation (M)"/><LISTITEM value="TMT (N-term)"/><LISTITEM value="TMT (K)"/>才能有效
 java -Xmx8500M -jar ~/tools/msgfplus/MSGFPlus.jar -s 01CPTAC_LSCC_W_BI_20190615_KL_f24_filter_sort.mzML -d ~/biodata/index/protein/ncRNA-coding/NEW_fourway_filter-ADDVariant.fasta -o test_msgfplus.mzid -thread 16 -tasks 16 -protocol 4 -conf MSGFPlus_TMT.txt
 #也可以用这个
-
 #定量
 IsobaricAnalyzer
-
 #整合MSGplus和定量的结果（整合之前应该做基于FDR值的过滤等步骤）
 IDMapper
-
 #最后计算丰度什么的
 ProteinQuantifier
+
+#我没有接着OPENMS往下跟进，因为这个实在太麻烦了，我不是主要跟计算蛋白组学方向的，要去摸索海量的参数实在是难为了我，主要是收益实在是太低了。
+#FragPipe似乎是一个好的选择，在我的建议下更新了philosopher使得计算速度有了极大提升，但还有一个MSFragger的计算bug没有修好，作者答应了会在新版本中修复，但一直没有把新的正式版本上传。
 
 
