@@ -23,6 +23,7 @@ blastp -query allfour_newidex.fasta -out newindex.blast -db ~/biodata/index/prot
 #不在R上做的话要快很多，因为可以并行，但rBLAST提供了一个接口，看自己怎么取舍吧
 #blastp还是太慢了，可以用diamond
 diamond blastp --db ../GRCh38_protein -q four_way_before_filter.fasta -e 100000 -o protein_matches_fmt6.txt #起飞
+diamond blastp --db ~/biodata/index/protein/GRCh38_protein -q ribocirc_pep.fasta -e 100000 -o protein_matches_fmt6.txt -f 6 qseqid qlen sseqid evalue bitscore pident length gapopen qcovhsp #结果文件的格式是至关重要的
 
 
 
