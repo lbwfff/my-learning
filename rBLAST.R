@@ -24,7 +24,7 @@ blastp -query allfour_newidex.fasta -out newindex.blast -db ~/biodata/index/prot
 #blastp还是太慢了，可以用diamond
 diamond blastp --db ../GRCh38_protein -q four_way_before_filter.fasta -e 100000 -o protein_matches_fmt6.txt #起飞
 diamond blastp --db ~/biodata/index/protein/GRCh38_protein -q ribocirc_pep.fasta -e 100000 -o protein_matches_fmt6.txt -f 6 qseqid qlen sseqid evalue bitscore pident length gapopen qcovhsp #结果文件的格式是至关重要的
-
+#每一列的信息是可以自己指定的，使用diamond help可以看到具体信息
 
 
 #记录一下怎么创建一个fasta文件（在R上）
