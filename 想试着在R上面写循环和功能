@@ -1,6 +1,6 @@
 ####主要还是为了节省劳动力吧
 
-案例一：
+#案例一：
   n1= c('gene_up','gene_down','gene_diff')
   n2= c('BP','MF','CC') 
 for (i in 1:3){
@@ -14,9 +14,10 @@ for (i in 1:3){
     }
   }
 
-这种用法在linux上也用到过，for (i in ""){},感觉比较能理解
 
-案例二：
+#这种用法在linux上也用到过，for (i in ""){},感觉比较能理解
+
+#案例二：
 
 test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
   gene_up=unique(gene_up)
@@ -35,6 +36,7 @@ test_kegg <- function(gene_up,pro='shTRA2A-shNC'){
 }
 
 test_kegg(gene_up,pro = 'ipe')
+
 
 ##试了一下，可以运行，暂时先体会这两种方法，可以减少非常多的无效代码
 
@@ -66,11 +68,13 @@ genomicElementDistribution(peaks,
 dev.off()
 }
 
+
 #######apply循环的使用#######
 #######这种循环对于你操作矩阵至关重要！######
 
 f<-function(x) sum(x > 0 & !is.na(x))
 apply(fc,1,f)####1为行，2为列，此处计算fc矩阵中每一行大于零且不为na的值的数目
+
 
 #######进阶实例########
 ######使用poolr包的stouffer函数对p矩阵的每一行进行p值的合并######
@@ -78,6 +82,7 @@ apply(fc,1,f)####1为行，2为列，此处计算fc矩阵中每一行大于零�
 library('poolr')
 f<-function(x) stouffer(as.numeric(x[!is.na(as.numeric(unlist(x)))]))$p
 allgene$integrateP<-apply(p,1,f)
+
 
 ######解决了你一直想解决的一些问题######
 f <-function(x) unlist(strsplit(x$experiment_title,';'))[1]
@@ -87,6 +92,7 @@ f <-function(x) unlist(strsplit(x['experiment_title'],';'))[1]
 list2$plate <-apply(list2,1,f)
 ####这样就可以取得任意封号前的字符了，换成'_',或者其他什么也可以操作，解决了一个大麻烦#####
 
+
 #####判断句#####
 #####基本的使用方法是，ifelse(对象,yes,no)######
 #####此处的应用是，对于diff矩阵，如果v1，v2同时为0或同时为翻译，则输出‘no change’，若不则进行下一步的判断。在下一步的判断中，若v1为0，v2为翻译，则输出‘turn-on’，否则输出‘turn-off’########
@@ -94,6 +100,7 @@ list2$plate <-apply(list2,1,f)
 diff$change = ifelse((diff$V1==0 & diff$V2==0)|(diff$V1=='translating' & diff$V2=='translating'),'no change',ifelse(diff$V1==0 & diff$V2=='translating','turn-on','turn-off'))
 tra2a$Grade<-ifelse(rownames(tra2a) %in% who1$CGGA_ID,'WHO II',
                 ifelse(rownames(tra2a) %in% who2$CGGA_ID,'WHO III','WHO IV')) #活用可以精简代码，可以节省体力
+
 
 ########我一直想写一个自动画图的function，以下为第一次尝试##########
 plot <- function(data,gene,group,label_1){
@@ -128,6 +135,7 @@ plot(data = exp,gene = 'ENSG00000123009.4_120282483_120282716_77',group = group_
 #改了一下，我觉得好歹算个半自动画图函数，主要在文本的地方改了一下，现在不要老去调两个文本的位置了，方便了很多。针对不同的矩阵，还是需要调整许多地方，但是这种程度的调整的话，都还能接受吧。
 
 
+
 ########双循环和if的判断############
 for (i in 1:nrow(cortest)){
   for (j in 1:ncol(cortest)){
@@ -142,10 +150,29 @@ for (i in 1:nrow(cortest)){
 }           #写得很丑，for循环里面叠一个for循环就是很呆的写法，但是暂时管不了那么多了，随便吧。if的判断倒是之前没写过的代码，其实还挺容易理解的。
 
 
+
 ###############if判断句############
 seq_list$jud<-c(NA)
 for (i in 1:nrow(seq_list)){
 test<-unlist(strsplit(seq_list[i,2],'')) 
 jud<-if(isEmpty(grep('[*]',test))) {isEmpty(grep('[*]',test))} else {identical(grep('[*]',test),length(test))}
 seq_list[i,3]<-c(jud)}  #能不能把这个改成apply循环呢？感觉for循环还是太慢了
+
+
+
+##############给for循环加一个进度条###########
+library(progress)
+
+test<-as.data.frame(array(NA,c(100,2)))
+test$V1<-c(1:100)
+
+pb <- progress_bar$new(total = 100)
+for (i in 1:100) {
+  pb$tick()
+  test[i,2]<-c((test[i,1]*3/4+19)/3.1976)
+  Sys.sleep(1 / 100)
+}
+#不加Sys.sleep的话，就看不到进度条了不知道为什么，可能如果运行太快的话不会出现？
+
+
 
