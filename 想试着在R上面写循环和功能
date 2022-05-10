@@ -205,3 +205,29 @@ for (i in 1:nrow(up)){
  }
 }
 
+###################然后我发现对大量基因进行分析时会有几种情况导致报错##################
+for (i in 1:nrow(ms)){
+ gene <- substr(unlist(strsplit(ms[i,1],'_'))[1],1,15)
+ if(length(grep('NONHSAG',gene))>0) {ms[i,20]<-c(NA)} else{
+   if(length(grep(gene,rownames(surexp)))<1) {ms[i,20]<-c(NA)} else{   #一，这个基因太新了，在TCGA的矩阵中没有出现
+   gene_exp<-surexp[rownames(surexp)==gene,]
+   gene_sur<-survival
+   gene_sur$exp<-c(as.numeric(gene_exp[1,]))
+   gene_sur<-gene_sur[gene_sur$exp>0,]
+   
+   if (nrow(gene_sur)<4) {ms[i,20]<-c(NA)} else{                       #二，这个基因转录本表达太少了，不足以进行分析
+   gene_sur<-gene_sur[!is.na(gene_sur$OS)&
+                        !is.na(gene_sur$OS.time),]
+   matt<-gene_sur
+   med.exp<-quantile(matt$exp)
+   more.med.exp.index<-which(matt$exp>=med.exp[4])
+   less.med.exp.index<-which(matt$exp<=med.exp[2])
+   matt$status<-NA
+   matt$status[more.med.exp.index]<-paste0('High (',length(more.med.exp.index),')')
+   matt$status[less.med.exp.index]<-paste0('Low (',length(less.med.exp.index),')')
+   
+   surv_diff <- survdiff(Surv(OS.time,OS) ~ status, data = matt)
+   p.value <- 1 - pchisq(surv_diff$chisq, length(surv_diff$n) -1)
+   ms[i,20]<-c(p.value)
+ }}}
+}    #考虑这几种情况，又多加了几次判断，水多了加面面多了加水，差不多就是这种感觉
