@@ -175,4 +175,33 @@ for (i in 1:100) {
 #不加Sys.sleep的话，就看不到进度条了不知道为什么，可能如果运行太快的话不会出现？
 
 
+#############一个示例,批量的计算基因对癌症生存的影响#################
+library(survminer)
+library(survival)
+library(ggpubr)
+library(gridExtra)
+
+for (i in 1:nrow(up)){
+ gene <- substr(unlist(strsplit(up[i,1],'_'))[1],1,15)
+ if(length(grep('NONHSAG',gene))>0) {up[i,20]<-c('NA')} else{    #因为含有NONCODE来源的基因，所以在这里写了一个判断句，如果遇到NONCODE基因则输出“NA”
+   gene_exp<-surexp[rownames(surexp)==gene,]                     #else里面才是正文，
+   gene_sur<-survival
+   gene_sur$exp<-c(as.numeric(gene_exp[1,]))
+   gene_sur<-gene_sur[gene_sur$exp>0,]
+   
+   gene_sur<-gene_sur[!is.na(gene_sur$OS)&
+                        !is.na(gene_sur$OS.time),]
+   matt<-gene_sur
+   med.exp<-quantile(matt$exp)
+   more.med.exp.index<-which(matt$exp>=med.exp[4])                #依据四分位数判断表达的高低
+   less.med.exp.index<-which(matt$exp<=med.exp[2])
+   matt$status<-NA
+   matt$status[more.med.exp.index]<-paste0('High (',length(more.med.exp.index),')')
+   matt$status[less.med.exp.index]<-paste0('Low (',length(less.med.exp.index),')')
+   
+   surv_diff <- survdiff(Surv(OS.time,OS) ~ status, data = matt)
+   p.value <- 1 - pchisq(surv_diff$chisq, length(surv_diff$n) -1)
+   up[i,20]<-c(p.value)
+ }
+}
 
