@@ -426,4 +426,14 @@ ggplot(chr_inf, aes(x=reorder(Var1,Freq), weight = Freq, fill = group))+
   scale_fill_manual(values=met.brewer('Hiroshige',n=4))
 dev.off()
 
+###############累积曲线图，有时候箱线表现出来不怎么好看的话，用累积曲线或许能有好的效果（？）############
+
+ggplot(immu, aes(neoantigen, colour = group)) + 
+  stat_ecdf(geom="smooth", se=F, size=1.2)+   #主要算法就是在这一行
+  theme_bw(base_size = 18) +
+  theme(legend.position='right',          #c(.25,.75),
+        panel.grid = element_blank()) +
+  labs(x="Immunogenicity Score", y="ECDF") + 
+  scale_color_manual(values=rev(met.brewer("Hokusai1", 7)[c(6,5,3)]))
+
 
