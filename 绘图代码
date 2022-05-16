@@ -190,6 +190,16 @@ plot_ly(platform, labels = ~Var1, values = ~Freq, type = 'pie',textposition = 'o
 
 ggplotly(p=p) #可以将ggplot的对象转换为plotly的对象，利用plotly的可交互性，可以方便获取许多信息
 
+#############我居然没记录过这个饼图代码################
+mis_val<-as.data.frame(table(mstab$mis_val))
+percent <- round(mis_val$Freq/sum(mis_val$Freq)*100, 1)
+label <- paste(mis_val$Var1,"(", percent, "% )") #, mis_val$Freq
+
+library('MetBrewer')
+pdf("mis_val.pdf",width = 9,height = 6)
+pie(mis_val$Freq,border="white", col=met.brewer('VanGogh1',n=7,type = 'discrete')[c(1,3,5,7)], label=label) #,main = 'Source of protein (or peptide)' #还没想好标题是什么
+dev.off() #这个能用，但是不太好用，还不知道该怎么调（有时候注释全挤到一团了），但我又确确实实用得挺多的
+
 ###########PCA图##########
 ###########我现在喜欢用DEseq包里的函数来画，因为自带标准化，后面也可以用ggplot来美化图片#######
 library(DESeq2)
