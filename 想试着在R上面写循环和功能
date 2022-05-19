@@ -232,5 +232,27 @@ for (i in 1:nrow(ms)){
  }}}
 }    #考虑了这几种情况，又多加了几次判断，水多了加面面多了加水，写这类的代码差不多就是这种感觉
 
+#########################写得好丑这样的代码，完了还有五十行报错，我真是##########
+for (i in 1:nrow(allindex)){
+  name_bef<-allindex[i,1]
+  if(length(grep('CNC_N',name_bef))>0) { #如果来自CNC
+    if(length(unlist(strsplit(name_bef,'_')))==4){
+      source<-paste0(unlist(strsplit(name_bef,'_'))[2],'_',unlist(strsplit(name_bef,'_'))[3],'_',unlist(strsplit(name_bef,'_'))[4])
+      inf<-cncdb[grep(source,cncdb$cncRNAdb.ID),]
+      allindex$adj_name[i]<-paste0(unlist(strsplit(name_bef,'_'))[1],'_',inf$Start,'_',inf$End,'_',source)
+      } else{source<-paste0(unlist(strsplit(name_bef,'_'))[3],'_',unlist(strsplit(name_bef,'_'))[4],'_',unlist(strsplit(name_bef,'_'))[5])
+      inf<-cncdb[grep(source,cncdb$cncRNAdb.ID),]
+      allindex$adj_name[i]<-paste0(unlist(strsplit(name_bef,'_'))[1],'-',unlist(strsplit(name_bef,'_'))[2],'_',inf$Start,'_',inf$End,'_',source)
+    }
+  } else {
+    if(length(grep('SPROHSA',name_bef))>0) { #如果来自smprot
+      source<-unlist(strsplit(name_bef,'_'))[2]
+      inf<-smprotdb[smprotdb$peak==source,]
+      allindex$adj_name[i]<-paste0(unlist(strsplit(name_bef,'_'))[1],'_',inf$start,'_',inf$end,'_',source)
+    } else{
+      allindex$adj_name[i]<-allindex$name[i]
+    }
+  }
+}
 
 
