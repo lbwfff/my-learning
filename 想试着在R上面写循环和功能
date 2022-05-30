@@ -1,4 +1,12 @@
-####主要还是为了节省劳动力吧
+####我觉得现阶段限制自己使用R语言处理数据速度的因素之一就是不能较好的使用merge函数，稍微会一点都会帮助许多，至少不用手动去match####
+test1<-data.frame(A=c('1','2','1','3'),
+                     B=c(rep(NA,4)))
+test2<-data.frame(A=c('1','2','3'),
+                  C=c('A','B','C'))
+merge(test1,test2)
+
+
+####学习循环是为了节省劳动力
 
 #案例一：
   n1= c('gene_up','gene_down','gene_diff')
