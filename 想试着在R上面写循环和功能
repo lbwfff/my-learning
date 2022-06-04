@@ -100,6 +100,9 @@ f <-function(x) unlist(strsplit(x['experiment_title'],';'))[1]
 list2$plate <-apply(list2,1,f)
 ####这样就可以取得任意封号前的字符了，换成'_',或者其他什么也可以操作，解决了一个大麻烦#####
 
+####除了拆开，也可以合起来，代码更加简单####
+protein<-paste0(protein,collapse = ';')
+
 
 #####判断句#####
 #####基本的使用方法是，ifelse(对象,yes,no)######
