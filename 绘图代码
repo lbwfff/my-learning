@@ -312,6 +312,31 @@ scatterplot3d(miceimpexp_new[,(1:3)],angle=55,color=colors,
 legend("topright",legend = levels(miceimpexp_new$group2),col = colors.lib,pch = shapes.lib,inset = -0.08,xpd = T,horiz = F)
 dev.off() 
 
+##############自己手动算PCA的话，就感觉很慢，用函数的话就快很多不知道为什么##############
+library("FactoMineR")
+library("factoextra")
+
+df=as.data.frame(t(datExpr))
+dat.pca <- PCA(df, graph = F) #这个算出来感觉和MDS的分布差不多
+testp<-fviz_pca_ind(dat.pca,
+             geom.ind = "point", # show points only (nbut not "text")
+             col.ind = group_list, # color by groups
+             palette = c(met.brewer("Cassatt1")[c(2,6)]),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Groups") 
+
+testp+theme(panel.grid.minor = element_blank())+
+  coord_fixed() + theme_bw() + 
+  theme_classic(base_size = 18)+ 
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  xlab(paste0("PC1: ",'7.9',"% variance")) +
+  ylab(paste0("PC2: ",'3.3',"% variance")) +  #有几个问题，首先是，散点的大小，形状要怎么调整？其次两轴的变量要怎么提取？
+  coord_fixed()
+
 ##############2DPCA（散点图）###############
 library('ggplot2')
 library('MetBrewer')
