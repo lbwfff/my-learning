@@ -420,6 +420,29 @@ Heatmap(mhcarray,col = col_fun1,
 #也可以直接+bar1来添加注释条
 #除了barplot，还有anno_lines，anno_boxplot，anno_histogram，anno_density啥的
 
+####################现在主要在用ComplexHeatmap，虽然能做的要更多，但是很多基础的功能要很多步骤才能实现，有点头大############3
+library('ComplexHeatmap') 
+library('circlize')
+mat_scaled = t(scale(t(pheatmap))) #自己手动在那里归一化
+
+df <- data.frame(group = c(rep("P", 96), rep("T", 96)))
+ha <- HeatmapAnnotation(df = df, col = list(group = c("P" =  "red", "T" = "blue"))) #分组的注释条，没找到简单实现的方法，相当于花了一个热图作为注释
+
+path<-paste0('./pheatmap/',ncorfs,'.pdf')
+hei<-c(nrow(mat_scaled)*(7/6)) #因为批量出图，所以对高度做了一些小修改
+col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Homer1")[7],'white',met.brewer("Signac")[4])) #对颜色的控制是我一直觉得比pheatmap简单的地方
+
+pdf(path,width = 8,height = 6)
+print(Heatmap(mat_scaled,
+        na_col = 'grey', #对NA值的处理
+        col = col_fun1,
+        width = unit(14, "cm"),height = unit(hei, "cm"),
+        cluster_columns = FALSE,cluster_rows =F,
+        show_row_dend = FALSE,show_column_names =F,
+        show_heatmap_legend = F,row_names_side = "left",
+        top_annotation = ha))
+dev.off()
+
 ####################批量出差异分析的图##############
 library('ggplot2')
 library('ggpubr')
