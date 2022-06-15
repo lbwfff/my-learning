@@ -498,4 +498,41 @@ ggplot(immu, aes(neoantigen, colour = group)) +
   labs(x="Immunogenicity Score", y="ECDF") + 
   scale_color_manual(values=rev(met.brewer("Hokusai1", 7)[c(6,5,3)]))
 
+###############生存分析#######################
+library(survminer)
+library(survival)
+library(ggpubr)
+library(gridExtra)
 
+dat<-line1_sv_t
+
+mat<-dat[!is.na(dat$Total.follow.up.period..m.)&
+           !is.na(dat$Died.of.recurrence),]
+matt<-mat
+med.exp<-median(matt$exp)
+more.med.exp.index<-which(matt$exp>=med.exp)
+less.med.exp.index<-which(matt$exp< med.exp)
+matt$status<-NA
+matt$status[more.med.exp.index]<-paste0('High (',length(more.med.exp.index),')')
+matt$status[less.med.exp.index]<-paste0('Low (',length(less.med.exp.index),')')
+
+s.fit<-survfit(Surv(Total.follow.up.period..m.,Died.of.recurrence) ~ status, data = matt)
+s.diff<-survdiff(Surv(Total.follow.up.period..m.,Died.of.recurrence) ~ status, data = matt)
+
+sdata.plot3<-ggsurvplot(s.fit, data=matt,
+                        palette="Pastel1",
+                        pval = TRUE,pval.method = TRUE, conf.int = TRUE,
+                        xlab = 'Time (Month)',ggtheme = theme_survminer(),
+                        surv.median.line = 'hv',
+                        title=paste0("LINE-1 survival"))
+
+pdf("Line-1-survival.pdf",width = 8,height = 6)
+sdata.plot3$plot+
+  theme_classic(base_size = 18)+ 
+  theme(legend.position = "none")+
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())
+dev.off() 
