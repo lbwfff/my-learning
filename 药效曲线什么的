@@ -23,7 +23,7 @@ fit_logistic4 <- drda(y ~ x, data = test_data, mean_function = "logistic4")
 fit_logistic5 <- drda(y ~ x, data = test_data, mean_function = "logistic5")
 fit_gompertz <- drda(y ~ x, data = test_data, mean_function = "gompertz")
 anova(fit_logistic2, fit_logistic4, fit_logistic5, fit_gompertz)
-####选取一个最好的模型做曲线
+####选取一个最好的模型做曲线（AIC值最小）
 
 fit1 <- drda(y ~ x, data = test_data, mean_function = "logistic2")
 pdf(file = "U87 Cell growth.pdf",width = 8,height = 6)
