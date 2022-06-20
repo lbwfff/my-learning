@@ -391,19 +391,23 @@ as.ggplot(~plot(fit1,xlab = "log10 (Dose)", ylab = "Cell growth",ylim = c(-0.1, 
                         legend_location = "bottomleft",legend = c(paste0('AF'))))
 #但问题在于这样做并不能真正得到一个ggplot对象，没法进行美学上的调整，也不能在plot对象上加注释什么的
 
-pdf("test.pdf",width = 12,height = 6) #然后我发现可以这么画
-par(mfrow=c(1,2)) #一行二列
+pdf("test.pdf",width = 12,height = 6)
+par(mfrow=c(1,2),pin = c(5,5)) # mfrow后面接行列数，pin后接一张图的长宽比
 
-text=paste0("IC50=",round(exp(as.data.frame(coef(fit2))[rownames(as.data.frame(coef(fit2)))=='phi',]),3),"nmol/L")
-plot(fit1,xlab = "log10 (Dose)", ylab = "Cell growth",ylim = c(-0.1, 1.1),  #第一张
+text1=paste0("IC50=",round(exp(as.data.frame(coef(fit1))[rownames(as.data.frame(coef(fit2)))=='phi',]),3),"nmol/L")
+
+plot(fit1,xlab = "log10 (Dose)", ylab = "Cell growth",ylim = c(-0.1, 1.1),
      legend_location = "bottomleft",legend = c(paste0('KY')))
-legend('topright',legend=text, bty ="n", pch=NA) 
+legend('topright',legend=text1, bty ="n", pch=NA) 
 
-text=paste0("IC50=",round(exp(as.data.frame(coef(fit2))[rownames(as.data.frame(coef(fit2)))=='phi',]),3),"nmol/L")
-plot(fit1,xlab = "log10 (Dose)", ylab = "Cell growth",ylim = c(-0.1, 1.1),  #第二张
+text2=paste0("IC50=",round(exp(as.data.frame(coef(fit2))[rownames(as.data.frame(coef(fit2)))=='phi',]),3),"nmol/L")
+
+plot(fit2,xlab = "log10 (Dose)", ylab = "Cell growth",ylim = c(-0.1, 1.1),
      legend_location = "bottomleft",legend = c(paste0('AF')))
-legend('topright',legend=text, bty ="n", pch=NA) 
+legend('topright',legend=text2, bty ="n", pch=NA) 
 dev.off()
+
+
 
 #########################################
            
