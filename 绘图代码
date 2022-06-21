@@ -448,6 +448,7 @@ Heatmap(mhcarray,col = col_fun1,
 #在热图上方扩展使用HeatmapAnnotation()函数
 #也可以直接+bar1来添加注释条
 #除了barplot，还有anno_lines，anno_boxplot，anno_histogram，anno_density啥的
+#rect_gp = gpar(col= "grey") 可以设置cell轮廓的细节
 
 ####################现在主要在用ComplexHeatmap，虽然能做的要更多，但是很多基础的功能要很多步骤才能实现，有点头大############3
 library('ComplexHeatmap') 
