@@ -566,3 +566,59 @@ sdata.plot3$plot+
         panel.border = element_blank(),
         legend.title = element_blank())
 dev.off() 
+
+
+########################环形热图###########################################
+#学起来很痛苦，但是用起来很有意思，有时间再注释
+
+load('~/biodata/circpheat.RData')
+
+allindex<-allindex[allindex$adj_genetype!='Noncode',]
+allindex$comm<-as.numeric(allindex$comm)
+allindex$chrom<-substr(allindex$chrom, 4, 10)
+allindex$deg_group<-as.numeric(allindex$deg_group)
+
+mat<-allindex[,c(7,8,11,12)]
+mat<-as.matrix(mat)
+
+split <- factor(allindex$chrom, levels = c('1','2','3','4','5','6','7',
+                                           '8','9','10','11','12','13','14',
+                                           '15','16','17','18','19','20','21',
+                                           '22','X','Y'))
+
+library('ComplexHeatmap')
+library('circlize')
+
+col_fun1 = colorRamp2(c(0,1), c('white',met.brewer("Signac")[8])) #ComplexHeatmap使用类似的方法来调控色条，感觉比pheatmap要方便一些？
+col_fun2 = colorRamp2(c(0,1), c('white',met.brewer("Signac")[13]))
+
+pdf('~/share/Ran/CIRCPHEAT.pdf',width = 8,height = 8)
+
+circos.par(start.degree = 90, gap.degree = 10,gap.after = c(3))
+# circos.par(gap.after = c(10))
+
+circos.heatmap(mat[,1],col = col_fun1 ,rownames.side = "none",
+               split =split,
+               dend.side='none',na.col = 'white',cluster = F) #,show.sector.labels = TRUE
+circos.track(track.index = get.current.track.index(), panel.fun = function(x, y) {
+  circos.text(CELL_META$xcenter, CELL_META$cell.ylim[2] + convert_y(2, "mm"), 
+              paste0(CELL_META$sector.index),
+              facing = "bending.inside", cex = 0.8,front='bond',
+              adj = c(0.5,0), niceFacing = TRUE)}, bg.border = NA)
+
+circos.heatmap(mat[,2], col = col_fun2 ,rownames.side = "none",
+               split =split,
+               dend.side='none',na.col = 'white',cluster = F,cell_width=8)
+
+col_fun3 = colorRamp2(c(0,1), c('white',met.brewer("Cassatt2")[4])) #ComplexHeatmap使用类似的方法来调控色条，感觉比pheatmap要方便一些？
+circos.heatmap(mat[,3], col = col_fun3 ,rownames.side = "none",
+               split =split,
+               dend.side='none',na.col = 'white',cluster = F,cell_width=8)
+
+col_fun4 = colorRamp2(c(-1,0,1), c(met.brewer("Homer1")[7],'white',met.brewer("Signac")[4]))
+circos.heatmap(mat[,4], col = col_fun4 ,rownames.side = "none",
+               split =split,
+               dend.side='none',na.col = 'white',cluster = F,cell_width=8)
+
+dev.off()
+circos.clear()
