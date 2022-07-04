@@ -161,7 +161,7 @@ for (i in 1:4){
     
     path<-paste0(names(list)[i],'_enrich.pdf')
     pdf(path,width = 15,height = 6)
-    wrap_plots(p,nrow=2) 
+    print(wrap_plots(p,nrow=2)) 
     dev.off()
     
     path<-paste0(names(list)[i],'_enrich.xlsx')
