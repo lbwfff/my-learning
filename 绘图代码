@@ -235,11 +235,13 @@ write.table(peak, file = "peak.bed", sep = "\t", row.names = F, col.names = F, q
 peak<-toGRanges('peak.bed',format=c('BED'))
 
 peak$sample <- c(rep("shNC",nrow(shNC)), rep("shTRA2A", nrow(shTRA2A)))
-meta<-metaGeneProfile(object = peak,annotation= 'gencode.v35.annotation.gff3',group = 'sample') #####这就是我说这个包呆的原因
+meta<-metaGeneProfile(object = peak,annotation= 'gencode.v35.annotation.gff3',
+                      group = 'sample',include_intron = TRUE) #####考虑内含子的距离的话，会更加好看不知道为什么
 meta[[2]] + ggtitle("Meta Profile")+
   theme(legend.position = "right")+
   theme_classic()+
-  scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) ######但优点是高度的可定制化
+  scale_color_manual(values = c("#0073C2FF", "#EFC000FF"))+ ######但优点是高度的可定制化
+  scale_y_continuous(expand = c(0,0))   #把横轴从零开始
 
 ###########祖传火山图，陪伴我整个生涯的代码，颜色还需要优化一下，其他的地方暂时没什么不满意的#########
 library('ggrepel')
