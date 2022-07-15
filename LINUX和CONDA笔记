@@ -42,6 +42,8 @@ bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-gz SRR7366868_trimmed.der
 使用bowtie2去除rRNA，一堆莫名其妙的参数，我还没有较好的理解
 bowtie2 -x ~/biodata/index/rRNA/rRNA.homo_sapiens --un-conc-gz Input-2-trimmed.derRNA.fq.gz -1 Input-2_L1_702D01.R1_val_1.fq.gz -2 Input-2_L1_702D01.R2_val_2.fq.gz -p 15 -S input-2-rRNA.mapped.sam 2>input-2-trimmed.fq.gz.log
 双端的
+/home/leelee/tools/bbtools/bbmap/bbduk.sh ref=/home/leelee/biodata/index/GCF/ncbi_dataset/allmycoplasma.fasta threads=18 ordered=t k=31 in=./ADPR/B0h-A-1_L4_704D04.R1_val_1.fq.gz in2=./ADPR/B0h-A-1_L4_704D04.R2_val_2.fq.gz out=B0H-A_bbduk_.R1.fq out2=B0H-A_bbduk_.R2.fq outm=B0H-A_bbduk_.bad.R1.fq outm2=B0H-A_bbduk_.bad.R2.fq
+#用bbduk去除污染reads，速度比bowtie2要快得多
 
 cutadapt -j 4 -a GATCGGAAG -a AGATCGGAAG -o 224.fastq SRR11554224.fastq
 不怎么用cutadapt
