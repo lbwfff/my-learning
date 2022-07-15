@@ -63,7 +63,17 @@ samtools sort -@ 15 -o "$i".positionsort.bam "$i".fixmate.bam
 samtools markdup -r -@ 15 "$i".positionsort.bam "$i".markdup.bam
 samtools index "$i".markdup.bam
 done
-对sam（bam）文件的处理，排序，去pcr重复什么的
+#对sam（bam）文件的处理，排序，去pcr重复什么的
+
+for i in M2_IP M2_Input NC_IP NC_Input T1_IP T1_Input
+do
+#samtools view -bSq 10 -@ 15 -F 4 -F 256 "$i".sam -o "$i".bam
+#samtools sort -@ 15 -n -o "$i".sorted.bam "$i".bam
+#samtools fixmate "$i".sorted.bam "$i".fixmate.bam
+#samtools sort -@ 15 -o "$i".positionsort.bam "$i".fixmate.bam
+samtools rmdup -S "$i".positionsort.bam "$i".markdup.bam
+samtools index "$i".markdup.bam
+done   #不知道是不是因为版本不同了，以前这一部分的代码不能直接用了，这是改完之后的
 
 
 bamCoverage -b 633.sort.bam -o shNC-IP.bw -bs 20 --normalizeUsing BPM --skipNAs --ignoreDuplicates
