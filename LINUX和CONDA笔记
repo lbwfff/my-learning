@@ -51,6 +51,8 @@ trim_galore --paired --quality 20 --length 30  -o ../clean CRR042286_f1.fastq CR
 双端
 trim_galore --quality 20 --length 35 --paired -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -a2 AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT raw/Input-2_L1_702D01.R1.fastq.gz raw/Input-2_L1_702D01.R2.fastq.gz -j 17 --stringency 1 --three_prime_clip_R1 3 --three_prime_clip_R2 3 --clip_R1 8 --clip_R2 8
 因为reads比较长，所以刀法比较迪拜
+cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o sham2-input.cutadapt.1.fastq -psham2-input.cutadapt.2.fastq ./OVX/sham2-Input_L2_701D02.R1.fastq.gz ./OVX/sham2-Input_L2_701D02.R2.fastq.gz -j 18 -q 20 -m 35:35
+#我遇到有一组数据，用trim_galore会报错不知道为什么，但是用cutadapt就能正常跑出来
 
 for i in Input-1 Input-2 Abcam-1 Abcam-2 CST-1 CST-2 SYSY-1 SYSY-2
 do
