@@ -26,6 +26,8 @@ sudo su#权限
 环境变量：（1）：export PATH=/home/uusama/mysql/bin:$PATH #当前终端有用
 （2）：vim /etc/profile 
 
+ascp -l 100M -QT -k 2 -i /home/leelee/miniconda3/envs/p3/etc/asperaweb_id_dsa.openssh anonftp@ftp.ncbi.nlm.nih.gov:/blast/db/FASTA/nt.gz ./ #拉跨是真的拉跨，但某些时候可能有奇效？谁知道呢
+
 
 #!bin/bash
 脚本的抬头
