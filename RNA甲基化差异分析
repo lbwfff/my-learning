@@ -1,3 +1,54 @@
+############################################################
+#diffbind差异分析流程
+BiocManager::install("DiffBind")
+library(DiffBind)
+
+sample<-as.data.frame(array(NA,c(6,11)))
+colnames(sample)<-c( "SampleID","Tissue", "Factor", "Condition" ,"Treatment",
+                    "Replicate", "bamReads", "ControlID", "bamControl", "Peaks",
+                    "PeakCaller")
+sample$SampleID<-c('OVX2_IP','OVX3_IP','OVX5_IP','sham2_IP','sham3_IP','sham5_IP')
+sample$Tissue<-c('tissue','tissue','tissue','tissue','tissue','tissue')
+sample$Factor<-c('OVX','OVX','OVX','sham','sham','sham')
+sample$Condition<-c('OVX','OVX','OVX','sham','sham','sham')
+sample$Replicate<-c('1','2','3','1','2','3')
+sample$bamReads<-c('~/share/7-14_seq/OVX/mapping/OVX2-IP.markdup.bam',
+                   '~/share/7-14_seq/OVX/mapping/OVX3-IP.markdup.bam',
+                   '~/share/7-14_seq/OVX/mapping/OVX5-IP.markdup.bam',
+                   '~/share/7-14_seq/OVX/mapping/sham2-IP.markdup.bam',
+                   '~/share/7-14_seq/OVX/mapping/sham3-IP.markdup.bam',
+                   '~/share/7-14_seq/OVX/mapping/sham5-IP.markdup.bam')
+sample$ControlID<-c('OVX2_input','OVX3_input','OVX5_input','sham2_input','sham3_input','sham5_input')
+sample$bamControl<-c('~/share/7-14_seq/OVX/mapping/OVX2-input.markdup.bam',
+                     '~/share/7-14_seq/OVX/mapping/OVX3-input.markdup.bam',
+                     '~/share/7-14_seq/OVX/mapping/OVX5-input.markdup.bam',
+                     '~/share/7-14_seq/OVX/mapping/sham2-input.markdup.bam',
+                     '~/share/7-14_seq/OVX/mapping/sham3-input.markdup.bam',
+                     '~/share/7-14_seq/OVX/mapping/sham5-input.markdup.bam')
+sample$Peaks<-c('~/share/7-14_seq/OVX/callpeak/ovx2/Mod.bed',
+                '~/share/7-14_seq/OVX/callpeak/OVX3/Mod.bed',
+                '~/share/7-14_seq/OVX/callpeak/OVX5/Mod.bed',
+                '~/share/7-14_seq/OVX/callpeak/sham2/Mod.bed',
+                '~/share/7-14_seq/OVX/callpeak/sham3/Mod.bed',
+                '~/share/7-14_seq/OVX/callpeak/sham5/Mod.bed')
+sample$PeakCaller<-c(rep('bed',6))
+
+OVX <- dba(sampleSheet=sample,
+           config=data.frame(AnalysisMethod=DBA_DESEQ2,th=0.1,
+                             DataType=DBA_DATA_GRANGES, RunParallel=F,
+                             minQCth=15, fragmentSize=125,
+                             bCorPlot=FALSE, reportInit="DBA",
+                             bUsePval=FALSE, design=TRUE,
+                             doBlacklist=TRUE, doGreylist=TRUE))
+
+OVX <- dba.count(OVX,bParallel=F)
+OVX <- dba.normalize(OVX)
+
+load('~/share/7-14_seq/OVX/callpeak/DIFFBIND.RData')
+OVX <- dba.contrast(OVX,contrast=c('Condition',"OVX","sham"))
+OVX <- dba.analyze(OVX)
+OVX.DB <- dba.report(OVX) #这些针对CHIP_SEQ做的工具好像都不care正负链的问题？，不是很懂
+
 ###################################################
 #RADAR的差异分析流程
 devtools::install_github("scottzijiezhang/RADAR")
@@ -32,25 +83,24 @@ res <- results(radar)
 #################################################
 #exomepeak2的差异分析
 
-# library('exomepeak2')
-# 
-# exomePeak2(bam_ip = c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-IP.markdup.bam',
-#                       '/home/leelee/share/7-14_seq/OVX/mapping/sham3-IP.markdup.bam',
-#                       '/home/leelee/share/7-14_seq/OVX/mapping/sham5-IP.markdup.bam'),
-#            bam_input =c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-input.markdup.bam',
-#                         '/home/leelee/share/7-14_seq/OVX/mapping/sham3-input.markdup.bam',
-#                         '/home/leelee/share/7-14_seq/OVX/mapping/sham5-input.markdup.bam'),
-#            bam_ip_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-IP.markdup.bam',
-#                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-IP.markdup.bam',
-#                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-IP.markdup.bam'),
-#            bam_input_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-input.markdup.bam',
-#                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-input.markdup.bam',
-#                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-input.markdup.bam'),
-#            genome = 'mm39', txdb=txdb,
-#            p_cutoff = 0.01,
-#            peak_calling_mode='exon',
-#            log2FC_cutoff = 1,
-#            parallel = TRUE,fragment_length=150,
-#            correct_GC_bg = TRUE,
-#            save_dir = "~/share/7-14_seq/OVX/callpeak/deg") 
-#什么也做不出来是为什么？callpeak后也是找不到基序，虽然峰数量有那么多。
+library('exomepeak2')
+ 
+ exomePeak2(bam_ip = c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-IP.markdup.bam',
+                       '/home/leelee/share/7-14_seq/OVX/mapping/sham3-IP.markdup.bam',
+                       '/home/leelee/share/7-14_seq/OVX/mapping/sham5-IP.markdup.bam'),
+            bam_input =c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-input.markdup.bam',
+                         '/home/leelee/share/7-14_seq/OVX/mapping/sham3-input.markdup.bam',
+                         '/home/leelee/share/7-14_seq/OVX/mapping/sham5-input.markdup.bam'),
+            bam_ip_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-IP.markdup.bam',
+                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-IP.markdup.bam',
+                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-IP.markdup.bam'),
+            bam_input_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-input.markdup.bam',
+                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-input.markdup.bam',
+                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-input.markdup.bam'),
+            genome = 'mm39', txdb=txdb,
+            p_cutoff = 0.01,
+            peak_calling_mode='exon',
+            log2FC_cutoff = 1,
+            parallel = TRUE,fragment_length=150,
+            correct_GC_bg = TRUE,
+            save_dir = "~/share/7-14_seq/OVX/callpeak/deg") 
