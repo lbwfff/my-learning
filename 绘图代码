@@ -624,3 +624,11 @@ circos.heatmap(mat[,4], col = col_fun4 ,rownames.side = "none",
 dev.off()
 circos.clear() #停止绘图，画完不停的话可能会报错什么的
                 #感觉画四个环又有点臃肿了，有时间慢慢调整吧
+                
+########################################韦恩################################
+library(ggvenn)
+
+venn<-list(shNC=c(shNC$adj_geneid),shMETTL3=c(shMETTL3$adj_geneid))
+
+p<-ggvenn(venn,fill_color = c("#0073C2FF", "#EFC000FF"),  #,"#CD534CFF"
+          stroke_size = 0.5, set_name_size = 4)
