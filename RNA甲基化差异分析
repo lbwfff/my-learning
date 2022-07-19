@@ -1,0 +1,56 @@
+###################################################
+#RADAR的差异分析流程
+devtools::install_github("scottzijiezhang/RADAR")
+library("RADAR")
+
+radar <- countReads(
+  samplenames=c('OVX2','OVX3','OVX5','sham2','sham3','sham5'),gtf='~/biodata/annotation/gencode.vM27.annotation.gtf', 
+  fragmentLength = 150,
+  bamFolder='~/share/7-14_seq/OVX/mapping/RADAR',outputDir='~/share/7-14_seq/OVX/mapping/RADAR/',
+  modification = "m6A",
+  binSize = 50,strandToKeep = "opposite",
+  paired = T,threads = 5,saveOutput = T
+) #核心数太多的话，会因为内存不够而低效
+
+save(radar,file = '~/share/7-14_seq/OVX/mapping/RADAR/radar.RData')
+radar <-readRDS("~/share/7-14_seq/OVX/mapping/RADAR/MeRIP_readCounts.RDS")
+radar <- normalizeLibrary( radar )
+
+sizeFactors(radar)
+radar <- adjustExprLevel( radar )
+
+variable(radar) <- data.frame(group = c("OVX","OVX","OVX","sham","sham","sham"))
+radar <- filterBins(radar ,minCountsCutOff = 5)
+
+radar <- diffIP_parallel(radar, thread = 10)
+head(radar@test.est)
+testest<-radar@test.est
+radar <- reportResult(radar, cutoff = 0.95, Beta_cutoff = 0.1 ) 
+radar@mergedBins #我猜它的结果是一样的，就是并没有找到有差异的位点
+res <- results(radar)
+
+#################################################
+#exomepeak2的差异分析
+
+# library('exomepeak2')
+# 
+# exomePeak2(bam_ip = c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-IP.markdup.bam',
+#                       '/home/leelee/share/7-14_seq/OVX/mapping/sham3-IP.markdup.bam',
+#                       '/home/leelee/share/7-14_seq/OVX/mapping/sham5-IP.markdup.bam'),
+#            bam_input =c('/home/leelee/share/7-14_seq/OVX/mapping/sham2-input.markdup.bam',
+#                         '/home/leelee/share/7-14_seq/OVX/mapping/sham3-input.markdup.bam',
+#                         '/home/leelee/share/7-14_seq/OVX/mapping/sham5-input.markdup.bam'),
+#            bam_ip_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-IP.markdup.bam',
+#                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-IP.markdup.bam',
+#                               '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-IP.markdup.bam'),
+#            bam_input_treated = c('/home/leelee/share/7-14_seq/OVX/mapping/OVX2-input.markdup.bam',
+#                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX3-input.markdup.bam',
+#                                  '/home/leelee/share/7-14_seq/OVX/mapping/OVX5-input.markdup.bam'),
+#            genome = 'mm39', txdb=txdb,
+#            p_cutoff = 0.01,
+#            peak_calling_mode='exon',
+#            log2FC_cutoff = 1,
+#            parallel = TRUE,fragment_length=150,
+#            correct_GC_bg = TRUE,
+#            save_dir = "~/share/7-14_seq/OVX/callpeak/deg") 
+#什么也做不出来是为什么？callpeak后也是找不到基序，虽然峰数量有那么多。
