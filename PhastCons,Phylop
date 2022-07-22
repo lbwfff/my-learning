@@ -46,3 +46,20 @@ for (i in 1:nrow(ribotricer)){
   ribotricer_bed$V11[i]<-paste0(coor$block_size,collapse = ',')
   ribotricer_bed$V12[i]<-paste0(coor$V2,collapse = ',')
 }
+
+########################################
+#把bed文件写成四份
+noncode_bed<-ribotricer_bed[grep('NONHSAT',ribotricer_bed$V4),]
+gencode_bed<-ribotricer_bed[-grep('NONHSAT',ribotricer_bed$V4),]
+noncode_neg_bed<-noncode_bed[noncode_bed$V6!='+',]
+noncode_pos_bed<-noncode_bed[noncode_bed$V6=='+',]
+gencode_neg_bed<-gencode_bed[gencode_bed$V6!='+',]
+gencode_pos_bed<-gencode_bed[gencode_bed$V6=='+',]
+
+write.table(noncode_neg_bed,file = 'noncode_neg.bed',row.names = F,col.names = F,quote = F,sep = '\t')
+write.table(noncode_pos_bed,file = 'noncode_pos.bed',row.names = F,col.names = F,quote = F,sep = '\t')
+write.table(gencode_neg_bed,file = 'gencode_neg.bed',row.names = F,col.names = F,quote = F,sep = '\t')
+write.table(gencode_pos_bed,file = 'gencode_pos.bed',row.names = F,col.names = F,quote = F,sep = '\t')
+
+####################################################################################################################
+#
