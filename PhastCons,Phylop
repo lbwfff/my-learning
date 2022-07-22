@@ -18,7 +18,6 @@
 #用R写的把ribotricer的输出改为有剪切位点的bed文件，smprot也同理可得
 
 ribotricer<-read.csv('ribotricer_coor.csv')
-
 ribotricer_bed<-as.data.frame(array(NA,c(126165,12)))
 for (i in 1:nrow(ribotricer)){
   ribotricer_bed$V1[i]<-ribotricer$chrom[i]
@@ -41,8 +40,9 @@ for (i in 1:nrow(ribotricer)){
   coor$V2<-as.numeric(coor$V2)
   coor$V3<-as.numeric(coor$V3)
   coor$block_size<-(coor$V3-coor$V2)
+  coor$V2<-(coor$V2-(as.numeric(unlist(strsplit(ribotricer$ORF_ID[i],'_'))[2])))
+  
   
   ribotricer_bed$V11[i]<-paste0(coor$block_size,collapse = ',')
   ribotricer_bed$V12[i]<-paste0(coor$V2,collapse = ',')
 }
-
