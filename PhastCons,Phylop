@@ -1,0 +1,16 @@
+#首先你得准备bed文件
+#bed文件的格式
+1-chrom - 染色体号; 例如，chr1，chrX。。。。。。。
+2-chromStart - feature在染色体上起始位置. 从0开始算，染色体上第一个碱基位置标记为0。
+3-chromEnd - feature在染色体上终止位置。染色体上前100个碱基片段的位置位置标记为：chromStart=0, chromEnd=100。 实际上，第100个碱基不属于当前片段中，当前片段的碱基应该是0-99。所以在BED文件中，起始位置从0开始，终止位置从1开始。
+4-name - BED行名，在基因组浏览器左边显示；
+5-score - 在基因组浏览器中显示的灰度设定，值介于0-1000；
+6-strand - 正负链标记. Either "." (=no strand) or "+" or "-".
+7-thickStart - feature起始位置(for example, the start codon in gene displays)。 When there is no thick part, thickStart and thickEnd are usually set to the chromStart position.
+8-thickEnd - feature编码终止位置 (for example the stop codon in gene displays).
+9-itemRgb - R,G,B (e.g. 255,0,0)值，当itemRgb 设置为 "On"，BED的行会显示颜色.
+10-blockCount - blocks (exons)数目.
+11-blockSizes - blocks (exons)大小列表，逗号分隔，对应于blockCount.
+12-blockStarts -blocks (exons)起始位置列表，逗号分隔，对应于blockCount.；这个起始位置是与chromStart的一个相对位置。
+
+#主要是11.12两列吧，因为我比较在意RNA的剪接所以需要写到12列，举个例子，10，11，12，列分别是，1，35，46，意思是有一个block，block的其实位置是46，block的长度为35个核苷酸
