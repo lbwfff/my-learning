@@ -14,3 +14,35 @@
 12-blockStarts -blocks (exons)起始位置列表，逗号分隔，对应于blockCount.；这个起始位置是与chromStart的一个相对位置。
 
 #主要是11.12两列吧，因为我比较在意RNA的剪接所以需要写到12列，举个例子，10，11，12，列分别是，1，35，46，意思是有一个block，block的其实位置是46，block的长度为35个核苷酸
+
+#用R写的把ribotricer的输出改为有剪切位点的bed文件，smprot也同理可得
+
+ribotricer<-read.csv('ribotricer_coor.csv')
+
+ribotricer_bed<-as.data.frame(array(NA,c(126165,12)))
+for (i in 1:nrow(ribotricer)){
+  ribotricer_bed$V1[i]<-ribotricer$chrom[i]
+  ribotricer_bed$V2[i]<-unlist(strsplit(ribotricer$ORF_ID[i],'_'))[2]
+  ribotricer_bed$V3[i]<-unlist(strsplit(ribotricer$ORF_ID[i],'_'))[3]
+  ribotricer_bed$V4[i]<-ribotricer$ORF_ID[i]
+  ribotricer_bed$V5[i]<-c(0)
+  ribotricer_bed$V6[i]<-ribotricer$strand[i]
+  ribotricer_bed$V7[i]<-unlist(strsplit(ribotricer$ORF_ID[i],'_'))[2]
+  ribotricer_bed$V8[i]<-unlist(strsplit(ribotricer$ORF_ID[i],'_'))[3]
+  ribotricer_bed$V9[i]<-c(0)
+  ribotricer_bed$V10[i]<-length(unlist(strsplit(ribotricer$coordinate[i],',')))
+  
+  coor<-as.data.frame(array(NA,c(length(unlist(strsplit(ribotricer$coordinate[i],','))),3)))
+  coor$V1<-unlist(strsplit(ribotricer$coordinate[i],','))
+  f <-function(x) unlist(strsplit(x['V1'],'-'))[1]
+  coor$V2<-apply(coor,1,f)
+  f <-function(x) unlist(strsplit(x['V1'],'-'))[2]
+  coor$V3<-apply(coor,1,f)
+  coor$V2<-as.numeric(coor$V2)
+  coor$V3<-as.numeric(coor$V3)
+  coor$block_size<-(coor$V3-coor$V2)
+  
+  ribotricer_bed$V11[i]<-paste0(coor$block_size,collapse = ',')
+  ribotricer_bed$V12[i]<-paste0(coor$V2,collapse = ',')
+}
+
