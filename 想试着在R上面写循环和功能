@@ -267,3 +267,51 @@ for (i in 1:nrow(allindex)){
 }
 
 
+##################################################################################
+#写了两个function比较以下fread和vroom的读取速度
+
+findribofile<-function(gene){
+  
+  list<-fread('~/share/ORFfind/ribotricer_genecode/cut/list.txt')
+  cache<-fread('~/share/ORFfind/ribotricer_genecode/cut/SRR10416857_cut.tsv')[1,]
+  cache$sample<-c(NA)
+  
+for (i in list$list.txt) {
+  path<-paste0('~/share/ORFfind/ribotricer_genecode/cut/',i)
+  ri<-fread(path)
+  ri<-ri[ri$gene_id==gene,]
+  ri$sample<-c(i)
+  cache<-rbind(cache,ri)
+  print(paste0('comp ',round((which(list$list.txt==i))/length(list$list.txt),2)*100,'%'))
+}
+  return(cache[-1,])
+}
+
+system.time(test<-findribofile('ENSG00000268034.1')) #user   system  elapsed 1502.012   32.815  768.757
+
+findribofile2<-function(gene){
+  
+  list<-vroom('~/share/ORFfind/ribotricer_genecode/cut/list.txt',delim = "\t")
+  cache<-vroom('~/share/ORFfind/ribotricer_genecode/cut/SRR10416857_cut.tsv',delim = "\t")[1,]
+  cache$sample<-c(NA)
+  
+  for (i in list$list.txt) {
+    path<-paste0('~/share/ORFfind/ribotricer_genecode/cut/',i)
+    ri<-vroom(path,delim = "\t")
+    ri<-ri[ri$gene_id==gene,]
+    ri$sample<-c(i)
+    cache<-rbind(cache,ri)
+    print(paste0('comp ',round((which(list$list.txt==i))/length(list$list.txt),2)*100,'%'))
+  }
+  return(cache[-1,])
+}
+
+system.time(test<-findribofile2('ENSG00000268034.1'))#user   system  elapsed  1367.137   33.669 1038.510 
+
+#用fread读取的话，340个文件，比vroom快一些。
+
+
+
+
+
+
