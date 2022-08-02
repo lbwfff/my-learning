@@ -311,8 +311,66 @@ system.time(test<-findribofile2('ENSG00000268034.1'))#user   system  elapsed  13
 #用fread读取的话，340个文件，比vroom快一些。
 
 ####################################################################################################
+#function里面叠function，究极套娃
 
+plot_ribo_track<-function(gene,gene_name,transcript_id){
+  
+print('search_sample')
+AC093673.1<-findribofile(gene) #懒得改这个中间文件的名字，有时间再说
+AC093673.1<-AC093673.1[order(AC093673.1$read_density,decreasing=T),]
+AC093673.1<-AC093673.1[!duplicated(AC093673.1$sample),]
 
+bgfile<-dir('/home/leelee/share/mapping/genome/')[grep('bedgraph',dir('/home/leelee/share/mapping/genome/'))]
+bgfile<-bgfile[-grep('_uniq_',bgfile)]
+bgfile<-bgfile[-grep('_P_sites_',bgfile)]
+
+f <-function(x) unlist(strsplit(x['sample'],'_'))[1]
+AC093673.1$sample<-apply(AC093673.1,1,f)
+
+if(AC093673.1$strand[1]=='+') {strand<-'plus'} else{strand<-'minus'} #判断基因的正负链
+
+AC093673.1$adj_sample<-paste0(AC093673.1$sample,'Aligned.sortedByCoord.out.bam_coverage_',strand,'.bedgraph')
+AC093673.1<-AC093673.1[AC093673.1$adj_sample %in% bgfile,]
+
+print('treat_file')
+if(nrow(AC093673.1)>5) {
+  AC093673.1<-AC093673.1[1:5,]
+  } else{
+  AC093673.1<-AC093673.1
+  }
+
+for (i in AC093673.1$sample){
+  treat<-paste0('LC_COLLATE=C sort -k1,1 -k2,2n /home/leelee/share/mapping/genome/',
+                i,'Aligned.sortedByCoord.out.bam_coverage_',strand,'.bedgraph > ',
+                '/home/leelee/share/mapping/bw/',i,'.',strand,'.sorted.bedGraph')
+  system(treat)
+  treat2<-paste0('/home/leelee/miniconda3/envs/p3/bin/bedGraphToBigWig /home/leelee/share/mapping/bw/',
+                 i,'.',strand,'.sorted.bedGraph',' /home/leelee/biodata/index/GRCh38/GRCh38.info.txt ',
+                 '/home/leelee/share/mapping/bw/',i,'.',strand,'.bw')
+  system(treat2)
+}
+
+file <- c(paste0('~/share/mapping/bw/',AC093673.1$sample,'.',strand,'.bw'))
+samp <- c(AC093673.1$sample)
+allBw <- loadBWfile(file = file, sample = samp)
+
+print('start plot')
+
+plot_path<-paste0(gene_name,'ribo_track.pdf')
+pdf(plot_path,width = 8,height = 8)
+print(plotTrack(
+  gtfFile = gtf,
+  gene = gene_name,
+  arrowCol = "black",
+  bigwigFile = allBw,
+  sampleAes = "group1",
+  facetVars = "sample",
+  multiple = TRUE,
+  myTransId = c(transcript_id)
+  ))
+dev.off()
+
+}
 
 
 
