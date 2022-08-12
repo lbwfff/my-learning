@@ -53,7 +53,7 @@ rownames(exp)<-gene$SYMBOL
 exp<-exp[1:20,]
 
 mat_scaled = t(scale(t(exp)))
-col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Hiroshige")[9],'white',met.brewer("Signac")[4])) #ComplexHeatmap使用类似的方法来调控色条，感觉比pheatmap要方便一些？
+col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Hiroshige")[9],'white',met.brewer("Signac")[4])) 
 
 df <- data.frame(group = c(rep("PBS", 3), rep("Drug", 3)))
 df$group<-factor(df$group)
@@ -80,7 +80,7 @@ ha <- HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 2:4),labels = c("PBS",
  test<-aplot::plot_list(gglist = p, ncol = 1)
  
  pdf(path,width = 12,height = 5)
- print(plot_grid(test,grob,  nrow=1)) #包升级之后，好多东西都改了
+ print(plot_grid(test,grob,  nrow=1)) #画到一起去
  dev.off() 
 
 }
