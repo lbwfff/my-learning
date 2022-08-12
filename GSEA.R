@@ -14,10 +14,10 @@ gsea$value<-(gsea$value*sign(gsea$log2FoldChange))
 gsea<-gsea[!is.na(gsea$value),]
 gsea<-gsea[!duplicated(gsea$ENTREZID),]
 rownames(gsea)<-gsea$ENTREZID
-gsea<-gsea[order(gsea$log2FoldChange,decreasing = T),] #需要排序
+gsea<-gsea[order(gsea$log2FoldChange,decreasing = T),]
 
 test<-as.numeric(gsea$log2FoldChange)
-names(test) = as.character(gsea$ENTREZID) #注意names这个属性
+names(test) = as.character(gsea$ENTREZID) #记住names这个属性
 edo2 <- gseGO(test,OrgDb= org.Mm.eg.db,ont='ALL',pvalueCutoff = 0.5)
 
 # edo2 <- simplify(edo2,cutoff = 0.8,by = "p.adjust",
@@ -40,12 +40,13 @@ library('ggplot2')
 
 gsea_pheat<-function(geneset_id) {
   
-p<-gseaplot2(edo2, geneSetID = geneset_id, pvalue_table=F,subplots = 1:3,
+p<-gseaplot2(edo2, geneSetID = geneset_id, pvalue_table=F,subplots = 1:3,rel_heights = c(2, 0.8, 1.2),
                       title = edo2$Description[which(edo2@result$ID==geneset_id)])
 
 p[[1]] <- p[[1]]+ annotate("text", x = 16000, y = 0.4, label = paste0('P.value = ',format(edo2@result$pvalue[which(edo2@result$ID==geneset_id)],2),
                                                                       '\n NES = ',round(edo2@result$NES[which(edo2@result$ID==geneset_id)],2)),
-                           size = 5)#自己写上P值NES什么的
+                           size = 5)
+# print(p)
 
 gene<-edo2@result$core_enrichment[edo2@result$ID==geneset_id]
 gene<-unlist(strsplit(gene,'/'))
@@ -54,15 +55,17 @@ gene<-bitr(gene, fromType = "ENTREZID",
          OrgDb = org.Mm.eg.db)[,2] 
 gene<-deseq[deseq$X %in% gene,]
 gene<-gene[order(gene$pvalue,decreasing = F),]
+gene<-gene[!duplicated(gene$SYMBOL),]
 
 rownames(count)<-substr(rownames(count),1,18)
 exp<-count[match(gene$X,rownames(count)),]
 exp<-exp[,c(4,5,6,1,2,3)]
 rownames(exp)<-gene$SYMBOL
-exp<-exp[1:20,]
+
+if(nrow(exp)>=20) {exp<-exp[1:20,]} else{exp<-exp}
 
 mat_scaled = t(scale(t(exp)))
-col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Hiroshige")[9],'white',met.brewer("Signac")[4])) 
+col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Hiroshige")[9],'white',met.brewer("Signac")[4])) #ComplexHeatmap使用类似的方法来调控色条，感觉比pheatmap要方便一些？
 
 df <- data.frame(group = c(rep("PBS", 3), rep("Drug", 3)))
 df$group<-factor(df$group)
@@ -84,18 +87,20 @@ ha <- HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 2:4),labels = c("PBS",
         row_names_side = "right",
         top_annotation = ha))) 
 
- path<-paste0(edo2$Description[which(edo2@result$ID==geneset_id)],'_gseapheat.pdf')
+ path<-paste0('./gsea_pheat/',edo2$Description[which(edo2@result$ID==geneset_id)],'_gseapheat.pdf')
 
- test<-aplot::plot_list(gglist = p, ncol = 1)
+ test<-aplot::plot_list(gglist = p, ncol = 1,heights=c(2, 0.8, 1.2))
  
  pdf(path,width = 12,height = 5)
- print(plot_grid(test,grob,  nrow=1)) #画到一起去
+ print(plot_grid(test,grob,  nrow=1)) 
  dev.off() 
 
 }
 
-gsea_pheat('GO:0019724')  
-gsea_pheat('GO:0002377')  
-gsea_pheat('GO:0003823')
-gsea_pheat('GO:0006959')
+list<-edo2@result[edo2@result$pvalue<0.01,]
+for (i in list$ID){
+  gsea_pheat(i)
+}
+
+
 
