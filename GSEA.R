@@ -1,13 +1,23 @@
+#在R上面做方便一些，但是不知道要怎么用自定义的基因集什么
+
+##################################################################
+#和GSEA没关系，记录一下怎么提取全org.Mm.eg.db的注释什么的
+library(org.Mm.eg.db)
+columns(org.Mm.eg.db)
+k <- keys(org.Mm.eg.db, keytype = "ENSEMBL")
+all_gene<-AnnotationDbi::select(org.Mm.eg.db,keys = k,columns = c("SYMBOL",'ENTREZID','GENENAME','GENETYPE'),keytype="ENSEMBL")
+
+###################################################################
 gsea<-deseq[!is.na(deseq$ENTREZID),]
 gsea$value<-(abs(log(gsea$pvalue)))
 gsea$value<-(gsea$value*sign(gsea$log2FoldChange))
 gsea<-gsea[!is.na(gsea$value),]
 gsea<-gsea[!duplicated(gsea$ENTREZID),]
 rownames(gsea)<-gsea$ENTREZID
-gsea<-gsea[order(gsea$log2FoldChange,decreasing = T),]
+gsea<-gsea[order(gsea$log2FoldChange,decreasing = T),] #需要排序
 
 test<-as.numeric(gsea$log2FoldChange)
-names(test) = as.character(gsea$ENTREZID) #记住names这个属性
+names(test) = as.character(gsea$ENTREZID) #注意names这个属性
 edo2 <- gseGO(test,OrgDb= org.Mm.eg.db,ont='ALL',pvalueCutoff = 0.5)
 
 # edo2 <- simplify(edo2,cutoff = 0.8,by = "p.adjust",
@@ -35,8 +45,7 @@ p<-gseaplot2(edo2, geneSetID = geneset_id, pvalue_table=F,subplots = 1:3,
 
 p[[1]] <- p[[1]]+ annotate("text", x = 16000, y = 0.4, label = paste0('P.value = ',format(edo2@result$pvalue[which(edo2@result$ID==geneset_id)],2),
                                                                       '\n NES = ',round(edo2@result$NES[which(edo2@result$ID==geneset_id)],2)),
-                           size = 5)
-# print(p)
+                           size = 5)#自己写上P值NES什么的
 
 gene<-edo2@result$core_enrichment[edo2@result$ID==geneset_id]
 gene<-unlist(strsplit(gene,'/'))
