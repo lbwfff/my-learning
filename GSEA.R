@@ -102,5 +102,53 @@ for (i in list$ID){
   gsea_pheat(i)
 }
 
+########################################################################################################
+#GSEA gene_set的散点图
+#主要记录一下绘图的代码吧，要怎么做心中还是有很多疑惑
 
+gsea_dot<-function(geneset_id) {
+  gene<-all_go2[grep(geneset_id,all_go2$GO),] #要想得到某一个GO词条的全部基因，就还挺麻烦的，单独拿一个代码页写怎么做的吧
+  gene<-deseq[deseq$X %in% gene$GENE,]
+  gene<-gene[order(gene$pvalue,decreasing = F),]
+  
+  gene2<-edo2@result$core_enrichment[edo2@result$ID==geneset_id] #首先core_enrichment这里得到的并不是gene_set的全部基因
+  gene2<-unlist(strsplit(gene2,'/'))                             #但有一些基因明显也是符合趋势的但没放在core_enrichment里面我不太明白
+  gene2<-bitr(gene2, fromType = "ENTREZID",
+             toType = c( "ENSEMBL"),
+             OrgDb = org.Mm.eg.db)[,2]
+  gene2<-deseq[deseq$X %in% gene2,]
+  gene2<-gene2[1:15,]
+  gene<-gene[!duplicated(gene$SYMBOL),]
+  
+  # gene<-gene[1:15,]
+  gene$ext<-c('T')
+  gene<-gene[match(rownames(dot),gene$X),]
+  dot$ext<-gene$ext
+  dot$ext[is.na(dot$ext)]<-c('F')
+  
+  path<-paste0('./dot/',edo2$Description[which(edo2@result$ID==geneset_id)],'_dot.pdf')
+  pdf(path,width = 8,height = 6)
+  print(ggplot(data = dot,aes(x=pbsmean,y=drugmean,color=group))+
+    geom_point()+scale_colour_manual(values=c("#808080","grey84","#808080"))+
+    theme_classic()+
+    xlab('PBS mean log2(normalized counts)')+
+    ylab('Drug mean log2(normalized counts)')+
+    theme_classic(base_size = 18)+  
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=16))+
+    theme(axis.text.x = element_text(size=12))+
+    theme(legend.text = element_text(size=12))+
+    theme(aspect.ratio=1)+
+    geom_abline(slope=1)+
+    geom_abline(slope=1,intercept=1,linetype = "dashed")+
+    geom_abline(slope=1,intercept=(-1),linetype = "dashed")+
+    geom_point(data = dot[dot$ext=='T',],color='#e1846c')+
+    geom_label_repel(data = dot[rownames(dot) %in% gene2$X,],aes(label = SYMBOL),
+                     size = 3,segment.color = "black", show.legend = FALSE ,color='#e1846c') #绘图代码
+    )
+  dev.off() 
+  }
+
+gsea_dot('GO:0050778')
+gsea_dot('GO:0002253')
 
