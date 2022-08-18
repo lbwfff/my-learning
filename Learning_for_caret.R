@@ -290,6 +290,27 @@ g <- ggroc(list(RF=rf.ROC,GBM=gbm.ROC,SVM=svm.ROC,KNN=knn.ROC)) #如果想把多
 #我查了一下，twoClassSummary给的是AUROC，prSummary给的则是AUPRC，这下我能够理解了
 #AUROC就是我们常用的ROC，以真阳性率，假阳性率做的。AUPRC则是以精确度和召回率做的，大家一般认为在不平衡数据上使用AUPRC更好一些？
 
+#一下子还真没找到好的画AUPRC的包
+  probs_1= predict(mod,Test) 
+  probs_2= predict(mod,Test,type = "prob")
+  Test$bind<-factor(Test$bind)
+  
+  eva<-cbind(probs_2,Test$bind)
+  colnames(eva)[3]<-c('obs')
+  eva$group<-(modname)
+  eva$group<-as.factor(eva$group)
+  eva$obs<-as.factor(eva$obs)
+  
+  library(PRROC)
+  library(ROCR)
+  scores <- data.frame(eva$BIN)
+  scores$labels<-ifelse(eva$obs=='BIN','1','0')
+  pr <- pr.curve(scores.class0=scores[scores$labels=="1",]$eva.BIN,
+                 scores.class1=scores[scores$labels=="0",]$eva.BIN,
+                 curve=T)
+  y <- as.data.frame(pr$curve)
+  ggplot(y, aes(y$V1, y$V2))+geom_path()+ylim(0,1) #这个画出来很糙感觉
+
 
 
 ################附件一：multiClassSummary，这个我用着感觉还不错，虽然后面好像出了花里胡哨的更新的版本，没有数学功底的人想写这么个东西几乎是不可能的#################
