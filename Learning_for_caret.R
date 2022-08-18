@@ -126,7 +126,7 @@ ggplot(gbmFit2)  #很重要但没什么好说的，可以用ggplot美化
 #对于"timeslice"方法, trainControl has options initialWindow, horizon and fixedWindow
 #classProbs，在重采样期间是否应计算保留样本的类别概率
 #index and indexOut，没懂
-#summaryFunction，#这个参数对于性能的表现非常重要，如果分类且只有两类的话可以用summaryFunction = twoClassSummary，当如果回归或是多类别的话要怎么做呢？
+#summaryFunction，#这个参数对于性能的表现非常重要，twoClassSummary的话就可以用ROC，灵敏度，特异性，调参，defaultSummary的话准确度，kappa值，prSummary的话，PRAUC，召回率，查准率，回归分析和多重分类同理
 #selectionFunction，
 #PCAthresh, ICAcomp and k，给preProcess 的参数
 #returnResamp，可以给"all", "final" or "none"
