@@ -280,6 +280,15 @@ rf.ROC = roc(response = Test$bind,predictor = rf.probs$BIN,levels = levels(Test$
 
 g <- ggroc(list(RF=rf.ROC,GBM=gbm.ROC,SVM=svm.ROC,KNN=knn.ROC)) #如果想把多条ROC画在一起的话，可以用这个
 
+#这里想聊一下几种表现度量
+#Recall这里被翻译为了查全率，其实我更喜欢叫召回率，说的是被正确预测的正例在所有正例中的比例，我认为这个度量重要在于，我们的样本在阳性和阴性比例相差较大的情况下，它的意义会比较大。
+#Precision查准率，是指被正确预测的正例在所有预测为正例的样本的比例，和recall是同时出现的度量没什么好说的
+#F score就是一个将查全率和查准率结合起来的指标
+#Kappa系数是一种比例，代表着模型的分类结果与完全随机的分类产生错误减少的比例，kappa在我的理解里是对Accuracy的一种扩展，因为Accuracy其实是不太能很好的表征不平衡数据集的。
+#可以看到在我们的demo中，kappa的大小和recall值是有一定的联系的，因为我们的demo中，阴性样本的显著的多于阳性样本，所以在kappa的算法里，查全的能力被看得更重了
+#ROC和AUC，只有在二分类模型中，ROC和AUC才适用，AUC是ROC下方的面积，我其实没有太懂prSummary给出的AUC是什么，如果认为AUC是ROC的面积的话，明显twoClassSummary给出的ROC值是正确的，rf.ROC给的值也与之对应。
+#我查了一下，twoClassSummary给的是AUROC，prSummary给的则是AUPRC，这下我能够理解了
+#AUROC就是我们常用的ROC，以真阳性率，假阳性率做的。AUPRC则是以精确度和召回率做的，大家一般认为在不平衡数据上使用AUPRC更好一些？
 
 
 
