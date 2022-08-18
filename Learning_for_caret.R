@@ -248,11 +248,37 @@ g.list <- ggroc(roc.list)
 
 
 
+#模型表现
+#这里主要是分类模型的表现吧，回归的模型暂时还没怎么做过
 
+mod_per <- function(mod){ #这个function写得还比较粗糙，之后可以改一下
+  
+rf.probs_1= predict(mod,Test) 
+rf.probs_2= predict(mod,Test,type = "prob")
+Test$bind<-factor(Test$bind)
+p1<-postResample(pred = rf.probs_1, obs = Test$bind) #这里得到精度和kappa系数，
+print(p1)
 
+level<-levels(Test$bind)
+dat<-data.frame(obs=factor(Test$bind),
+                pred=factor(rf.probs_1),
+                BIN = rf.probs_2$BIN
+)
+dat$NOT <- 1 - dat$BIN
+p2<-twoClassSummary(dat, lev = level)  #这里得到ROC，灵敏度和特异性
+print(p2)
 
+p3<-prSummary(dat, lev = level) #这里得到AUC，查准率，查全率，F1 score
+print(p3)
+}
 
+mod_per(rfFit)
 
+library('pROC') #ROC曲线
+rf.probs = predict(rfFit,Test,type = "prob")
+rf.ROC = roc(response = Test$bind,predictor = rf.probs$BIN,levels = levels(Test$bind))
+
+g <- ggroc(list(RF=rf.ROC,GBM=gbm.ROC,SVM=svm.ROC,KNN=knn.ROC)) #如果想把多条ROC画在一起的话，可以用这个
 
 
 
