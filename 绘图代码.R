@@ -632,3 +632,66 @@ venn<-list(shNC=c(shNC$adj_geneid),shMETTL3=c(shMETTL3$adj_geneid))
 
 p<-ggvenn(venn,fill_color = c("#0073C2FF", "#EFC000FF"),  #,"#CD534CFF"
           stroke_size = 0.5, set_name_size = 4)
+
+###########################################################################
+#AUC,AUPRC
+library('pROC')
+Test$bind<-factor(Test$bind)
+rf.probs = predict(rfFit,Test,type = "prob")
+rf.ROC = roc(response = Test$bind,predictor = rf.probs$BIN,levels = levels(Test$bind))
+
+p<-ggroc(rf.ROC)
+pdf("~/tools/pepnn/learning/auc.pdf",width = 8,height = 6)
+p+theme_bw(base_size=18)+
+  theme(panel.grid.major =element_blank(), 
+        panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  geom_abline(intercept = 1, slope = 1, linetype = "dashed")+
+  scale_x_reverse(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0))+
+  annotate("text", x=0.3, y=0.3, label="AUC = 0.69",size=5)+
+  theme(aspect.ratio=1)+
+  coord_fixed(ratio = 0.8)
+dev.off()
+
+{ #plot_pr,画这个目前还比较麻烦，而且视觉效果也没有很理想
+  probs_1= predict(mod,Test) 
+  probs_2= predict(mod,Test,type = "prob")
+  Test$bind<-factor(Test$bind)
+  
+  eva<-cbind(probs_2,Test$bind)
+  colnames(eva)[3]<-c('obs')
+  eva$group<-(modname)
+  eva$group<-as.factor(eva$group)
+  eva$obs<-as.factor(eva$obs)
+  
+  library(PRROC)
+  library(ROCR)
+  scores <- data.frame(eva$BIN)
+  scores$labels<-ifelse(eva$obs=='BIN','1','0')
+  pr <- pr.curve(scores.class0=scores[scores$labels=="1",]$eva.BIN,
+                 scores.class1=scores[scores$labels=="0",]$eva.BIN,
+                 curve=T)
+  y <- as.data.frame(pr$curve)
+  
+  pdf("~/tools/pepnn/learning/auprc.pdf",width = 8,height = 6)
+  ggplot(y, aes(y$V1, y$V2))+geom_path()+ylim(0,1)+
+    theme_bw(base_size=18)+
+    theme(panel.grid.major =element_blank(), 
+          panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank())+
+    scale_x_continuous(expand = c(0,0))+
+    scale_y_continuous(expand = c(0,0))+
+    annotate("text", x=0.3, y=0.5, label="AUPRC = 0.59",size=5)+
+    theme(aspect.ratio=1)+
+    labs(x="Recall", y = "Precision")+
+    coord_cartesian(ylim=c(0,1),xlim=c(0,1))
+  dev.off()
+  
+  plot(pr)
+  
+}
