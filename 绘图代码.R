@@ -695,3 +695,39 @@ dev.off()
   plot(pr)
   
 }
+
+
+#还是复杂热图
+bar1 <- rowAnnotation(
+  Immunogenicity = pheat$prob_2.Positive,
+  foo = anno_barplot(
+    pheat$prob_2.Positive,bar_width = 0.9,
+    gp = gpar(col = "black", fill = "orange"),
+    border = T,height = unit(2, "cm")), 
+  show_annotation_name = F) #我没想好免疫原性分数要怎么表示，感觉柱状图也好，颜色条也好都没有达到想要的效果，之后再调整吧
+
+col_fun1 = colorRamp2(c(0, 1), c('white',met.brewer("Homer1")[8])) 
+
+split = c(rep(1,13),rep(2,5))
+ha <- HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 2:4),labels = c("HLA-I", "HLA-II"), 
+                                         labels_gp = gpar(col = "white", fontsize = 10))) #给上面添加了HLA-I和HLA-II的注释
+
+ha2 = rowAnnotation(foo = anno_mark(at = c(which(pheat$prob_2.Positive>0.85),which(freq>3)), 
+                                   labels = rownames(pheat)[c(which(pheat$prob_2.Positive>0.85), which(freq>3))],side ='left')) 
+                   #这里是我主要想记录的，我不想把所有肽的名字都体现出来，只想展示一部分我觉得不错的
+
+pdf("test_pheat.pdf",width = 10,height = 12)
+p<-Heatmap(pheat[,-1],col = col_fun1,
+        width = unit(10, "cm"),
+        height = unit(14, "cm"), #指定width和height是必要的，不然保存的图片比例会很奇怪
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,show_row_dend = FALSE,
+        show_heatmap_legend = F,
+        show_row_names = F,right_annotation = bar1,
+        column_split = split,column_title = NULL,column_gap = unit(c(1, 1), "mm"),
+        top_annotation = ha,
+        row_names_side = "left")
+draw(ha2+p) #绘图，复杂热图其实可以自定义的地方还挺多的，需要再学习。我看中了热图上面接GO词条什么的，到时候WGCNA做完也可以试试用复杂热图呈现
+dev.off()
+                   
+                   
