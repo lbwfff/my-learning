@@ -632,6 +632,14 @@ venn<-list(shNC=c(shNC$adj_geneid),shMETTL3=c(shMETTL3$adj_geneid))
 
 p<-ggvenn(venn,fill_color = c("#0073C2FF", "#EFC000FF"),  #,"#CD534CFF"
           stroke_size = 0.5, set_name_size = 4)
+                   
+library(eulerr) #我想做那种根据集的大小面积不同的韦恩图，eulerr这个包可以做，但是感觉用起来不太方便，也可能是我没有找到合适的方法
+
+fit <- euler(c("ncORF" = 1355, "SRAMP" = 932, "twodatabase" = 152, 
+               "ncORF&SRAMP" = 932, "ncORF&twodatabase" = 152, "SRAMP&twodatabase" = 116,
+               "ncORF&SRAMP&twodatabase" = 116),
+             input='union',shape = "ellipse")
+plot(fit)
 
 ###########################################################################
 #AUC,AUPRC
