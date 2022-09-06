@@ -738,4 +738,53 @@ p<-Heatmap(pheat[,-1],col = col_fun1,
 draw(ha2+p) #绘图，复杂热图其实可以自定义的地方还挺多的，需要再学习。我看中了热图上面接GO词条什么的，到时候WGCNA做完也可以试试用复杂热图呈现
 dev.off()
                    
+###################记录一下ggplot的密度，频度，直方，曲线#################################
+#这些密度曲线，频度直方图的代码对于提升效率非常重要
                    
+ggplot(plot, aes(Position, colour = group)) +
+  geom_freqpoly(bins = 50)          #频率曲线，bins可以设置窗口，bins越大越平滑，信息量越少
+                   
+ggplot(plot, aes(Position, after_stat(density), colour = group)) +
+  geom_density(adjust = 1/3, size=1)+      #我更喜欢用密度曲线，adjust可以设置平滑度，值越接近零越粗糙，信息量越大
+  xlim(-497,98)+
+  theme_classic(base_size = 18)+
+  theme(axis.text.x = element_text(size=12))+
+  theme(aspect.ratio=0.7)+
+  scale_color_manual(values = c("#0073C2FF", "#EFC000FF",'#96345A74'))         
+                   
+ggplot(hight, aes(Position, fill = Classification)) +
+  geom_density(adjust = 1/3, size=1,position = "stack")+  #密度曲线可以做成堆积曲线，比较适合可视化某一组线的组内组成
+  labs(title="Detected more than 10% sample")+
+  theme_classic(base_size = 18)+
+  scale_fill_manual(values = c(met.brewer("Egypt",n=4,type="continuous")))
+                   
+ggplot(diamonds, aes(price, fill = cut)) +
+  geom_histogram(bins = 40)  #同样也可以用直方图做堆积（colour改成fill），不过不太好看，不怎么喜欢用
+
+ggplot(diamonds, aes(price, fill = cut)) +
+  geom_histogram(alpha = 0.6, bins = 40) +facet_wrap(~ cut) +
+  theme(legend.position = "none")   
+                   
+ggplot(diamonds, aes(price, fill = cut)) +
+  geom_density(alpha = 0.6) +facet_wrap(~ cut) +
+  theme(legend.position = "none")    #密度曲线和直方图都可以做成分面图
+       
+########################################################################################################                 
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+      
