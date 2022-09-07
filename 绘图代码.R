@@ -769,9 +769,16 @@ ggplot(diamonds, aes(price, fill = cut)) +
   geom_density(alpha = 0.6) +facet_wrap(~ cut) +
   theme(legend.position = "none")    #密度曲线和直方图都可以做成分面图
        
-########################################################################################################                 
+########################################################################################################         
                    
-                   
+#cox回归和森林图                
+meta$Gender<-strata(meta$Gender)
+meta$group<-strata(meta$group)
+res.cox<-coxph(Surv(Total.follow.up.period..m.,Died.of.recurrence)~Age+Gender+Liver.cirrhosis+Microvascular.invasion+AFP..ng.ml.+group+InfiltrationScore, data=meta)
+summary(res.cox)
+
+ggforest(res.cox,data = meta,main="hazard ratio",
+         fontsize=0.8,noDigits=2)                  
                    
                    
                    
