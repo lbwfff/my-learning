@@ -535,7 +535,10 @@ ggplot(immu, aes(neoantigen, colour = group)) +
   theme(legend.position='right',          #c(.25,.75),
         panel.grid = element_blank()) +
   labs(x="Immunogenicity Score", y="ECDF") + 
-  scale_color_manual(values=rev(met.brewer("Hokusai1", 7)[c(6,5,3)]))
+  scale_color_manual(values=rev(met.brewer("Hokusai1", 7)[c(6,5,3)]))+
+  scale_x_continuous(expand = c(0,0))+  #把X轴和Y轴的间隙去除
+  scale_y_continuous(expand = c(0,0))+
+  theme(aspect.ratio=1)                 #我想要两轴比例一比一
 
 ###############生存分析#######################
 library(survminer)
