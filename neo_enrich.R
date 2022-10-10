@@ -169,3 +169,21 @@ for (i in 1:4){
     sheets = list("KEGG" = kk,"GO_BP" = BP,'GO_CC'=CC,'GO_MF'=MF,'DO'=DO)
     write.xlsx(sheets,path)
 }
+
+                       
+#####################################################################################
+pway = ReactomePA::enrichPathway(gene = cand.entrez) # Reactome的富集，结果的格式和GO，KEGG什么的没有区别
+pway = setReadable(pway, OrgDb=org.Hs.eg.db)
+
+pwayGSE <- ReactomePA::gsePathway(geneList) #也可以做GSEA，也是需要对基因进行排序                       
+                       
+library('CBNplot')
+bngeneplot(results = pway, exp = vsted, pathNum = 17)
+bngeneplot(results = pway, exp = vsted, pathNum = 17, labelSize=7, shadowText=TRUE)
+bngeneplot(results = pway, exp = vsted, expSample = incSample, pathNum = 17)       #这玩意叫，香草图？可以看到蛋白与蛋白的相互作用网络                 
+                       
+                       
+                       
+                       
+
+                       
