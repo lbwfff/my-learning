@@ -1,3 +1,6 @@
+samtools view -h SRR14510077Aligned.sortedByCoord.out.bam | awk 'length($10) ==28 || $1 ~ /^@/' | samtools view -bS - > ../test.bam
+#提取特定长度的reads，主要就是awk的使用，||为逻辑或，后面这个 “$1 ~ /^@/” 我就完全没明白是什么意思了
+
 cut -f1-17 SRR8590813.ribotricer_translating_ORFs.tsv > test
 #使用cut分割‘\t’分割符的文件，比如输出1到17列
 
