@@ -1,5 +1,5 @@
 ./ORFfinder -in circ_seq.fasta -c t -s 1 -ml 30 -out ribo_crc_orf.fasta -outfmt 1 #ORFfinder的使用
-docker run -it --rm -e WINEDEBUG=-all -v /home/leelee/share/CNHPP_HCC/L091/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:x64 wine msconvert /data/CNHPP_HCC_LC_profiling_L091_P_F1.raw
+docker run --rm -e WINEDEBUG=-all -v /home/leelee/share/CNHPP_HCC/L091/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:x64 wine msconvert /data/CNHPP_HCC_LC_profiling_L091_P_F1.raw
 #msconvert的使用
 casanovo --mode=denovo --model_path='/home/leelee/tools/casanovo/casanovo_pretrained_model_weights/pretrained_excl_human.ckpt' --test_data_path='/home/leelee/share/CNHPP_HCC/casanovo' --config_path='/home/leelee/tools/casanovo/casanovo-main/casanovo/config.py' --output_path='./'
 #casanovo从头组装(试了一下，速度完全没法看，对于深度学习来说，CPU和GPU之间的差距确实太大了)
@@ -85,6 +85,6 @@ IDMapper
 ProteinQuantifier
 
 #我没有接着OPENMS往下跟进，因为这个实在太麻烦了，我不是主要跟计算蛋白组学方向的，要去摸索海量的参数实在是难为了我，主要是收益实在是太低了。
-#FragPipe似乎是一个好的选择，在我的建议下更新了philosopher使得计算速度有了极大提升，但还有一个MSFragger的计算bug没有修好，作者答应了会在新版本中修复，但一直没有把新的正式版本上传。
+#FragPipe似乎是一个好的选择，在我的建议下更新了philosopher使得计算速度有了极大提升
 
 
