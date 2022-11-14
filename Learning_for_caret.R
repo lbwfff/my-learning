@@ -380,4 +380,30 @@ conda create --name r-tensorflow keras tensorflow #然后在服务器上我新�
 ##########################一个简单应用的示例在Caret-based_machine_learning_and_immunogenicity_prediction.R########################
 
 
+##################################################################################################################################
+#有一种算法叫mRMR（Max-Relevance and Min-Redundancy），是一种特征选择的算法，在生物标志物的研究种想要用更少的标志物做预测可以用这样的方法做选择。
 
+library(mRMRe)
+
+feature_num = 46 #未经选择的全部特征
+train_feature = mlexp[,0:feature_num] #全部特征的矩阵
+train_label = as.numeric(as.factor(mlexp$group)) #结果
+
+mrmr_feature<-train_feature
+mrmr_feature$y<-train_label
+
+target_indices = which(names(mrmr_feature)=='y')
+
+#转化成mRMR.data的形式才能被使用
+Data <- mRMR.data(data = data.frame(mrmr_feature))
+#data就是数据，target_indices就是Y（label）值，也就是需要对比相关度的列
+
+#feature_count设置选择特征数，这里有classic mRMR feature selection和mRMR.ensemble两种，没太明白区别都是什么
+mrmr=mRMR.ensemble(data = Data, target_indices = target_indices,
+                   feature_count = 5, solution_count = 1)
+#获得mrmr选择后的特征索引
+#获取筛选出来的特征的列，包含在mrmr@filters中，mrmr@filters[原特征个数]这个list里
+index=mrmr@filters[[as.character(mrmr@target_indices)]]
+
+#新数据提取
+new_data = mlexp[,index] #这个重新做学习的话，结果还不错，可以写个循环批量的做一堆不同特征的情况下的预测能力的比较，然后再做决定。
