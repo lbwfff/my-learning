@@ -407,3 +407,78 @@ index=mrmr@filters[[as.character(mrmr@target_indices)]]
 
 #新数据提取
 new_data = mlexp[,index] #这个重新做学习的话，结果还不错，可以写个循环批量的做一堆不同特征的情况下的预测能力的比较，然后再做决定。
+
+######################################################################################################
+#自己折腾的一个函数，输入特征数和模型就可以自动算出AUC值来，这个函数目前集成得还不够好，有时间可以把input矩阵和label也给集成进去
+
+feature_to_AUC<-function(num,model) {
+
+library(mRMRe)
+
+feature_num = 75
+train_feature = scale(learn[,0:feature_num])
+train_feature<-as.data.frame(train_feature) #需要变成数据框
+train_label = as.numeric(as.factor(lab_learn)) 
+
+mrmr_feature<-train_feature
+mrmr_feature$y<-train_label
+
+target_indices = which(names(mrmr_feature)=='y')
+Data <- mRMR.data(data = data.frame(mrmr_feature))
+
+mrmr=mRMR.ensemble(data = Data, target_indices = target_indices,
+                   feature_count = num, solution_count = 1)
+
+index=mrmr@filters[[as.character(mrmr@target_indices)]]
+new_data = train_feature[,index] 
+new_data<-as.data.frame(new_data)
+new_data$label<-lab_learn
+
+library('caret')
+library(doParallel)
+cl <- makePSOCKcluster(6)
+registerDoParallel(cl)
+
+inTraining <- createDataPartition(new_data$label, p = .75, list = FALSE)
+training <- new_data[ inTraining,]
+testing  <- new_data[-inTraining,]
+
+fitControl <- trainControl(method = "repeatedcv",summaryFunction =prSummary,
+                           number = 10,repeats =10,classProbs = TRUE)
+
+rfFit <- train(label ~ ., data = training, method = model, trControl = fitControl, 
+               tuneLength = 8,metric = "AUC") 
+
+rf.probs = predict(rfFit,testing) 
+rf.probs_2= predict(rfFit,testing,type = "prob")
+testing$label<-factor(testing$label)
+
+level<-levels(testing$label)
+dat<-data.frame(obs=factor(testing$label),
+                pred=factor(rf.probs),
+                T = rf.probs_2$T,
+                N = rf.probs_2$N
+)
+
+prsum<-prSummary(dat, lev = level)
+return(prsum)
+
+}
+
+
+learn_array<-as.data.frame(array(NA,c(10,6)))
+rownames(learn_array) <-c(3:12)
+model_list<-c('rf','LogitBoost','svmRadial','gbm','knn','naive_bayes') #本来准备用十个模型做比较的，几个模型有一些小问题，十个给我缩成了六个
+colnames(learn_array) <-c(model_list)
+
+for (i in 1:nrow(learn_array)){
+  for (j in 1:ncol(learn_array)) {
+    
+    fe_num<-as.numeric(rownames(learn_array)[i])
+    model_name<-colnames(learn_array)[j]
+
+ learn_array[i,j]<-feature_to_AUC(num=fe_num,model=model_name)[1]
+
+ print(paste0('fin! featureNUM:',fe_num,' model:',model_name))
+}
+}  #就是对六个模型，选择特征数从3到12的情况下模型表现的一个比较。
