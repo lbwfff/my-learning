@@ -783,8 +783,19 @@ summary(res.cox)
 ggforest(res.cox,data = meta,main="hazard ratio",
          fontsize=0.8,noDigits=2)                  
                    
-                   
-                   
+###########################################################################
+#我也不知道这叫什么图，双拼？没什么用，但是花里胡哨的的很有意思
+library('ggplot2')
+library('ggpubr')
+library('gghalves')
+ggplot(plot[-1,], aes(x=group, y=plot, fill=group))+
+    geom_half_boxplot()+
+    geom_half_dotplot(dotsize = 0.6)+ #挺有意思的
+    stat_compare_means(method = "t.test",label.x = 0.7,size=5)+ 
+    theme_classic()+ scale_fill_brewer(palette="Blues") + 
+    theme(legend.position = "none")+
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=16))                   
                    
                    
                    
