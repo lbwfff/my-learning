@@ -180,9 +180,70 @@ pwayGSE <- ReactomePA::gsePathway(geneList) #也可以做GSEA，也是需要对�
 library('CBNplot')
 bngeneplot(results = pway, exp = vsted, pathNum = 17)
 bngeneplot(results = pway, exp = vsted, pathNum = 17, labelSize=7, shadowText=TRUE)
-bngeneplot(results = pway, exp = vsted, expSample = incSample, pathNum = 17)       #这玩意叫，香草图？可以看到蛋白与蛋白的相互作用网络                 
+bngeneplot(results = pway, exp = vsted, expSample = incSample, pathNum = 17)       #这玩意叫，香草图？可以看到蛋白与蛋白的相互作用网络    
                        
                        
+#################################################################################################################
+#GSVA分析
+                       
+library("GSEABase")
+library("GSVA")
+
+geneset <- getGmt('./GSVA/m5.go.bp.v2022.1.Mm.symbols.gmt')  #官网下载的数据集，一个压缩包就把一堆数据集下载了
+
+#使用DESEQ2做了标准化，这里我比较纠结是使用归一化之后的数据还是标准化后的Counts值，后来发现都没有区别
+                       
+normalized_counts <- counts(dds,normalized=T) 
+normalized_counts <- exprSet_new
+normalized_counts<-as.data.frame(normalized_counts)
+normalized_counts$id<-substr(rownames(normalized_counts),1,18)
+                       
+k <- keys(org.Mm.eg.db, keytype = "ENSEMBL")
+all_gene<-AnnotationDbi::select(org.Mm.eg.db,keys = k,columns = c("SYMBOL",'ENTREZID','GENENAME','GENETYPE'),keytype="ENSEMBL")
+all_gene<-all_gene[match(normalized_counts$id,all_gene$ENSEMBL),]
+normalized_counts$sym<-all_gene$SYMBOL                             #这一段是在做ID的转换
+
+normalized_counts<-normalized_counts[!is.na(normalized_counts$sym),]
+normalized_counts<-normalized_counts[order(normalized_counts$PBS_1.sorted.bam,decreasing = T),]
+normalized_counts<-normalized_counts[!duplicated(normalized_counts$sym),]
+rownames(normalized_counts)<-normalized_counts$sym
+normalized_counts<-normalized_counts[,-c(7:8)]
+
+es <- gsva(as.matrix(normalized_counts), geneset,
+           min.sz=10, max.sz=500, verbose=TRUE) #核心代码
+es<-as.data.frame(es)
+es$de<-rownames(es)
+immugsva<-es[grep('IMMU',es$de),]
+immugsva<-immugsva[,-7]
+
+immugsva2<-immugsva[-grep('NEGATIVE',rownames(immugsva)),] 
+rownames(immugsva2)<-substr(rownames(immugsva2),6,999)
+write.csv(immugsva2,file = 'immugsva2.csv')
+
+immugsva2<-read.csv('immugsva2.csv') #我手动去除了一些词条，这里得到的东西实在是过于冗余了
+rownames(immugsva2)<-immugsva2$X
+immugsva2<-immugsva2[,-1]
+immugsva2<-immugsva2[,c(4,5,6,1,2,3)]
+#然后就是做热图
+
+library(pheatmap)
+annotate_b<-as.data.frame(array(NA,c(6,2)))
+
+colnames(annotate_b)<-c('group','whatever')
+annotate_b$group<-c('DRUG','DRUG','DRUG','PBS','PBS','PBS')
+annotate_b<-as.data.frame(annotate_b$group)
+rownames(annotate_b)<-c(colnames(immugsva))
+colnames(annotate_b)<-c('group')
+
+pdf("GSVA_test.pdf",width =14,height = 12)
+pheatmap(immugsva2,cluster_rows = T,cluster_cols =F,
+         annotation_col =annotate_b, annotation_legend=TRUE, 
+         scale = "none",
+         cellwidth=36,cellheight=12,
+         # color = rev(colors),
+         show_rownames = T,show_colnames = F,
+         breaks = seq(-0.5,0.5,length.out = 100))
+dev.off()                        
                        
                        
 
