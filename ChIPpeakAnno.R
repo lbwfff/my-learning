@@ -35,3 +35,19 @@ identical(paste0(meta$chr,meta$chromStart+1,meta$chromEnd), paste0(unique.ann$se
 unique.ann<-cbind(unique.ann,meta[14:22])
 unique.ann<-unique.ann[,-1]
 write.csv(unique.ann,file = 'ann.bind.csv')
+
+##############################################################################################################
+#我居然没记过这个venn的代码吗
+
+shTRA2A_below <- toGRanges('~/share/MERIP/exomepeak/manorm/T1_NC/output_filters/adjust_shTRA2A_below.bed', format="BED", header=FALSE)
+shMETTL3_below <- toGRanges('~/share/MERIP/exomepeak/manorm/M2_NC/output_filters/adjust_shMETTL3_below.bed', format="BED", header=FALSE)
+
+shMETTL3_below<-unique(shMETTL3_below)
+shTRA2A_below<-unique(shTRA2A_below)
+
+ol <- findOverlapsOfPeaks(shMETTL3_below,shTRA2A_below,ignore.strand = F)
+
+makeVennDiagram(ol,fill=c(met.brewer('Hiroshige',n=4)[c(1,3)]),
+                col=c("#D55E00", "#009E73"), ignore.strand=F,
+                cat.col=c("#D55E00", "#0072B2"),cat.cex =1.2)
+
