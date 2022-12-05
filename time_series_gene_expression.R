@@ -21,7 +21,7 @@ testfuzz <- standardise(testfuzz)
 m1 <- mestimate(testfuzz)
 
 tmp <- cselection(testfuzz,m=m1,crange=seq(4,16,4),repeats=2,visu=TRUE)
-#是可以自己优化簇数量的啊
+#是可以自己优化簇数量的啊，但我运行这个老是报错，不知道哪里写错了
 
 cl <- mfuzz(testfuzz,c=16,m=m1)
 
