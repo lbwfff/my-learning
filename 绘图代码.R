@@ -798,9 +798,29 @@ ggplot(plot[-1,], aes(x=group, y=plot, fill=group))+
           axis.title=element_text(size=16))                   
                    
                    
-                   
-                   
-                   
+#####################################复杂热图#########################################                   
+
+df <- data.frame(group = c(rep("m6A", 8), rep("RNA", 8))) #分组信息
+df$group<-factor(df$group)
+col_fun1 = colorRamp2(c(-1,0,1), c(met.brewer("Homer1")[7],'white',met.brewer("Signac")[4]))
+split = rep(1:2, each = 8)
+ha <- HeatmapAnnotation(foo = anno_block(gp = gpar(fill = 2:4),labels = c("m6A", "RNA"), 
+                                         labels_gp = gpar(col = "white", fontsize = 10)))
+Heatmapexp<-rbind(scale(t(cluster2exp[,1:8])),  #需要做归一化
+                  scale(t(cluster2exp[,9:16])))
+Heatmapexp<-t(Heatmapexp)
+
+ht_list<-Heatmap(Heatmapexp,col = col_fun1, name = "Score",
+                 column_split = split,column_title = NULL,
+                 width = unit(14, "cm"),height = unit(14, "cm"),
+                 cluster_columns = T,cluster_rows =T,
+                 show_row_dend = T,show_column_names =F,show_row_names =F,
+                 show_heatmap_legend = F,row_names_side = "right",
+                 top_annotation = ha)
+
+pdf("cacocluster_test.pdf",width =16,height = 16)
+draw(ht_list, annotation_legend_side = "bottom")
+dev.off()                   
                    
                    
                    
