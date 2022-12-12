@@ -269,6 +269,12 @@ ggplot(Dat,aes(x=logFC,y=-log10(adj.P.Val),color=threshold))+
   geom_vline(xintercept=c(-0.75,0.75),lty=3,col="black",lwd=0.5) +
   geom_hline(yintercept = -log10(0.01),lty=3,col="black",lwd=0.5)
 
+ scale_color_manual(values=c("#dd5129","#808fe1","#b9b9b8"),
+                     breaks=c("Up", "Down", "NoSignifi"),
+                     labels=c(paste0('Up',' (',nrow(table[table$group=='Up',]),')'),
+                              paste0('Down',' (',nrow(table[table$group=='Down',]),')'),
+                              paste0('NoSignifi',' (',nrow(table[table$group=='NoSignifi',]),')'))) #在legend旁加上数量
+
 ############dotplot，我总觉得自己应该抛弃dotplot这个函数，因为感觉每次画出来的一批图，从来没有结构一致的，注释信息到处跑，图的大小从来没有一致过######
 library('ggplot2')
 library('stringr')
