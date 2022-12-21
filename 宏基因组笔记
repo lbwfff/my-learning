@@ -1,0 +1,5 @@
+#宏基因组，之前没有接触过的邻域
+
+#qiime2
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime  #本来想用conda装的，怎么也装不上还是用了docker
