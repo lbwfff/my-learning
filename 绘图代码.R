@@ -860,7 +860,7 @@ motif <- new("pcm", mat=as.matrix(pcm), name=paste0('P = 1e-',test$log_p_value[i
 plot(motif)
 
 }
-dev.off()    #已经完全完了这段代码是什么意思
+dev.off()    #已经完全完了这段代码是什么意思，应该是画了前十显著的基序？得到的基序和homer的结果还不太一样，好像homer做了合并什么的
                    
                    
                    
