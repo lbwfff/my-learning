@@ -830,7 +830,37 @@ dev.off()
                    
                    
                    
-                   
+#######################################################################################
+#motif的定制化，基于homer结果
+
+devtools::install_github('robertamezquita/marge', ref = 'master')
+library('marge')
+test<-read_denovo_results('./motif/', homer_dir = TRUE)
+
+BiocManager::install("motifStack")
+library('motifStack')
+
+test<-test[order(test$log_p_value,decreasing = T),]
+
+opar<-par(mfrow=c(5,2))
+par(opar)
+
+pdf("motif2.pdf",width = 6,height = 3)
+
+for (i in 1:10) {
+motiffile <- test[[5]][[i]]
+A <- motiffile$A
+C <- motiffile$C
+G <- motiffile$G
+T <- motiffile$T
+data <- rbind(A,C,G,T)
+pcm <- data[,1:ncol(data)]
+motif <- new("pcm", mat=as.matrix(pcm), name=paste0('P = 1e-',test$log_p_value[i]))
+
+plot(motif)
+
+}
+dev.off()    #已经完全完了这段代码是什么意思
                    
                    
                    
