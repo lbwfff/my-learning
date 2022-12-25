@@ -374,9 +374,13 @@ dev.off()
 
 #############################################################################################################
 library(ggplot2)
+library('org.Hs.eg.db')
+library(patchwork)
 library(clusterProfiler)
-library(org.Hs.eg.db)
 library(stringr)
+library(DOSE)
+library(openxlsx)
+R.utils::setOption("clusterProfiler.download.method",'auto')
 
 #每次富集都要写很长一段的重复代码，包装一下会方便一些？这个function我还没有试验过
                      
