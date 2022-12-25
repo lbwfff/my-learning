@@ -1,6 +1,7 @@
 bedtools sort -i ./MOV10_hg38.bed > mov10_sorted.bed
 bedtools merge -i ./mov10_sorted.bed > MOV10_merged.bed #活用一些小工具，每次都想在R语言中解决问题，一是麻烦二来效率也很低，一些编程好的小工具能够提升效率
 
+liftOver GSM1173263_allTC_4su_MOV10_WT.bed hg19ToHg38.over.chain.gz MOV10_WT.bed Unmap.bed
 
 samtools view -h SRR14510077Aligned.sortedByCoord.out.bam | awk 'length($10) ==28 || $1 ~ /^@/' | samtools view -bS - > ../test.bam
 #提取特定长度的reads，主要就是awk的使用，||为逻辑或，后面这个 “$1 ~ /^@/” 我就完全没明白是什么意思了
