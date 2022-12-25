@@ -7,6 +7,15 @@ nohup docker run --rm -e WINEDEBUG=-all -v /home/leelee/share/hcc_biom/Yi-Qun_Ch
 docker run --rm -e WINEDEBUG=-all -v /home/leelee/share/hcc_biom/Yi-Qun_Che_data/hco/sunhgyun/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:x64 wine msconvert --mzML --64 --zlib --filter "peakPicking true 1-" /data/210329_HC_M195_2ug_iRT3ul.raw
 #fragpipe推荐的做法
 
+####################DIANN######################
+#最近在做4D-DIA，然后因为是.d格式的数据，有没有DDA建库，fragpipe是分析不了的，所以在用DIANN在分析，DIANN也是window平台的支持要好于linux平台，但好的一点是他的命令行是完全能用的
+nohup /usr/diann/1.8/diann-1.8 --f ./P20221100062-C001_Slot2-38_1_2240.d --lib "" --threads 10 --verbose 1 --out ./diann/C001/report.tsv --qvalue 0.01 --matrices --min-corr 2.0 --corr-diff 1.0 --time-corr-only --extracted-ms1 --out-lib ./diann/C001/report-lib.tsv --gen-spec-lib --predictor --fasta /home/leelee/biodata/index/protein/ncRNA-coding/NEW_fourway_filter_10-28.fasta --fasta-search --min-fr-mz 200 --max-fr-mz 1800 --met-excision --cut K*,R* --missed-cleavages 1 --min-pep-len 7 --max-pep-len 30 --min-pr-mz 300 --max-pr-mz 1800 --min-pr-charge 1 --max-pr-charge 4 --unimod4 --reanalyse --smart-profiling & 
+#快速版
+
+nohup /usr/diann/1.8/diann-1.8 --f ./P20221100062-C001_Slot2-38_1_2240.d --lib "" --threads 10 --verbose 1 --out ./diann/C001/report.tsv --qvalue 0.01 --matrices  --out-lib ./diann/C001/report-lib.tsv --gen-spec-lib --predictor --fasta /home/leelee/biodata/index/protein/ncRNA-coding/NEW_fourway_filter_10-28.fasta --fasta-search --min-fr-mz 200 --max-fr-mz 1800 --met-excision --cut K*,R* --missed-cleavages 1 --min-pep-len 7 --max-pep-len 30 --min-pr-mz 300 --max-pr-mz 1800 --min-pr-charge 1 --max-pr-charge 4 --unimod4 --reanalyse --smart-profiling   &  
+#常速版
+
+#############################################
 nohup java -jar -Xmx16g /home/leelee/tools/msfragger/fragpipe/tools/tmt-integrator-3.3.3.jar tmt-integrator-conf.yml *_psm.tsv & #使用fragpipe，分析计算蛋白组数据从未如此快乐
 
 casanovo --mode=denovo --model_path='/home/leelee/tools/casanovo/casanovo_pretrained_model_weights/pretrained_excl_human.ckpt' --test_data_path='/home/leelee/share/CNHPP_HCC/casanovo' --config_path='/home/leelee/tools/casanovo/casanovo-main/casanovo/config.py' --output_path='./'
