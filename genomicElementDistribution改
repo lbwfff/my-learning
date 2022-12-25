@@ -163,3 +163,290 @@ gEDadjust <- function(nc,treated){
 }
 
 gEDadjust(nc='shNC',treated='shTRA2A')
+
+
+########################################################################################################################
+#我把cliprofile的代码拆开重建了，因为想要更加深层次的自定义以及debug
+#分为两部分，一部分是function文件
+
+#function_cliprfile.R
+.centerPeaks <- function(granges)
+{
+  ## Store the original information for the peaks
+  granges$oriStart <- BiocGenerics::start(granges)
+  granges$oriEnd <- BiocGenerics::end(granges)
+  
+  ## Extract the center of all peaks
+  granges$half_length <- BiocGenerics::width(granges)/2
+  ## For the peaks which width = 1, keep them as what they are
+  granges$half_length[granges$half_length == 0.5] <- 0
+  granges$half_length <- round(granges$half_length)
+  GenomicRanges::start(granges) <- GenomicRanges::start(granges) +
+    granges$half_length
+  GenomicRanges::end(granges) <- BiocGenerics::start(granges)
+  granges$half_length <- NULL
+  
+  granges$center <- BiocGenerics::start(granges)
+  return(granges)
+}
+
+
+.annoCalculateP <- function(annoP){
+  annoP <- as.data.frame(annoP)
+  annoP <- annoP %>% group_by(transcript_id) %>%
+    mutate(full_length = sum(width)) %>%
+    mutate(Rstart = min(start)) %>% mutate(Rend = max(end))
+  annoP <- GenomicRanges::makeGRangesFromDataFrame(annoP,keep.extra.columns = TRUE)
+  annoP <- sort(annoP) %>% as.data.frame()
+  annoP <- annoP %>% group_by(transcript_id) %>%
+    mutate(Add = c(0, cumsum(width)[-length(width)]))
+  annoP <- GenomicRanges::makeGRangesFromDataFrame(annoP, keep.extra.columns = TRUE)
+  return(annoP)
+}
+
+.annoCalculateN <- function(annoN)
+{
+  annoN <- as.data.frame(annoN)
+  annoN <- annoN %>% group_by(transcript_id) %>%
+    mutate(full_length = sum(width)) %>%
+    mutate(Rstart = min(start)) %>% mutate(Rend = max(end))
+  annoN <- GenomicRanges::makeGRangesFromDataFrame(annoN,keep.extra.columns = TRUE)
+  annoN <- sort(annoN, decreasing=TRUE) %>% as.data.frame()
+  annoN <- annoN %>% group_by(transcript_id) %>%
+    mutate(Add = c(0, cumsum(width)[-length(width)]))
+  annoN <- GenomicRanges::makeGRangesFromDataFrame(annoN,keep.extra.columns = TRUE)
+  return(annoN)
+}
+
+.peakAssignment <- function(granges, overlap, fullAnno)
+{
+  granges$location <- fullAnno$type2[overlap]
+  granges$length <- fullAnno$full_length[overlap]
+  granges$Rstart <- fullAnno$Rstart[overlap]
+  granges$Rend <- fullAnno$Rend[overlap]
+  granges$S1 <- GenomicRanges ::start(fullAnno)[overlap]
+  granges$E1 <- GenomicRanges ::end(fullAnno)[overlap]
+  granges$Add <- fullAnno$Add[overlap]
+  granges$Gene_ID <- fullAnno$gene_id[overlap]
+  granges$Transcript_ID <- fullAnno$transcript_id[overlap]
+  return(granges)
+}
+
+.intronOutPosition <- function(granges)
+{
+  granges$Position <- 5
+  granges_n <- granges[GenomicRanges::strand(granges) == "-"]
+  granges_p <- granges[GenomicRanges::strand(granges) == "+"]
+  
+  granges_n$Position <- (granges_n$E1-GenomicRanges::start(granges_n) +
+                           granges_n$Add)/granges_n$length
+  granges_p$Position <- (GenomicRanges::start(granges_p) - granges_p$S1 +
+                           granges_p$Add) /granges_p$length
+  granges <- c(granges_n,granges_p)
+  
+  granges$Position[granges$Position == -Inf] <- 5
+  granges$Position[granges$Position ==  Inf] <- 5
+  granges$length <- NULL
+  granges$S1 <- NULL
+  granges$E1 <- NULL
+  granges$Add <- NULL
+  granges$Rstart <- NULL
+  granges$Rend <- NULL
+  
+  return(granges)
+}
+
+.plotMetaSplit <- function(df, title, adjust)
+{
+  df$Position[df$location == "CDS"] <-
+    df$Position[df$location == "CDS"] + 1
+  df$Position[df$location == "UTR3"] <-
+    df$Position[df$location == "UTR3"] + 2
+  p1 <- ggplot(df, aes(x = Position, color = location)) +
+    geom_density(fill = "white", alpha= 0.05,
+                 adjust = adjust)  +
+    ggtitle(title) +
+    scale_x_continuous(breaks = c(0.5,1.5,2.5, 5),
+                       labels = c("5'UTR","CDS","3'UTR", "No Map")) +
+    geom_vline(xintercept=c(1,2), linetype=2, color="cornflowerblue") +
+    theme_bw() +
+    geom_density(data=df, aes(x = Position), color="grey",
+                 linetype = 2, fill="grey", alpha=0.1)
+  return(p1)
+}
+
+.plotMeta <- function(df, title, adjust)
+{
+  df$Position[df$location == "CDS"] <-
+    df$Position[df$location == "CDS"] + 1
+  df$Position[df$location == "UTR3"] <-
+    df$Position[df$location == "UTR3"] + 2
+  p1 <- ggplot(df, aes(x = Position)) +
+    geom_density(fill = "white", alpha= 0.05,
+                 adjust = adjust, color = "Orange")  +
+    ggtitle(title) +
+    scale_x_continuous(breaks = c(0.5,1.5,2.5, 5),
+                       labels = c("5'UTR","CDS","3'UTR", "No Map")) +
+    geom_vline(xintercept=c(1,2), linetype=2, color="cornflowerblue") +
+    theme_bw()
+  return(p1)
+}
+
+.plotMetaGroup <- function(df, title, adjust)
+{
+  df$Position[df$location == "CDS"] <-
+    df$Position[df$location == "CDS"] + 1
+  df$Position[df$location == "UTR3"] <-
+    df$Position[df$location == "UTR3"] + 2
+  p1 <- ggplot(df, aes(x=Position, color=groupIn)) +
+    geom_freqpoly(binwidth=0.15)+
+    ggtitle(title) +
+    scale_x_continuous(breaks=c(0.5,1.5,2.5,5),
+                       labels = c("5'UTR","CDS","3'UTR","No Map"))  +
+    geom_vline(xintercept = c(1,2), linetype = 2,
+               color = "cornflowerblue") +
+    theme_bw() + theme(legend.position="bottom") +
+    guides(color=guide_legend(title="Group"))
+  return(p1)
+}
+
+metaGeneProfile_freq <- function(object, annotation, include_intron=FALSE,
+                            title="Meta Gene Profile", group=NA, split=FALSE,
+                            exlevel=NA, extranscript_support_level=NA,
+                            adjust=1, nomap=FALSE)
+{
+  anno <- rtracklayer::import.gff3(con = annotation) #注释
+  anno$transcript_support_level<-c(2)
+  
+  anno$transcript_support_level[
+    is.na(anno$transcript_support_level)] <- 6
+  anno$transcript_support_level[
+    anno$transcript_support_level == "NA"] <- 6
+  
+  if (sum(is.na(exlevel)) == 0) {
+    anno <- .annoFilterLevel(anno, exlevel)
+  }
+  if (sum(is.na(extranscript_support_level)) == 0) {
+    anno <- .annoFilterTSL(anno, extranscript_support_level)
+  }
+  
+  object <- .centerPeaks(object)
+  
+  CDS <- anno[anno$type == "CDS"]
+  UTR3 <- anno[anno$type == "three_prime_UTR"]
+  UTR5 <- anno[anno$type == "five_prime_UTR"]
+  
+  CDS_p  <- CDS[BiocGenerics::strand(CDS) == "+"] %>% sort()
+  CDS_n  <- CDS[BiocGenerics::strand(CDS) == "-"] %>% sort()
+  
+  UTR3_p <- UTR3[BiocGenerics::strand(UTR3) == "+"] %>% sort()
+  UTR3_n <- UTR3[BiocGenerics::strand(UTR3) == "-"] %>% sort()
+  
+  UTR5_p <- UTR5[BiocGenerics::strand(UTR5) == "+"] %>% sort()
+  UTR5_n <- UTR5[BiocGenerics::strand(UTR5) == "-"] %>% sort()
+  
+  ## Get the location of annotation fragments for intronic
+  ## region exclusive version.
+  ## 5'UTR
+  UTR5_p <- .annoCalculateP(UTR5_p)
+  UTR5_n <- .annoCalculateN(UTR5_n)
+  UTR5 <- sort(c(UTR5_n,UTR5_p))
+  UTR5$type2 <- "UTR5"
+  
+  ## CDS
+  CDS_p <- .annoCalculateP(CDS_p)
+  CDS_n <- .annoCalculateN(CDS_n)
+  CDS <- sort(c(CDS_n,CDS_p))
+  CDS$type2 <- "CDS"
+  
+  ## 3' UTR
+  UTR3_p <- .annoCalculateP(UTR3_p)
+  UTR3_n <- .annoCalculateN(UTR3_n)
+  UTR3 <- sort(c(UTR3_n,UTR3_p))
+  UTR3$type2 <- "UTR3"
+  ## Assign the transcript length for the following peak
+  ## assignment
+  anno_exon <- anno[anno$type == "exon"]
+  anno_exon <- as.data.frame(anno_exon) %>%
+    group_by(transcript_id) %>%
+    mutate(trans_len = sum(width)) %>%
+    GenomicRanges::makeGRangesFromDataFrame(., keep.extra.columns = TRUE)
+  
+  UTR5$transcript_length <- anno_exon$trans_len[
+    match(UTR5$transcript_id, anno_exon$transcript_id)]
+  UTR3$transcript_length <- anno_exon$trans_len[
+    match(UTR3$transcript_id, anno_exon$transcript_id)]
+  CDS$transcript_length <- anno_exon$trans_len[
+    match(CDS$transcript_id, anno_exon$transcript_id)]
+  
+  ## Rank the transcript fragments base on the level,
+  ## transcript support level and transcript length ##
+  fullAnno <- c(UTR5,UTR3,CDS)
+  
+  fullAnno <-
+    fullAnno[order(fullAnno$level,
+                   fullAnno$transcript_support_level,
+                   -fullAnno$transcript_length)]
+  
+  o <- GenomicRanges ::findOverlaps(object, fullAnno, select = "first")
+  object <- .peakAssignment(object, o, fullAnno)
+  
+  ## Remove all the NA from the object
+  object$location[is.na(object$location)] <- "NO"
+  object$length[is.na(object$length)] <- 0
+  object$Rstart[is.na(object$Rstart)] <- 0
+  object$Rend[is.na(object$Rend)] <- 0
+  object$S1[is.na(object$S1)] <- 0
+  object$E1[is.na(object$E1)] <- 0
+  object$Add[is.na(object$Add)] <- 0
+  object$Gene_ID[is.na(object$Gene_ID)] <- "Nan"
+  
+  GenomicRanges::start(object) <- object$oriStart
+  GenomicRanges::end(object) <- object$oriEnd
+  object$oriStart <- NULL
+  object$oriEnd <- NULL
+  
+  ## Get result for the intron excluded version
+  object <- .intronOutPosition(object)
+  df <- as.data.frame(object)
+  df<-df[df$location!='NO',]
+  
+  if (is.na(group)) {
+      ourpic <- .plotMeta(df, title=title, adjust=adjust)
+  }
+  
+  if (!is.na(group)) {
+    df$groupIn <- df[,colnames(df) == group]
+      ourpic <- .plotMetaGroup(df, title=title)
+  }
+  
+  output <- list(Data = df) 
+  return(output)
+  }
+
+#另一部分则是运行
+library('dplyr')
+library('methods')
+library('ggplot2')
+library('GenomicRanges')
+library('rtracklayer')
+library('S4Vectors')
+library('ChIPpeakAnno')
+
+
+source('function_cliprfile.R')
+
+gr1 <- ChIPpeakAnno::toGRanges('/home/leelee/share/11_28_seq/clean/human/exomepeak/overlap.bed', format="BED", header=FALSE)
+
+test<-metaGeneProfile_freq(object=gr1,annotation='/home/leelee/biodata/annotation/gencode.v35.annotation.gff3',
+                             include_intron=FALSE,title="just_test",group=NA, split=FALSE,
+                             exlevel=NA, extranscript_support_level=NA,nomap=FALSE)
+
+resultpath<-c(paste0('/home/leelee/R/coca/chippeak/overlap_peaksite.csv'))
+write.csv(test[['Data']],file = resultpath) 
+
+#这里得到的就是peak位置矩阵，然后可以自己基于矩阵绘图什么的
+
+
+
+
