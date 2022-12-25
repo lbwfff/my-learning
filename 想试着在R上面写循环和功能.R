@@ -372,5 +372,153 @@ dev.off()
 
 }
 
+#############################################################################################################
+library(ggplot2)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(stringr)
 
+#每次富集都要写很长一段的重复代码，包装一下会方便一些？这个function我还没有试验过
+                     
+myenrich <- function(genelist,name,dir,species){
+  p<-list()
+  if (species=='human'){organism='hsa' 
+  Org = org.Hs.eg.db
+  } else {organism='mmu' 
+  Org = org.Mm.eg.db
+  } 
+  
+  genelist<-unique(genelist)
+  kk.negative <- enrichKEGG(gene  = genelist,
+                            organism = organism,
+                            pvalueCutoff = 0.5,
+                            qvalueCutoff =0.5)
+  kk.negative<-setReadable(kk.negative,OrgDb = Org, keyType="ENTREZID")
+  kk=kk.negative@result
+  kk<-kk[order(kk$pvalue,decreasing = F),]
+  
+  library('stringr')
+  title<-paste0('KEGG')
+  color<-c(MetBrewer::met.brewer('Hokusai1')[c(3,5,6,7)],
+           MetBrewer::met.brewer('Troy')[5])
+  
+  p[[1]]<-
+    ggplot(data = kk[1:10,], aes(x = reorder(Description,-pvalue), y = -log10(pvalue))) + #####这里有一个reorder函数，可以对元素进行排序，这里使用y轴值进行了重新排列
+    geom_col(aes(fill='#d8443c',colour='#d8443c'),show.legend = FALSE,width=0.8) +
+    ggtitle(title) +coord_flip() +
+    theme_classic(base_size = 13)+ 
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank(),
+          text = element_text(size=12,face='bold'))+
+    labs(y="-log10(P value)",x=' ')+
+    scale_fill_manual(values = c(color[1]))+
+    scale_colour_manual(values = c("black"))+
+    scale_y_continuous(expand = c(0,0))+
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 45))+
+    theme(plot.title = element_text(size=12))+
+    theme(aspect.ratio=1.4)
+  
+  BP <- enrichGO(gene          = genelist,
+                 OrgDb         = Org,
+                 ont           = 'BP' ,
+                 pAdjustMethod = "BH",
+                 pvalueCutoff  = 0.8,
+                 qvalueCutoff  = 0.8,
+                 readable      = TRUE)
+  
+  CC <- enrichGO(gene          = genelist,
+                 OrgDb         = Org,
+                 ont           = 'CC' ,
+                 pAdjustMethod = "BH",
+                 pvalueCutoff  = 0.8,
+                 qvalueCutoff  = 0.8,
+                 readable      = TRUE)
+  
+  MF <- enrichGO(gene          = genelist,
+                 OrgDb         = Org,
+                 ont           = 'MF' ,
+                 pAdjustMethod = "BH",
+                 pvalueCutoff  = 0.8,
+                 qvalueCutoff  = 0.8,
+                 readable      = TRUE)
+  
+  BP=BP@result
+  BP<-BP[order(BP$pvalue,decreasing = F),]
+  CC=CC@result
+  CC<-CC[order(CC$pvalue,decreasing = F),]
+  MF=MF@result
+  MF<-MF[order(MF$pvalue,decreasing = F),]
+  
+  title<-paste0('GO_BP')
+  p[[2]]<-
+    ggplot(data = BP[1:10,], aes(x = reorder(Description,-pvalue), y = -log10(pvalue))) + #####这里有一个reorder函数，可以对元素进行排序，这里使用y轴值进行了重新排列
+    geom_col(aes(fill='#d8443c',colour='#d8443c'),show.legend = FALSE,width=0.8) +
+    ggtitle(title) +coord_flip() +
+    theme_classic(base_size = 13)+ 
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank(),
+          text = element_text(size=12,face='bold'))+
+    labs(y="-log10(P value)",x=' ')+
+    scale_fill_manual(values = c(color[2]))+
+    scale_colour_manual(values = c("black"))+
+    scale_y_continuous(expand = c(0,0))+
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 45))+
+    theme(plot.title = element_text(size=12))+
+    theme(aspect.ratio=1.4)
+  
+  title<-paste0('GO_CC')
+  p[[3]]<-
+    ggplot(data = CC[1:10,], aes(x = reorder(Description,-pvalue), y = -log10(pvalue))) + #####这里有一个reorder函数，可以对元素进行排序，这里使用y轴值进行了重新排列
+    geom_col(aes(fill='#d8443c',colour='#d8443c'),show.legend = FALSE,width=0.8) +
+    ggtitle(title) +coord_flip() +
+    theme_classic(base_size = 13)+ 
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank(),
+          text = element_text(size=12,face='bold'))+
+    labs(y="-log10(P value)",x=' ')+
+    scale_fill_manual(values = c(color[3]))+
+    scale_colour_manual(values = c("black"))+
+    scale_y_continuous(expand = c(0,0))+
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 45))+
+    theme(plot.title = element_text(size=12))+
+    theme(aspect.ratio=1.4)
+  
+  title<-paste0('GO_MF')
+  p[[4]]<-
+    ggplot(data = MF[1:10,], aes(x = reorder(Description,-pvalue), y = -log10(pvalue))) + #####这里有一个reorder函数，可以对元素进行排序，这里使用y轴值进行了重新排列
+    geom_col(aes(fill='#d8443c',colour='#d8443c'),show.legend = FALSE,width=0.8) +
+    ggtitle(title) +coord_flip() +
+    theme_classic(base_size = 13)+ 
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank(),
+          text = element_text(size=12,face='bold'))+
+    labs(y="-log10(P value)",x=' ')+
+    scale_fill_manual(values = c(color[4]))+
+    scale_colour_manual(values = c("black"))+
+    scale_y_continuous(expand = c(0,0))+
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 45))+
+    theme(plot.title = element_text(size=12))+
+    theme(aspect.ratio=1.4)
+  
+  path<-paste0(dir,'/',name,'_enrich.pdf')
+  pdf(path,width = 12,height = 8)
+  print(wrap_plots(p,nrow=2)) 
+  dev.off()
+  
+  path<-paste0(dir,'/',name,'_enrich.xlsx')
+  sheets = list("KEGG" = kk,"GO_BP" = BP,'GO_CC'=CC,'GO_MF'=MF) #,'DO'=DO
+  write.xlsx(sheets,path)
+}
 
