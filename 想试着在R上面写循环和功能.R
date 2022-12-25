@@ -522,3 +522,10 @@ myenrich <- function(genelist,name,dir,species){
   write.xlsx(sheets,path)
 }
 
+#试了一下是可以正常运行的，使用方法就是myenrich(rnacotarget,'RNA_cotarget','enrich/','human')
+#我是不是改自己写一个包什么的会比function更加方便？但是function方便修改，写包的话就不太方便修改代码了。
+                     
+                     
+                     
+                     
+                     
