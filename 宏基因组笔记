@@ -3,3 +3,10 @@
 #qiime2
 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime  #本来想用conda装的，怎么也装不上还是用了docker
+
+###########################人体微生物数据########################################################
+#导入数据
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type EMPSingleEndSequences --input-path ./emp-single-end-sequences --output-path emp-single-end-sequences.qza
+#文件夹emp-single-end-sequences里有barcodes.fastq.gz和sequences.fastq.gz两个文件
+
+#拆分数据
