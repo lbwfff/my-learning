@@ -80,3 +80,20 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa collapse 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table gut-table-l6.qza --o-composition-table comp-gut-table-l6.qza
 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-gut-table-l6.qza --m-metadata-file sample-metadata.tsv --m-metadata-column subject --o-visualization l6-ancom-subject.qzv
+
+
+###############训练分类器####################
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'FeatureData[Sequence]' --input-path 85_otus.fasta --output-path 85_otus.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'FeatureData[Taxonomy]' --input-format HeaderlessTSVTaxonomyFormat --input-path 85_otu_taxonomy.txt --output-path ref-taxonomy.qza
+  
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier extract-reads --i-sequences 85_otus.qza --p-f-primer GTGCCAGCMGCCGCGGTAA --p-r-primer GGACTACHVGGGTWTCTAAT --p-trunc-len 120 --p-min-length 100 --p-max-length 400 --o-reads ref-seqs.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier fit-classifier-naive-bayes --i-reference-reads ref-seqs.qza --i-reference-taxonomy ref-taxonomy.qza --o-classifier classifier.qza
+  
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier classify-sklearn --i-classifier classifier.qza --i-reads rep-seqs.qza --o-classification taxonomy.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv  
+  
+  
+  
