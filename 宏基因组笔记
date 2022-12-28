@@ -97,5 +97,16 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classi
 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv  
   
-  
-  
+
+###############一个测试pipline####################
+mkdir -p seq
+awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_f1.fq.gz -O seq/"$1"_1.fq.gz")}' <(tail -n+2 metadata.txt)
+awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_r2.fq.gz -O seq/"$1"_2.fq.gz")}' <(tail -n+2 metadata.txt)
+#根据metadata.txt的内容下载数据，话说每个数据都好小啊
+
+
+
+
+
+
+
