@@ -149,7 +149,7 @@ docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseu
 
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table-l6.qza --m-metadata-file metadata.txt --m-metadata-column ${column} --o-visualization l6-ancom-${column}.qzv
 
-
+#其实想想，不同数据好像就导入的步骤不太一样，其它就大同小异了
 
 
 
