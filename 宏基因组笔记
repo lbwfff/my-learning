@@ -15,3 +15,18 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime demux emp-sing
 
 #拆分结果的统计
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
+
+#质量控制
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime dada2 denoise-single --i-demultiplexed-seqs demux.qza --p-trim-left 0 --p-trunc-len 120 --o-representative-sequences rep-seqs-dada2.qza --o-table table-dada2.qza --o-denoising-stats stats-dada2.qza 
+#可视化
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file stats-dada2.qza --o-visualization stats-dada2.qzv 
+
+mv rep-seqs-dada2.qza rep-seqs.qza
+mv table-dada2.qza table.qza
+
+#另外一种质控方法
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime quality-filter q-score --i-demux demux.qza --o-filtered-sequences demux-filtered.qza --o-filter-stats demux-filter-stats.qza
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime deblur denoise-16S --i-demultiplexed-seqs demux-filtered.qza --p-trim-length 120 --o-representative-sequences rep-seqs-deblur.qza --o-table table-deblur.qza --p-sample-stats --o-stats deblur-stats.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file demux-filter-stats.qza --o-visualization demux-filter-stats.qzv
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime deblur visualize-stats --i-deblur-stats deblur-stats.qza --o-visualization deblur-stats.qzv
