@@ -26,7 +26,7 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabul
 mv rep-seqs-dada2.qza rep-seqs.qza
 mv table-dada2.qza table.qza
 
-#另外一种质控方法
+#另外一种质控方法，据说这种方法会慢挺多的，后续也没有用到就没有跑
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime quality-filter q-score --i-demux demux.qza --o-filtered-sequences demux-filtered.qza --o-filter-stats demux-filter-stats.qza
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime deblur denoise-16S --i-demultiplexed-seqs demux-filtered.qza --p-trim-length 120 --o-representative-sequences rep-seqs-deblur.qza --o-table table-deblur.qza --p-sample-stats --o-stats deblur-stats.qza
 
