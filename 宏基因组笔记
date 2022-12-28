@@ -63,7 +63,7 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity alph
   
 #物种组成
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier classify-sklearn --i-classifier gg-13-8-99-515-806-nb-classifier.qza --i-reads rep-seqs.qza --o-classification taxonomy.qza
-#一个已经训练好的分类器
+#一个已经训练好的分类器，然后发现版本不同还没法通用，需要重新训练？
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv
 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa barplot --i-table table.qza --i-taxonomy taxonomy.qza --m-metadata-file sample-metadata.tsv --o-visualization taxa-bar-plots.qzv
