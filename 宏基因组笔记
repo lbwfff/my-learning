@@ -102,10 +102,57 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabul
 mkdir -p seq
 awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_f1.fq.gz -O seq/"$1"_1.fq.gz")}' <(tail -n+2 metadata.txt)
 awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_r2.fq.gz -O seq/"$1"_2.fq.gz")}' <(tail -n+2 metadata.txt)
-#根据metadata.txt的内容下载数据，话说每个数据都好小啊
+#根据metadata.txt的内容下载数据，话说每个数据都好小啊，应该只是测试数据集的原因
 
-awk 'NR==1{print "sample-id\tforward-absolute-filepath\treverse-absolute-filepath"} NR>1{print $1"\t$PWD/seq/"$1"_1.fq.gz\t$PWD/seq/"$1"_2.fq.gz"}' metadata.txt > manifest
-#根据metadata.txt编写manifest，高端的awk写法
+awk 'NR==1{print "sample-id\tforward-absolute-filepath\treverse-absolute-filepath"} NR>1{print $1"\t/data/seq/"$1"_1.fq.gz\t/data/seq/"$1"_2.fq.gz"}' metadata.txt > manifest
+#根据metadata.txt编写manifest，高端的awk写法,因为我使用的docker版的软件，所以manifest还需要改一下
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-n-threads 8 --p-trim-left-f 29 --p-trim-left-r 18 --p-trunc-len-f 0 --p-trunc-len-r 0 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats denoising-stats.qza
+
+cp dada2-table.qza table.qza
+cp dada2-rep-seqs.qza rep-seqs.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table summarize --i-table table.qza --o-visualization table.qzv --m-sample-metadata-file metadata.txt
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table tabulate-seqs --i-data rep-seqs.qza --o-visualization rep-seqs.qzv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime phylogeny align-to-tree-mafft-fasttree --i-sequences rep-seqs.qza --o-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza --o-tree unrooted-tree.qza --o-rooted-tree rooted-tree.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity core-metrics-phylogenetic --i-phylogeny rooted-tree.qza --i-table table.qza --p-sampling-depth 27060 --m-metadata-file metadata.txt --output-dir core-metrics-results
+
+index=observed_features
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity alpha-group-significance --i-alpha-diversity core-metrics-results/${index}_vector.qza --m-metadata-file metadata.txt --o-visualization core-metrics-results/${index}-group-significance.qzv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity alpha-rarefaction --i-table table.qza --i-phylogeny rooted-tree.qza --p-max-depth 34663 --m-metadata-file metadata.txt --o-visualization alpha-rarefaction.qzv
+
+distance=weighted_unifrac
+column=Group
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity beta-group-significance --i-distance-matrix core-metrics-results/${distance}_distance_matrix.qza --m-metadata-file metadata.txt --m-metadata-column ${column} --o-visualization core-metrics-results/${distance}-${column}-significance.qzv --p-pairwise
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier classify-sklearn --i-classifier classifier_gg_13_8_99_V5-V7.qza --i-reads rep-seqs.qza --o-classification taxonomy.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa barplot --i-table table.qza --i-taxonomy taxonomy.qza --m-metadata-file metadata.txt --o-visualization taxa-bar-plots.qzv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table table.qza --o-composition-table comp-table.qza
+
+column=Group
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table.qza --m-metadata-file metadata.txt --m-metadata-column ${column} --o-visualization ancom-${column}.qzv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa collapse --i-table table.qza --i-taxonomy taxonomy.qza --p-level 6 --o-collapsed-table table-l6.qza
+ 
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table table-l6.qza --o-composition-table comp-table-l6.qza
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table-l6.qza --m-metadata-file metadata.txt --m-metadata-column ${column} --o-visualization l6-ancom-${column}.qzv
+
+
+
+
+
+
+
 
 
 
