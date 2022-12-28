@@ -32,3 +32,11 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime deblur denoise
 
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file demux-filter-stats.qza --o-visualization demux-filter-stats.qzv
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime deblur visualize-stats --i-deblur-stats deblur-stats.qza --o-visualization deblur-stats.qzv
+
+#特征表
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table summarize --i-table table.qza --o-visualization table.qzv --m-sample-metadata-file sample-metadata.tsv
+
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table tabulate-seqs --i-data rep-seqs.qza --o-visualization rep-seqs.qzv
+
+#进化树
+docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime phylogeny align-to-tree-mafft-fasttree --i-sequences rep-seqs.qza --o-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza --o-tree unrooted-tree.qza --o-rooted-tree rooted-tree.qza
