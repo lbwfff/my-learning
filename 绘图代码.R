@@ -219,7 +219,8 @@ ggpie(data = peaklist, group_key = "adj_type", count_type = "full",
       label_info = "ratio", label_type = "horizon",
       label_size = 4, label_pos = "out" )+
   scale_fill_manual(values=rev(met.brewer('Hiroshige',n=4)))+ #同样本质上也是一个ggplot对象，可以自己对美学进行改造
-  labs(fill='Gene type')
+  labs(fill='Gene type')+
+  ggtitle('test') 
   
 
 ###########PCA图##########
