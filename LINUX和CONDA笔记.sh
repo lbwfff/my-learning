@@ -1,3 +1,13 @@
+infer_experiment.py -i ./OVX14_1-Input.sam -r /home/leelee/biodata/annotation/NCBI_mm39.bed -q 20
+#之前一直不太明白怎么判断数据的链特异性问题，这里有一个简单的工具，来自RSeQC
+#我得到的结果是
+#This is PairEnd Data
+#Fraction of reads failed to determine: 0.0495
+#Fraction of reads explained by "1++,1--,2+-,2-+": 0.0177
+#Fraction of reads explained by "1+-,1-+,2++,2--": 0.9327
+#可以看到reads大部分偏第二种情况，说明是链特异性的，read1在+链，相对的gene其实是在-链（reverse）。这种就是“fr-firststrand”，也就是参数中的--rf，first read maps to the reverse strand
+
+
 bedtools sort -i ./MOV10_hg38.bed > mov10_sorted.bed
 bedtools merge -i ./mov10_sorted.bed > MOV10_merged.bed #活用一些小工具，每次都想在R语言中解决问题，一是麻烦二来效率也很低，一些编程好的小工具能够提升效率
 
