@@ -1,0 +1,73 @@
+
+
+########################################################################################
+#前处理
+
+for i in OVX3-Input OVX3-IP OVX5-Input OVX5-IP sham2-Input sham2-IP sham3-IP sham3-Input sham5-Input sham5-IP
+do
+trim_galore --quality 20 --length 35 --paired ./"$i".R1.fastq.gz ./"$i".R2.fastq.gz  -j 18 --stringency 1 --three_prime_clip_R1 3 --three_prime_clip_R2 3
+done
+
+for i in OVX3-Input OVX3-IP OVX5-Input OVX5-IP sham2-Input sham2-IP sham3-IP sham3-Input sham5-Input sham5-IP
+do
+  /home/leelee/tools/bbtools/bbmap/bbduk.sh ref=/home/leelee/biodata/index/GCF/ncbi_dataset/allmycoplasma.fasta threads=12 ordered=t k=31 in=./"$i".R1_val_1.fq.gz in2=./"$i".R2_val_2.fq.gz out="$i"_bbduk_.R1.fq out2="$i"_bbduk_.R2.fq outm="$i"_bbduk_.bad.R1.fq outm2="$i"_bbduk_.bad.R2.fq
+  /home/leelee/tools/bbtools/bbmap/bbduk.sh ref=/home/leelee/biodata/index/rRNA/rRNA.mus_musculus.fa threads=12 ordered=t k=31 in=./"$i"_bbduk_.R1.fq in2=./"$i"_bbduk_.R2.fq out="$i"_rmrrna_bbduk_.R1.fq out2="$i"_rmrrna_bbduk_.R2.fq outm="$i"_rmrrna_bbduk_.bad.R1.fq outm2="$i"_rmrrna_bbduk_.bad.R2.fq
+done
+
+mv ./*rmrrna* ./clean 
+
+for i in IP-o-1 IP-o-3 IP-s-1 IP-s-2 o-1 o-3 s-1 s-2 OVX3-Input OVX3-IP OVX5-Input OVX5-IP sham2-Input sham2-IP sham3-IP sham3-Input sham5-Input sham5-IP
+do
+trim_galore --quality 20 --length 50 --paired ./clean/"$i"_rmrrna_bbduk_.R1.fq ./clean/"$i"_rmrrna_bbduk_.R2.fq  -j 10 --hardtrim5 50
+#这种方法要求把reads的长度裁剪到50bp，我使用trim_galore进行的裁剪
+hisat2 -p 12 --dta -t -x /home/leelee/biodata/index/GRCm39/GRCm39 -1 ./"$i"_rmrrna_bbduk_.R1.50bp_5prime.fq -2 ./"$i"_rmrrna_bbduk_.R2.50bp_5prime.fq -S "$i".sam --un-conc "$i"_un.fq.gz
+done
+
+for i in  OVX14_1-IP OVX14_1-Input OVX14_2-IP OVX14_2-Input OVX36_1-IP OVX36_1-Input OVX36_2-IP OVX36_2-Input sham_1-IP sham_1-Input sham_2-IP sham_2-Input sham_3-IP sham_3-Input
+do
+ samtools view -bSq 10 -@ 15 -F 4 -F 256 -F 128 ./mapping/"$i".sam -o ./mapping/"$i".bam
+  #然后因为是双端的测序，方法也没法处理，这里把reads2全部去掉了保留的reads1
+ samtools sort -@ 15 -o ./mapping/"$i".sorted.bam ./mapping/"$i".bam
+ samtools index ./mapping/"$i".sorted.bam
+done
+
+###########################################################################################################
+#callpeak，脚本是他们组写的，我在基础上稍稍改了一下，可以借鉴他们shell脚本的写法
+
+#!bin/bash
+
+echo "Usage: sh step1.sh control1 control2 treat1 treat2"
+
+sliding_window="sliding_window_on_merged_tx_Ens_mm39.txt"
+gsize="mm39_size"
+path="/home/leelee/share/11_16_seq/new_treat/mapping"
+
+source activate callpeak2
+
+function callPeak(){
+	i=$1
+	bedtools genomecov -bg -split -strand + -ibam ${path}/${i}-Input.sorted.bam -g ${gsize} > ${i}-Input_plus.bedGraph
+	bedtools genomecov -bg -split -strand - -ibam ${path}/${i}-Input.sorted.bam -g ${gsize} > ${i}-Input_minus.bedGraph
+	bedtools genomecov -bg -split -strand + -ibam ${path}/${i}-IP.sorted.bam -g ${gsize} > ${i}-IP_plus.bedGraph
+	bedtools genomecov -bg -split -strand - -ibam ${path}/${i}-IP.sorted.bam -g ${gsize} > ${i}-IP_minus.bedGraph
+	./rnaexp_rpkm_strand_JW.pl ${sliding_window} ${gsize} ${i}-Input_minus.bedGraph ${i}-Input_plus.bedGraph ${i}-Input_win_rpkm.txt
+	./rnaexp_rpkm_strand_JW.pl ${sliding_window} ${gsize} ${i}-IP_minus.bedGraph ${i}-IP_plus.bedGraph ${i}-IP_win_rpkm.txt
+	}
+
+echo "calculate windown RPKM"
+for var in "$@"; do callPeak $var; done
+
+for i in "$@"; do
+	./merge_input_eluate_win_RPKM.py ${i}-Input_win_rpkm.txt ${i}-IP_win_rpkm.txt ${i}_win_rpkm.txt
+	./calculate_winscore.pl ${i}_win_rpkm.txt
+	./remove_data_RPKM10.pl ${i}_win_rpkm_winscore.txt ${i}_winscore_filtered.txt
+	./match_two_files.pl ${i}_winscore_filtered.txt ${sliding_window} ${i}_winscore_filtered_matched.txt
+	cut -f 3,5,6,17,18 ${i}_winscore_filtered_matched.txt > ${i}_winscore_filtered_matched_formated.txt
+	./combine_peak.pl ${i}_winscore_filtered_matched_formated.txt
+	./combine_peak2.pl ${i}_winscore_filtered_matched_formated.txt
+	grep -P "	Y$" ${i}_winscore_filtered_matched_formated.txt.co.pk | cut -f 1-5 > ${i}_winscore_filtered_matched_formated_greped.txt
+	cat ${i}_winscore_filtered_matched_formated_greped.txt ${i}_winscore_filtered_matched_formated.txt.co.pk2  > ${i}_peaklist.txt	
+done
+
+echo "add strand"
+ls *peaklist.txt | while read id; do ./add_strand_to_final_peaks.py ${sliding_window} ${id} ${id%%.*}_addStrand.bed; done
