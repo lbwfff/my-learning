@@ -71,3 +71,37 @@ done
 
 echo "add strand"
 ls *peaklist.txt | while read id; do ./add_strand_to_final_peaks.py ${sliding_window} ${id} ${id%%.*}_addStrand.bed; done
+
+############################################################################################
+echo "merge peaks of replicates"
+
+allsample=`ls *peaklist_addStrand.bed`
+#echo $allsample
+#./merge_and_find_common_peaks_anysample_any_replcates.py $allsample common_peaks > common_peaks.log #如果做单组的话是不是就用这个代码
+
+#./merge_and_find_union_peaks_anysample_any_replcates.py OVX14_1_peaklist_addStrand.bed,OVX14_2_peaklist_addStrand.bed OVX36_1_peaklist_addStrand.bed,OVX36_2_peaklist_addStrand.bed OVX14_VS_OVX36
+#./merge_and_find_union_peaks_anysample_any_replcates.py OVX14_1_peaklist_addStrand.bed,OVX14_2_peaklist_addStrand.bed sham1_1_peaklist_addStrand.bed,sham_2_peaklist_addStrand.bed,sham_3_peaklist_addStrand.bed OVX14_VS_sham
+#./merge_and_find_union_peaks_anysample_any_replcates.py OVX14_1_peaklist_addStrand.bed,OVX14_2_peaklist_addStrand.bed sham_1_peaklist_addStrand.bed,sham_2_peaklist_addStrand.bed,sham_3_peaklist_addStrand.bed OVX14_VS_sham
+#两两之间比较
+
+echo "calculate windown RPKM of common peaks for each replicates"
+
+for i in "$@"; do
+		./rnaexp_rpkm_strand_JW.pl OVX14_VS_OVX36_union_peaks.txt ${gsize} ${i}-IP_plus.bedGraph ${i}-IP_minus.bedGraph ${i}-IP_window_rpkm_of_OVX14_VS_OVX36_peaks.txt
+		./rnaexp_rpkm_strand_JW.pl OVX14_VS_OVX36_union_peaks.txt ${gsize} ${i}-Input_plus.bedGraph ${i}-Input_minus.bedGraph ${i}-Input_window_rpkm_of_OVX14_VS_OVX36_peaks.txt
+	done
+
+#echo "filter common peaks"
+
+#if [ $# != 3 ] ; then
+#	./filter_common_peaks_using_winscrore.R $1,$2
+#	exit -1
+#else
+#	./filter_common_peaks_using_winscrore.R $1,$2,$3
+#	exit -1
+#fi
+
+#echo "END!!!"
+
+
+
