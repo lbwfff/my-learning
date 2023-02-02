@@ -85,6 +85,7 @@ allsample=`ls *peaklist_addStrand.bed`
 #两两之间比较
 
 echo "calculate windown RPKM of common peaks for each replicates"
+#这一步还比较麻烦，因为数据中有三个分组
 
 for i in "$@"; do
 		./rnaexp_rpkm_strand_JW.pl OVX14_VS_OVX36_union_peaks.txt ${gsize} ${i}-IP_plus.bedGraph ${i}-IP_minus.bedGraph ${i}-IP_window_rpkm_of_OVX14_VS_OVX36_peaks.txt
