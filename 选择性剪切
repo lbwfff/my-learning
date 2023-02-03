@@ -1,1 +1,4 @@
 docker run -v $(pwd):/data mcfonsecalab/rmats python rmats.py --help 
+
+rmats.py --s1 s1.txt --s2 s2.txt --gtf ~/biodata/annotation/gencode.vM30.annotation.gtf --bi ~/biodata/index/GRCm39/star_index -t paired --readLength 150 --nthread 4 --od ./output --tmp ./tmp_output --libType fr-firststrand
+#我嫌docker用索引麻烦，用转回去用conda了
