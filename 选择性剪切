@@ -6,3 +6,5 @@ rmats.py --s1 s1.txt --s2 s2.txt --gtf ~/biodata/annotation/gencode.vM30.annotat
 #它没法把参数传递给star，所以还得gunzip解压fastq
 
 rmats.py --s1 s1.txt --s2 s2.txt --gtf ~/biodata/annotation/gencode.vM30.annotation.gtf --bi ~/biodata/index/GRCm39/star_index -t paired --readLength 50 --nthread 4 --od ./output --libType fr-firststrand
+
+nohup docker run -v $(pwd):/data xinglab/rmats --s1 /data/rmats/s1.txt --s2 /data/rmats/s2.txt --gtf /data/rmats/gencode.vM30.annotation.gtf --bi /data/rmats/star_index -t paired --readLength 50 --nthread 4 --od /data/rmats/docker --tmp /data/rmats/tmp --libType fr-firststrand &
