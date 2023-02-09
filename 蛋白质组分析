@@ -1,4 +1,5 @@
 ./ORFfinder -in circ_seq.fasta -c t -s 1 -ml 30 -out ribo_crc_orf.fasta -outfmt 1 #ORFfinder的使用
+#值得注意的是，虽然orffinder提供了-c参数，但是比较后发现这个参数无论写什么都不会有改变，orffinder并没有做好在环状序列上寻找orf的功能
 
 docker run --rm -e WINEDEBUG=-all -v /home/leelee/share/CNHPP_HCC/L091/:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses:x64 wine msconvert /data/CNHPP_HCC_LC_profiling_L091_P_F1.raw
 #不太会用openms的组件，ProteoWizard是一个好选择，这个软件也部署了docker使用较为方便。
