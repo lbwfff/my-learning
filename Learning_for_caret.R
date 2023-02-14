@@ -482,3 +482,172 @@ for (i in 1:nrow(learn_array)){
  print(paste0('fin! featureNUM:',fe_num,' model:',model_name))
 }
 }  #就是对六个模型，选择特征数从3到12的情况下模型表现的一个比较。
+
+
+##############################################################################################
+#一个实例
+library('caret')
+library('doParallel')
+library('MetBrewer')
+library('ggplot2')
+library('pROC')
+library('PRROC')
+library('ROCR')
+
+cl <- makePSOCKcluster(16)
+registerDoParallel(cl)
+
+load('caret_ay.RData')
+test[is.na(test)]<-c(0)
+caret_ay<-test
+caret_ay$pre<-ifelse(caret_ay$label_1=='FALSE','nontumor','tumor')
+caret_ay$pre<-factor(caret_ay$pre,levels = c('tumor','nontumor'))
+caret_ay<-caret_ay[,-1]
+
+set.seed(618)
+inTraining <- createDataPartition(caret_ay$pre, p = .75, list = FALSE)
+training <- caret_ay[ inTraining,]
+testing  <- caret_ay[-inTraining,]
+
+save(training,testing,file = 'ml_data.RData')
+load('ml_data.RData')
+
+fitControl <- trainControl(method = "LGOCV",number = 400, #repeats = 20,
+                           classProbs = TRUE,
+                           summaryFunction = prSummary)
+
+rfFit <- train(pre ~ ., data = training, method = "rf", trControl = fitControl, 
+               tuneLength = 40,metric = "AUC")
+print('end_mod_rf')
+
+svmFit <- train(pre ~ ., data = training, method = "svmRadial", trControl = fitControl, 
+               tuneLength = 40,metric = "AUC")
+print('end_mod_svm')
+
+lbFit <- train(pre ~ ., data = training, method = "LogitBoost", trControl = fitControl, 
+               tuneLength = 40,metric = "AUC")
+print('end_mod_lb')
+
+knnFit <- train(pre ~ ., data = training, method = "knn", trControl = fitControl, 
+               tuneLength = 40,metric = "AUC")
+print('end_mod_knn')
+
+nbFit <- train(pre ~ ., data = training, method = "naive_bayes", trControl = fitControl,
+               tuneLength = 40,metric = "AUC")
+print('end_mod_nb')
+
+save(rfFit,svmFit,lbFit,knnFit,nbFit,file = 'mod.RData')
+load('mod.RData') #我不明白，之前做到单个的rf模型不是表现很好吗，为什么这次跑的会变成这样？
+
+#模型表现
+rf.probs_1= predict(rfFit,testing) 
+rf.probs_2= predict(rfFit,testing,type = "prob")
+postResample(pred = rf.probs_1, obs = testing$pre)  
+
+level<-levels(testing$pre)
+dat<-data.frame(obs=factor(testing$pre),
+                pred=factor(rf.probs_1,levels = c('tumor','nontumor')),
+                tumor = rf.probs_2$tumor
+)
+dat$nontumor <- 1 - dat$tumor
+
+twoClassSummary(dat, lev = level)
+prSummary(dat, lev = level) 
+
+
+rf.probs = predict(rfFit,testing,type = "prob")
+rf.ROC = roc(response = testing$pre,
+             predictor = rf.probs$nontumor,
+             levels = levels(testing$pre))
+svm.probs = predict(svmFit,testing,type = "prob")
+svm.ROC = roc(response = testing$pre,
+             predictor = svm.probs$nontumor,
+             levels = levels(testing$pre))
+lb.probs = predict(lbFit,testing,type = "prob")
+lb.ROC = roc(response = testing$pre,
+              predictor = lb.probs$nontumor,
+              levels = levels(testing$pre))
+knn.probs = predict(knnFit,testing,type = "prob")
+knn.ROC = roc(response = testing$pre,
+              predictor = knn.probs$nontumor,
+              levels = levels(testing$pre))
+nb.probs = predict(nbFit,testing,type = "prob")
+nb.ROC = roc(response = testing$pre,
+              predictor = nb.probs$nontumor,
+              levels = levels(testing$pre))
+
+
+g <- ggroc(list(RF=rf.ROC,SVM=svm.ROC,LB=lb.ROC,KNN=knn.ROC,NB=nb.ROC),size=0.7)
+
+pdf("auc_multimod.pdf",width = 8,height = 6)
+g+theme_bw(base_size=18)+
+  theme(panel.grid.major =element_blank(), 
+        panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+        panel.grid.minor = element_blank(),panel.border = element_blank(),
+        legend.title = element_blank())+
+  geom_abline(intercept = 1, slope = 1, linetype = "dashed")+
+  scale_x_reverse(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0))+
+  # annotate("text", x=0.5, y=0.3, label=paste0("AUC = ",round(rf.ROC[["auc"]],3)),size=5)+
+  theme(aspect.ratio=1)+
+  coord_fixed(ratio = 0.8)+
+  scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete'))
+dev.off()
+
+#然后是PRAUC
+auprc <- function(mod,Test,modname){ 
+  
+  probs_1= predict(mod,Test) 
+  probs_2= predict(mod,Test,type = "prob")
+  Test$pre<-factor(Test$pre)
+  
+  eva<-cbind(probs_2,Test$pre)
+  colnames(eva)[3]<-c('obs')
+  eva$group<-(modname)
+  eva$group<-as.factor(eva$group)
+  eva$obs<-as.factor(eva$obs)
+  
+  scores <- data.frame(eva$tumor)
+  scores$labels<-ifelse(eva$obs=='tumor','1','0')
+  pr <- pr.curve(scores.class0=scores[scores$labels=="1",]$eva.tumor,
+                 scores.class1=scores[scores$labels=="0",]$eva.tumor,
+                 curve=T) 
+
+  y <- as.data.frame(pr$curve)
+  y$mod<-c(modname)
+  return(y)
+}
+  
+auprcplot<-rbind(auprc(rfFit,testing,'RF'),
+      auprc(svmFit,testing,'SVM'),
+      auprc(lbFit,testing,'LB'),
+      auprc(knnFit,testing,'KNN'),
+      auprc(nbFit,testing,'NB'))
+auprcplot$mod<-factor(auprcplot$mod,levels = c('RF','SVM','LB','KNN','NB'))
+
+pdf("auprc_multi_mod.pdf",width = 8,height = 6)
+ggplot(auprcplot, aes(V1, V2,colour = mod))+
+    geom_path(size=0.7)+ylim(0,1)+
+    theme_bw(base_size=18)+
+    theme(panel.grid.major =element_blank(), 
+          panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank())+
+    scale_x_continuous(expand = c(0,0))+
+    scale_y_continuous(expand = c(0,0))+
+    # annotate("text", x=0.3, y=0.5, label=paste0("AUPRC = ",round(pr$auc.integral, 3)),size=5)+
+    theme(aspect.ratio=1)+
+    labs(x="Recall", y = "Precision")+
+    coord_cartesian(ylim=c(0,1),xlim=c(0,1))+
+    scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete'))
+dev.off()
+
+
+
+
+
+
+
+
+
