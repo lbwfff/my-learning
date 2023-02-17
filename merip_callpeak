@@ -129,7 +129,7 @@ findMotifsGenome.pl test.sorted.bed /home/leelee/biodata/index/GRCm39/GRCm39_pri
 bedGraphToBigWig  test_fwd_treat_pileup.bdg  ~/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa.fai  test_IP_fwd.bw
 bedGraphToBigWig  test_fwd_control_lambda.bdg  ~/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa.fai  test_input_fwd.bw
 #看下了track，感觉很多peak都还挺微妙的，可能我需要把阈值调高，可能不应该使用broad模式？像是这样：
-macs3 callpeak -t IP-Re-0h.markdup.bam_fwd.bam -c Re-0h.markdup.bam_fwd.bam --call-summits -q 0.01 -g mm -n test_fwd --bdg
+macs3 callpeak -t IP-Re-0h.markdup.bam_fwd.bam -c Re-0h.markdup.bam_fwd.bam --call-summits -q 0.01 -g mm -n test_fwd --bdg #这个代码出来有重复的峰？
 #重新做了，看了一下track，callpeak我觉得是没有问题的，问题可能还是在于，数据的IP质量不够好？
 #然后我想到，如果想要依据RPKM对peak进行过滤的话，我是不是可以用rnaexp_rpkm_strand_JW.pl？
 
