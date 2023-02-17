@@ -129,6 +129,40 @@ findMotifsGenome.pl test.sorted.bed /home/leelee/biodata/index/GRCm39/GRCm39_pri
 ~/R/R-4.1.2/bin/Rscript cliprofile.R
 #metaprofile倒是没什么问题,和之前没什么区别
 
+#记录一下split.sh，这个脚本后期可以再改
 
+#!bin/bash
+source activate p3
 
+# Get the bam file from the command line
+DATA=$1
+
+# Forward strand.
+# 1. alignments of the second in pair if they map to the forward strand
+# 2. alignments of the first in pair if they map to the reverse  strand
+samtools view -b -f 128 -F 16 $DATA > fwd1.bam
+
+samtools index fwd1.bam
+
+samtools view -b -f 80 $DATA > fwd2.bam
+samtools index fwd2.bam
+
+# Combine alignments that originate on the forward strand.
+samtools merge -f "$1"_fwd.bam fwd1.bam fwd2.bam
+samtools index "$1"_fwd.bam
+
+# Reverse strand
+# 1. alignments of the second in pair if they map to the reverse strand
+# 2. alignments of the first in pair if they map to the forward strand
+
+samtools view -b -f 144 $DATA > rev1.bam
+samtools index rev1.bam
+
+samtools view -b -f 64 -F 16 $DATA > rev2.bam
+samtools index rev2.bam
+
+# Combine alignments that originate on the reverse strand.
+
+samtools merge -f "$1"_rev.bam rev1.bam rev2.bam
+samtools index "$1"_rev.bam
 
