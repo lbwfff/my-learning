@@ -114,7 +114,12 @@ for i in "$@"; do
 
 split.sh Re-0h.markdup.bam
 macs3 callpeak -t IP-Re-0h.markdup.bam_fwd.bam -c Re-0h.markdup.bam_fwd.bam --broad -g mm --broad-cutoff 0.1 -n test_fwd --bdg
+macs3 callpeak -t IP-Re-0h.markdup.bam_rev.bam -c Re-0h.markdup.bam_rev.bam --broad -g mm --broad-cutoff 0.1 -n test_rev --bdg
 awk -F '\t' '{OFS="\t"} $6="+"' test_fwd_peaks.gappedPeak > plus.bed
+awk -F '\t' '{OFS="\t"} $6="-"' test_rev_peaks.gappedPeak > minus.bed
+
+cat plus.bed minus.bed > test_merge.bed
+
 
 #简单质控一下
 findMotifsGenome.pl plus.bed /home/leelee/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa test_homer -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
