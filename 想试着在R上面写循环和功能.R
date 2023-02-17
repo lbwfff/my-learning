@@ -530,6 +530,20 @@ myenrich <- function(genelist,name,dir,species){
 #我是不是改自己写一个包什么的会比function更加方便？但是function方便修改，写包的话就不太方便修改代码了。
                      
                      
-                     
-                     
+##########################################################                     
+#给for循环加个进度条
+library(progress)
+pb <- progress_bar$new(total = nrow(shTRA2A_down))
+
+for (i in 1:nrow(shTRA2A_down)){
+  pb$tick()
+  chr<-traclip[traclip$V1==shTRA2A_down$seqnames[i]& 
+                 traclip$V4==shTRA2A_down$feature_strand[i],]
+  chr<-chr[(chr$V2>shTRA2A_down$start[i] & chr$V3<shTRA2A_down$end[i])| 
+             (chr $V2< shTRA2A_down$start[i] & chr $V3> shTRA2A_down$start[i]) |
+                (chr $V2 < shTRA2A_down$end[i] & chr$V3> shTRA2A_down$end[i]),]
+  if (nrow(chr)>0 ) {shTRA2A_down$group[i]<-c('target')} else {
+    shTRA2A_down$group[i]<-c('nontarget')
+  }
+}
                      
