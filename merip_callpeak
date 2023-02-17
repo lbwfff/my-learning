@@ -119,7 +119,7 @@ awk -F '\t' '{OFS="\t"} $6="+"' test_fwd_peaks.gappedPeak > plus.bed
 awk -F '\t' '{OFS="\t"} $6="-"' test_rev_peaks.gappedPeak > minus.bed
 
 cat plus.bed minus.bed > test_merge.bed
-
+sort -k1,1 -k2,2n test_merge.bed > test.sorted.bed
 
 #简单质控一下
 findMotifsGenome.pl plus.bed /home/leelee/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa test_homer -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
