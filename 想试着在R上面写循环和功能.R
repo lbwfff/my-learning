@@ -79,24 +79,20 @@ dev.off()
 
 
 #######apply循环的使用#######
-#######这种循环对于你操作矩阵至关重要！######
-
+#######其实多用apply会比for循环更好一些，因为apply更加简洁高效也更容易去做多线程的计算，但是更难理解一些
+                     
 f<-function(x) sum(x > 0 & !is.na(x))
 apply(fc,1,f)####1为行，2为列，此处计算fc矩阵中每一行大于零且不为na的值的数目
-
 
 #######进阶实例########
 ######使用poolr包的stouffer函数对p矩阵的每一行进行p值的合并######
 ######此例可以让你更好的理解apply循环，function的x是是什么？如果想把function应用在apply上，此处的x应该是行（或列）#####
+                     
 library('poolr')
 f<-function(x) stouffer(as.numeric(x[!is.na(as.numeric(unlist(x)))]))$p
 allgene$integrateP<-apply(p,1,f)
 
-
-######解决了你一直想解决的一些问题######
-f <-function(x) unlist(strsplit(x$experiment_title,';'))[1]
-plate <-apply(list2,1,f) 
-#####这是错误示范，会显示报错：$ operator is invalid for atomic vectors,具体的原理我不是太懂，但是通过像下面的改动可以避开这个问题####
+                     
 f <-function(x) unlist(strsplit(x['experiment_title'],';'))[1]
 list2$plate <-apply(list2,1,f)
 ####这样就可以取得任意封号前的字符了，换成'_',或者其他什么也可以操作，解决了一个大麻烦#####
@@ -104,6 +100,7 @@ list2$plate <-apply(list2,1,f)
 ####除了拆开，也可以合起来，代码更加简单####
 protein<-paste0(protein,collapse = ';')
 
+                     
 
 #####判断句#####
 #####基本的使用方法是，ifelse(对象,yes,no)######
