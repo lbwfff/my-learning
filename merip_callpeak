@@ -122,10 +122,12 @@ cat plus.bed minus.bed > test_merge.bed
 sort -k1,1 -k2,2n test_merge.bed > test.sorted.bed
 
 #简单质控一下
-findMotifsGenome.pl plus.bed /home/leelee/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa test_homer -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
-#RAC倒是对上了，但是前面的R和后面的H没对上是为什么？
+findMotifsGenome.pl test.sorted.bed /home/leelee/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa test_homer -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
+#只看正链时RAC倒是对上了，但是前面的R和后面的H没对上是为什么？
+#两条链都看时GGAC出来了，但是显著性变成第二了？
+
 ~/R/R-4.1.2/bin/Rscript cliprofile.R
-#metaprofile倒是没什么问题
+#metaprofile倒是没什么问题,和之前没什么区别
 
 
 
