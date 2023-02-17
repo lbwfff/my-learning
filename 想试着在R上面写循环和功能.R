@@ -5,6 +5,7 @@ test2<-data.frame(A=c('1','2','3'),
                   C=c('A','B','C'))
 merge(test1,test2)
 
+ensembl_id <- substr(row.names(norm),1,15) #随便找个地方放一下代码
 
 ####学习循环是为了节省劳动力
 
