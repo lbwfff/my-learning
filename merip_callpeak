@@ -131,6 +131,7 @@ bedGraphToBigWig  test_fwd_control_lambda.bdg  ~/biodata/index/GRCm39/GRCm39_pri
 #看下了track，感觉很多peak都还挺微妙的，可能我需要把阈值调高，可能不应该使用broad模式？像是这样：
 macs3 callpeak -t IP-Re-0h.markdup.bam_fwd.bam -c Re-0h.markdup.bam_fwd.bam --call-summits -q 0.01 -g mm -n test_fwd --bdg
 #重新做了，看了一下track，callpeak我觉得是没有问题的，问题可能还是在于，数据的IP质量不够好？
+#然后我想到，如果想要依据RPKM对peak进行过滤的话，我是不是可以用rnaexp_rpkm_strand_JW.pl？
 
 ~/R/R-4.1.2/bin/Rscript cliprofile.R
 #metaprofile倒是没什么问题,和之前没什么区别
