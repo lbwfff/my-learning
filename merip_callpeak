@@ -112,9 +112,15 @@ for i in "$@"; do
 #我也不知道是因为winscore的要求过于严苛了，还是这些数据就是有问题，没法得到预期的结果。
 #我一直想试试MACS来做callpeak，这个工具在chip-seq中表现非常不错，但是chip-seq的工具是不分正负链的，倒是可以自己做一些调整，但不确定会不会更好用。
 
+split.sh Re-0h.markdup.bam
+macs3 callpeak -t IP-Re-0h.markdup.bam_fwd.bam -c Re-0h.markdup.bam_fwd.bam --broad -g mm --broad-cutoff 0.1 -n test_fwd --bdg
+awk -F '\t' '{OFS="\t"} $6="+"' test_fwd_peaks.gappedPeak > plus.bed
 
-
-
+#简单质控一下
+findMotifsGenome.pl plus.bed /home/leelee/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa test_homer -p 10 -len 6 -size -100,100 -rna -mis 0 -basic
+#RAC倒是对上了，但是前面的R和后面的H没对上是为什么？
+~/R/R-4.1.2/bin/Rscript cliprofile.R
+#metaprofile倒是没什么问题
 
 
 
