@@ -11,6 +11,15 @@ infer_experiment.py -i ./OVX14_1-Input.sam -r /home/leelee/biodata/annotation/NC
 bedtools sort -i ./MOV10_hg38.bed > mov10_sorted.bed
 bedtools merge -i ./mov10_sorted.bed > MOV10_merged.bed #活用一些小工具，每次都想在R语言中解决问题，一是麻烦二来效率也很低，一些编程好的小工具能够提升效率
 
+#bedtools想要merge但是保留正负链该怎么做
+cat ./*bed > all.bed
+sort -k1,1 -k2,2n all.bed > all_sorted.bed
+bedtools merge -i all_sorted.bed -S + -c 6 -o distinct > plus.bed
+bedtools merge -i all_sorted.bed -S - -c 6 -o distinct > minus.bed
+cat plus.bed minus.bed > merged.bed
+sort -k1,1 -k2,2n merged.bed > merged_sorted.bed
+
+
 liftOver GSM1173263_allTC_4su_MOV10_WT.bed hg19ToHg38.over.chain.gz MOV10_WT.bed Unmap.bed
 
 samtools view -h SRR14510077Aligned.sortedByCoord.out.bam | awk 'length($10) ==28 || $1 ~ /^@/' | samtools view -bS - > ../test.bam
