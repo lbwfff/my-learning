@@ -126,6 +126,10 @@ findMotifsGenome.pl test.sorted.bed /home/leelee/biodata/index/GRCm39/GRCm39_pri
 #只看正链时RAC倒是对上了，但是前面的R和后面的H没对上是为什么？
 #两条链都看时GGAC出来了，但是显著性变成第二了？
 
+bedGraphToBigWig  test_fwd_treat_pileup.bdg  ~/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa.fai  test_IP_fwd.bw
+bedGraphToBigWig  test_fwd_control_lambda.bdg  ~/biodata/index/GRCm39/GRCm39_primary_assembly_genome.fa.fai  test_input_fwd.bw
+#看下track
+
 ~/R/R-4.1.2/bin/Rscript cliprofile.R
 #metaprofile倒是没什么问题,和之前没什么区别
 
