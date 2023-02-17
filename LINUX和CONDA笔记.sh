@@ -19,6 +19,11 @@ bedtools merge -i all_sorted.bed -S - -c 6 -o distinct > minus.bed
 cat plus.bed minus.bed > merged.bed
 sort -k1,1 -k2,2n merged.bed > merged_sorted.bed
 
+jupyter notebook #
+
+sudo chown -R leelee ./share/
+
+STAR --runThreadN 18 --genomeDir ~/biodata/index/GRCh38 --readFilesIn rmrrna/${id}.derRNA.fq.gz --outFilterType BySJout --outFilterMismatchNmax 2 --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outFilterMultimapNmax 1 --outFilterMatchNmin 16 --outFileNamePrefix ${id} --readFilesCommand zcat --outReadsUnmapped None --alignEndsType EndToEnd
 
 liftOver GSM1173263_allTC_4su_MOV10_WT.bed hg19ToHg38.over.chain.gz MOV10_WT.bed Unmap.bed
 
