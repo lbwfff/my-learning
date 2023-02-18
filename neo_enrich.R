@@ -246,5 +246,57 @@ pheatmap(immugsva2,cluster_rows = T,cluster_cols =F,
 dev.off()                        
                        
                        
-
+##############################################################
+#蛋白PPI互作的网络
                        
+library(tidyverse)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(STRINGdb)
+library(igraph)
+library(ggraph)
+
+string_db <- STRINGdb$new( version="11.5", species=10090,
+                           score_threshold=400, input_directory="")
+gene <- c('Gper1',Gper1$id)
+gene <- gene %>% bitr(fromType = "SYMBOL", 
+                      toType = "ENTREZID", 
+                      OrgDb = "org.Mm.eg.db", 
+                      drop = T)
+data_mapped <- gene %>% string_db$map(my_data_frame_id_col_names = "ENTREZID", 
+                                      removeUnmappedRows = TRUE)
+# string_db$plot_network( data_mapped$STRING_id ) #这张画出来应该和网页版是一样的，但不知道为什么网络有问题
+ 
+#
+data_links <- data_mapped$STRING_id[1:100] %>% string_db$get_interactions()
+
+links <- data_links %>%
+  mutate(from = data_mapped[match(from, data_mapped$STRING_id), "SYMBOL"]) %>% 
+  mutate(to = data_mapped[match(to, data_mapped$STRING_id), "SYMBOL"]) %>%  
+  dplyr::select(from, to , last_col()) %>% 
+  dplyr::rename(weight = combined_score)
+
+links_2 <- links %>% mutate(from_c = count(., from)$n[match(from, count(., from)$from)]) %>%
+  mutate(to_c = count(., to)$n[match(to, count(., to)$to)]) %>%
+  filter(!(from_c == 1 & to_c == 1)) %>%
+  dplyr::select(1,2,3)
+# 新的节点数据
+nodes_2 <- links_2 %>% { data.frame(gene = c(.$from, .$to)) } %>% distinct()
+# 创建网络图
+net_2 <- igraph::graph_from_data_frame(d=links_2,vertices=nodes_2,directed = F)
+# 添加必要的参数
+igraph::V(net_2)$deg <- igraph::degree(net_2)
+igraph::V(net_2)$size <- igraph::degree(net_2)/5
+igraph::E(net_2)$width <- igraph::E(net_2)$weight/10
+
+pdf('test_ppi.pdf',width = 8,height = 6)
+ggraph(net_2,layout = "centrality", cent = deg)+
+  geom_edge_fan(aes(edge_width=width), color = "lightblue", show.legend = F)+
+  geom_node_point(aes(size=size), color="orange", alpha=0.7)+
+  geom_node_text(aes(filter=deg>5, label=name), size = 5, repel = T)+  #比较边缘的点会在这里被过滤掉
+  scale_edge_width(range = c(0.2,1))+
+  scale_size_continuous(range = c(1,10) )+
+  guides(size=F)+
+  theme_graph()
+dev.off() 
+#就，目前也还能行，ggraph的美化又是一个大坑，应付甲方的话图画成这样也随便了          
