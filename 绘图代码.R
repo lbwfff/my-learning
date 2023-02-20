@@ -870,6 +870,33 @@ plot(motif)
 }
 dev.off()    #已经完全完了这段代码是什么意思，应该是画了前十显著的基序？得到的基序和homer的结果还不太一样，好像homer做了合并什么的
                    
-                   
+#######################################################################################
+#一个柱状图
+i<-which(rownames(mer_cel_pep)==orf)
+test<-data.frame(exp=as.numeric(mer_cel_pep[i,]),
+                 group=group$cog)
+test$exp<-c(scale(test$exp,center = TRUE, scale = TRUE))
+test$group<-factor(test$group,level=c('N_I','N_A','T_I','T_A'))
+test$title<-rownames(mer_cel_pep)[i]
+library(ggpubr)
+
+compaired <- list(c("N_A","N_I"),c("T_A","T_I"),
+                  c("N_I","T_I"),c("N_A", "T_A"))
+
+ggbarplot(test, x = "group", y = "exp",add = c("mean_se", "point"),
+          color = "group", fill = "group", alpha = 0.5,
+          position=position_dodge(1),width=0.9)+
+          theme_bw(base_size = 18)+
+          geom_hline(yintercept = 0,lty=1,col="black",lwd=0.5)+
+          geom_signif(comparisons = compaired,step_increase = 0.12,vjust =0.2,
+                map_signif_level = T,test = wilcox.test)+
+          scale_color_manual(values=met.brewer(name="VanGogh1",n=7,type="discrete")[c(7,5,4,2)])+
+          scale_fill_manual(values=met.brewer(name="VanGogh1",n=7,type="discrete")[c(7,5,4,2)])+
+          theme(legend.position = "none",
+                strip.text.x = element_text(size = 7,face = "bold.italic"))+  #这一行参数是调整分面的标签的字体大小什么的
+          ylab('Centralized Intensity')+
+          xlab(NULL)+
+          facet_grid(. ~ title)  #分面
+     
                    
       
