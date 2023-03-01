@@ -371,18 +371,21 @@ dev.off()
 }
 
 #############################################################################################################
-library(ggplot2)
-library('org.Hs.eg.db')
-library(patchwork)
-library(clusterProfiler)
-library(stringr)
-library(DOSE)
-library(openxlsx)
-R.utils::setOption("clusterProfiler.download.method",'auto')
 
 #每次富集都要写很长一段的重复代码，包装一下会方便一些？这个function我还没有试验过
                      
 myenrich <- function(genelist,name,dir,species){
+  
+  library(org.Mm.eg.db) #据说library不会重复载包，那我就没有理由把library放在外面了
+  library('org.Hs.eg.db')
+  library(patchwork)
+  library(clusterProfiler)
+  library(stringr)
+  library(DOSE)
+  library(openxlsx)
+  library(ggplot2)
+  R.utils::setOption("clusterProfiler.download.method",'auto')
+  
   p<-list()
   if (species=='human'){organism='hsa' 
   Org = org.Hs.eg.db
@@ -526,6 +529,7 @@ myenrich <- function(genelist,name,dir,species){
 
 #试了一下是可以正常运行的，使用方法就是myenrich(rnacotarget,'RNA_cotarget','enrich/','human')
 #我是不是改自己写一个包什么的会比function更加方便？但是function方便修改，写包的话就不太方便修改代码了。
+#这个要说有什么想要优化的，可以把bitr的部分也包进去，要求的genelist只要SYMBOL ID就好了
                      
                      
 ##########################################################                     
