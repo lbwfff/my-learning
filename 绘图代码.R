@@ -892,7 +892,7 @@ ggbarplot(test, x = "group", y = "exp",add = c("mean_se", "point"),
                 map_signif_level = T,test = wilcox.test)+
           scale_color_manual(values=met.brewer(name="VanGogh1",n=7,type="discrete")[c(7,5,4,2)])+
           scale_fill_manual(values=met.brewer(name="VanGogh1",n=7,type="discrete")[c(7,5,4,2)])+
-          theme(legend.position = "none",
+          theme(legend.position = "none",axis.text.x=element_text(size = 9,face = 'bold'), #这一行是调X轴label的字体大小什么的
                 strip.text.x = element_text(size = 7,face = "bold.italic"))+  #这一行参数是调整分面的标签的字体大小什么的
           ylab('Centralized Intensity')+
           xlab(NULL)+
