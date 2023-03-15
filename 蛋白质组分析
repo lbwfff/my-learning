@@ -18,9 +18,11 @@ nohup /usr/diann/1.8/diann-1.8 --f ./P20221100062-C001_Slot2-38_1_2240.d --lib "
 
 #############################################
 nohup java -jar -Xmx16g /home/leelee/tools/msfragger/fragpipe/tools/tmt-integrator-3.3.3.jar tmt-integrator-conf.yml *_psm.tsv & #使用fragpipe，分析计算蛋白组数据从未如此快乐
+#这里使用fragpiep分别跑的tmt数据，然后最后用tmt-integrator一起定量
 
+#############################################
 casanovo --mode=denovo --model_path='/home/leelee/tools/casanovo/casanovo_pretrained_model_weights/pretrained_excl_human.ckpt' --test_data_path='/home/leelee/share/CNHPP_HCC/casanovo' --config_path='/home/leelee/tools/casanovo/casanovo-main/casanovo/config.py' --output_path='./'
-#casanovo从头组装(试了一下，速度完全没法看，对于深度学习来说，CPU和GPU之间的差距确实太大了)
+#casanovo从头组装(试了一下，速度完全没法看，对于深度学习来说，CPU和GPU之间的差距确实太大了)，综述里casanovo的表现还挺厉害的
 
 ####################MAXQUANT################
 #######简单使用#####
