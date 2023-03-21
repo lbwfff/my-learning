@@ -5,6 +5,52 @@ library(ggpubr)
 
 ########################################
 #现在用的绘图代码还是不行，主要是比例的问题，绘图前可以和已经发表的文章对一下看看比例有没有问题，之后有时间再专门调整
+ggplot(lopplot_sample, aes(x=group, y=mean))+
+  geom_boxplot(width=0.5,aes(fill=group),colour='black',alpha = 0.4,linetype="dashed")+
+  stat_boxplot(aes(ymin=..lower..,ymax=..upper..,fill=group),color="black")+
+  stat_boxplot(geom = "errorbar",aes(ymin=..ymax..),width=0.2,color="black")+
+  stat_boxplot(geom = "errorbar",aes(ymax=..ymin..),width=0.2,color="black")+
+  labs(y="Mean phastcon score")+ 
+  theme_classic(base_size = 22)+ 
+  scale_fill_manual(values=rev(met.brewer("Hokusai1", 7)[c(7,6,5,4,3,2)]))+
+  theme_classic(base_size = 14)+ 
+  theme(legend.position = "none")+
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  xlab('')+
+  geom_signif(comparisons = compaired,step_increase = 0.12,vjust =0.2,map_signif_level = T,test = wilcox.test)+
+  theme(axis.title.x =element_text(size=12), axis.title.y=element_text(size=16))+
+  theme(axis.text.x = element_text(size=12,angle=45,hjust=1))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(plot.subtitle = element_text(hjust = 0.5))+
+  theme(plot.caption = element_text(hjust = 0.5))+
+  theme(plot.background = element_rect(fill = "white"))+
+  theme(panel.background = element_rect(fill = "white"))+
+  theme(panel.border = element_rect(fill = NA, color = "black"))+
+  theme(panel.grid.major = element_line(color = "gray90"))+
+  theme(panel.grid.minor = element_line(color = "gray90"))+
+  theme(axis.line = element_line(color = "black"))+
+  theme(axis.ticks = element_line(color = "black"))+
+  theme(axis.ticks.length = unit(0.3, "cm"))+
+  theme(axis.ticks.margin = unit(0.5, "cm"))+
+  theme(axis.text = element_text(color = "black"))+
+  theme(axis.title = element_text(color = "black"))+
+  theme(legend.background = element_rect(fill = "white"))+
+  theme(legend.box.background = element_rect(fill = "white"))+
+  theme(legend.box.margin = unit(0.5, "cm"))+
+  theme(legend.box.spacing = unit(0.5, "cm"))+
+  theme(legend.key = element_rect(fill = "white"))+
+  theme(legend.key.size = unit(1.2, "lines"))+
+  theme(legend.key.width = unit(1.2, "lines"))+
+  theme(legend.text = element_text(color = "black"))+
+  theme(legend.title = element_text(color = "black"))+
+  theme(plot.margin = margin(1, 1, 1, 1, "cm"))
+
+# 让chatgpt美化的一张箱线图，他对于坐标轴的粗细，刻度线的长度什么的，要比我做出来好得多确实是。
+# 之前我都没想过theme的参数能写这么长，只能说学到了
 
 ########################################
 par(mar=c(8, 8.5, 3, 3))  #对页面布局非常重要的一句，数值分别代表bottom, left, top, right。
