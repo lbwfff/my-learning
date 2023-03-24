@@ -1,3 +1,21 @@
+###############Boruta,一个特征选择包，用起来还比较方便，当然特征选择肯定有很多的方法，可以多了解一下##########
+library(Boruta)
+set.seed(20230322)#可以先设置种子
+Var.Selec<-Boruta(label~., data=assaylearn,maxRuns=500, doTrace=1)
+
+Var.Selec$finalDecision
+
+pdf('Importance.pdf',width = 18,height = 8,family="GB1") #
+par(mar=c(20,5,2,5)) #下方，左方，上方，右方
+plot(Var.Selec,xlab="Attributes",ylab="Importance:Z-Score",las=2) #这玩意的美化还挺麻烦的，但是也不是就没有思路吧
+dev.off()  
+
+plotImpHistory(Var.Selec)
+
+test<-attStats(Var.Selec)
+
+getSelectedAttributes(Var.Selec,withTentative=FALSE)
+
 #############记录一下学习caret包的过程吧，想用机器学习来做当前project的收尾，不过暂时自己能做的还比较少，总之一边学习一边思考吧########
 #############参考自https://topepo.github.io/caret/index.html################
 
