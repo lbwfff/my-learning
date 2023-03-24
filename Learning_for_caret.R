@@ -16,6 +16,54 @@ test<-attStats(Var.Selec)
 
 getSelectedAttributes(Var.Selec,withTentative=FALSE)
 
+#对应Boruta的绘图我做了修改
+Borutaplot<-function(vc){
+  imparray<-vc[["ImpHistory"]]
+  imparray<-reshape2::melt(imparray)
+  imparray$value[imparray$value == -Inf] <- 0
+  
+  feasel<-as.data.frame(vc[["finalDecision"]])
+  feasel<-feasel[match(imparray$Var2,rownames(feasel)),]
+  imparray$group<-as.character(feasel)
+  imparray$group[is.na(imparray$group)]<-c('shadow')
+  imparray$group<-factor(imparray$group,levels = c('Confirmed','Rejected','shadow','Tentative'))
+  library(ggplot2)
+  
+  p<-ggplot(imparray, aes(x = reorder(Var2,value), y = value)) +
+    stat_boxplot(geom = "errorbar",width=0.2)+
+    geom_boxplot(outlier.shape = 1,aes(fill=group),show.legend = F)+
+    # geom_boxplot(width=0.8,aes(fill=group),colour='black',alpha = 1,outlier.shape = NA)+
+    labs(y="Importance:Z-Score")+ 
+    theme_classic(base_size = 22)+ 
+    scale_fill_manual(values=MetBrewer::met.brewer("Hokusai1", 7)[c(6,3,7,4)])+
+    theme_classic(base_size = 14)+ 
+    theme(legend.position = "none")+
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank())+
+    coord_flip()+
+    xlab(NULL)+
+    theme(aspect.ratio=2)+
+    theme(axis.title.x = element_text(size = 16, color = "black"),
+          axis.title.y = element_text(size = 16, color = "black"),
+          axis.text.x = element_text(size = 14, color = "black"),
+          axis.text.y = element_text(size = 10, color = "black"),
+          legend.text = element_text(size = 14, color = "black"),
+          legend.background = element_rect(fill = "white"),
+          legend.key = element_rect(fill = "white"),
+          panel.background = element_rect(fill = "white"),
+          panel.border = element_rect(fill = NA, color = "black"),
+          panel.grid.minor = element_line(color = "gray", size = 0.25))
+  
+  return(p)
+  }
+
+cairo_pdf("Importance.pdf",width = 10,height = 12)
+Borutaplot(Var.Selec)
+dev.off()
+
 #############记录一下学习caret包的过程吧，想用机器学习来做当前project的收尾，不过暂时自己能做的还比较少，总之一边学习一边思考吧########
 #############参考自https://topepo.github.io/caret/index.html################
 
