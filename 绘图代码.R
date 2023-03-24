@@ -3,6 +3,9 @@ library(ggsignif)
 library(ggsci)
 library(ggpubr)
 
+library(showtext)
+showtext_auto() #自动调中文字符
+
 ########################################
 #现在用的绘图代码还是不行，主要是比例的问题，绘图前可以和已经发表的文章对一下看看比例有没有问题，之后有时间再专门调整
 ggplot(lopplot_sample, aes(x=group, y=mean))+
