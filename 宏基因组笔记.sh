@@ -7,6 +7,8 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime
 #docker如果想在.sh脚本里面运行的话，需要删掉-t -i
 #本来想用conda装的，因为网络问题怎么也装不上，还是用了docker，docker总感觉卡卡的
 
+docker stop $(docker ps -aq) #停止所有容器
+
 #随便跑了一些demo，目前的感受就是，这玩意得到的结果这么散装且稀碎，到时候要怎么整合呢？
 
 #有一个问题，就是我用docker run的时候每次都激活了一个新的容器，有没有什么办法在一个容器里面进行全部操作呢？我觉得这是一个docekr使用的问题。
