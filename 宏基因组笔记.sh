@@ -103,13 +103,18 @@ docker run  -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate -
   
 
 ###############一个测试pipline####################
+###############这部分我包装为sh代码了，但依然还不够，可以参考之前中山大学他们组做的那种sh脚本，应该就可以在自动化上面有极大的提升，而且也没有太麻烦####################
+###############后面分析的流程其实大同小异，但是值得去多想的就是前期的数据导入，去噪这些流程，尤其是数据的导入，其实还挺麻烦的####################################
+###############我用R语言太多了，导致awk的语法变成了很陌生的东西##########################
+
 mkdir -p seq
 awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_f1.fq.gz -O seq/"$1"_1.fq.gz")}' <(tail -n+2 metadata.txt)
 awk '{system("wget -c ftp://download.big.ac.cn/gsa/"$5"/"$6"/"$6"_r2.fq.gz -O seq/"$1"_2.fq.gz")}' <(tail -n+2 metadata.txt)
 #根据metadata.txt的内容下载数据，话说每个数据都好小啊，应该只是测试数据集的原因
+#然后这个数据里没有需要样本拆分的问题（或者是大部分数据都没有这步？），也没有需要去接头的问题
 
 awk 'NR==1{print "sample-id\tforward-absolute-filepath\treverse-absolute-filepath"} NR>1{print $1"\t/data/seq/"$1"_1.fq.gz\t/data/seq/"$1"_2.fq.gz"}' metadata.txt > manifest
-#根据metadata.txt编写manifest，高端的awk写法,因为我使用的docker版的软件，所以manifest中描述的文件位置信息需要做修改
+#根据metadata.txt编写manifest（其实就是文件和文件位置），高端的awk写法,因为我使用的docker版的软件，所以manifest中描述的文件位置信息需要做修改
 
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-n-threads 8 --p-trim-left-f 29 --p-trim-left-r 18 --p-trunc-len-f 0 --p-trunc-len-r 0 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats denoising-stats.qza
