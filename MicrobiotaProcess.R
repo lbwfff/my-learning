@@ -1,5 +1,7 @@
 #一天到晚的，闲着也是闲着，不如提前学点东西
 #MAPE是余教授组做的一个宏基因组，微生物组的包，而且对于qiime2可以有一个很好的对接，想试着学一下
+#装了最新的R，安装了MAPE和一亿个依赖后，之前遇到的几个问题终于都被解决了，包括有一个值没有计算，包括热图什么的，在新版本中都可以实现
+
 library(MicrobiotaProcess)
 
 mpse2 <- mp_import_qiime2(otuqza='table.qza', taxaqza='taxonomy.qza', mapfilename='metadata.txt')  #导入qiime2的结果
