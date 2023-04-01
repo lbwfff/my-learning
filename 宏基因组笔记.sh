@@ -118,7 +118,7 @@ awk 'NR==1{print "sample-id\tforward-absolute-filepath\treverse-absolute-filepat
 
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-n-threads 8 --p-trim-left-f 29 --p-trim-left-r 18 --p-trunc-len-f 0 --p-trunc-len-r 0 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats denoising-stats.qza
-#这一步是比较费时的，可以多线程
+#这一步是比较费时的，36个7m不到的fq文件，18核跑了一个小时，这个效率是不是有点过于emmmmm
 
 cp dada2-table.qza table.qza
 cp dada2-rep-seqs.qza rep-seqs.qza
