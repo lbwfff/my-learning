@@ -160,10 +160,42 @@ docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --
 #其实想想，不同数据好像就导入的步骤不太一样，其它就大同小异了
 
 
+###########################################################################################################################################################
+#试着写了一个脚本，使用方法就是bash qiime2.sh manifest.txt metadata.txt gg-13-8-99-nb-classifier.qza这样
 
+echo "Usage: sh qiime.sh manifest metadata classifier" #因为这一大段需要的输入其实也就是这三个文件了，还挺容易组合起来的，剩下的就是怎么更高效的搓出来manifest核metadata了。
 
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path "$1" --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-n-threads 18 --p-trim-left-f 29 --p-trim-left-r 18 --p-trunc-len-f 0 --p-trunc-len-r 0 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats denoising-stats.qza
 
+cp dada2-table.qza table.qza
+cp dada2-rep-seqs.qza rep-seqs.qza
 
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table summarize --i-table table.qza --o-visualization table.qzv --m-sample-metadata-file "$2"
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-table tabulate-seqs --i-data rep-seqs.qza --o-visualization rep-seqs.qzv
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime phylogeny align-to-tree-mafft-fasttree --i-sequences rep-seqs.qza --o-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza --o-tree unrooted-tree.qza --o-rooted-tree rooted-tree.qza
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity core-metrics-phylogenetic --i-phylogeny rooted-tree.qza --i-table table.qza --p-sampling-depth 27060 --m-metadata-file "$2" --output-dir core-metrics-results
+#这步报了一堆错，但是结果好像正常的出来了？
+
+index=observed_features
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity alpha-group-significance --i-alpha-diversity core-metrics-results/${index}_vector.qza --m-metadata-file "$2" --o-visualization core-metrics-results/${index}-group-significance.qzv
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity alpha-rarefaction --i-table table.qza --i-phylogeny rooted-tree.qza --p-max-depth 34663 --m-metadata-file "$2" --o-visualization alpha-rarefaction.qzv
+
+distance=weighted_unifrac
+column=Group
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime diversity beta-group-significance --i-distance-matrix core-metrics-results/${distance}_distance_matrix.qza --m-metadata-file "$2" --m-metadata-column ${column} --o-visualization core-metrics-results/${distance}-${column}-significance.qzv --p-pairwise
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime feature-classifier classify-sklearn --i-classifier "$3" --i-reads rep-seqs.qza --o-classification taxonomy.qza
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa barplot --i-table table.qza --i-taxonomy taxonomy.qza --m-metadata-file "$2" --o-visualization taxa-bar-plots.qzv
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table table.qza --o-composition-table comp-table.qza
+
+column=Group
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table.qza --m-metadata-file "$2" --m-metadata-column ${column} --o-visualization ancom-${column}.qzv
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa collapse --i-table table.qza --i-taxonomy taxonomy.qza --p-level 6 --o-collapsed-table table-l6.qza
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table table-l6.qza --o-composition-table comp-table-l6.qza
+docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table-l6.qza --m-metadata-file "$2" --m-metadata-column ${column} --o-visualization l6-ancom-${column}.qzv
+
+docker container prune -f #把产生的一堆乱七八糟的容器全部删掉
 
 
 
