@@ -8,6 +8,7 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime  #不想要交
 #本来想用conda装的，因为网络问题怎么也装不上，还是用了docker，docker总感觉卡卡的
 
 docker container prune -f #停止所有容器
+docker rm $(docker ps -a | awk '/qiime/ {print $1}') #仅停qiime2的容器
 
 #随便跑了一些demo，目前的感受就是，这玩意得到的结果这么散装且稀碎，到时候要怎么整合呢？
 
