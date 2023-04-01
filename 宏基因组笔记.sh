@@ -9,6 +9,7 @@ docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime
 
 #随便跑了一些demo，目前的感受就是，这玩意得到的结果这么散装且稀碎，到时候要怎么整合呢？
 
+#有一个问题，就是我用docker run的时候每次都激活了一个新的容器，有没有什么办法在一个容器里面进行全部操作呢？我觉得这是一个docekr使用的问题。
 ###########################人体微生物数据########################################################
 #导入数据
 docker run -t -i -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime tools import --type EMPSingleEndSequences --input-path ./emp-single-end-sequences --output-path emp-single-end-sequences.qza
