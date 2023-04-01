@@ -196,7 +196,7 @@ docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime taxa collapse --i-ta
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition add-pseudocount --i-table table-l6.qza --o-composition-table comp-table-l6.qza
 docker run -v $(pwd):/data quay.io/qiime2/core:2022.8 qiime composition ancom --i-table comp-table-l6.qza --m-metadata-file "$2" --m-metadata-column ${column} --o-visualization l6-ancom-${column}.qzv
 
-docker container prune -f #把产生的一堆乱七八糟的容器全部删掉
+docker rm $(docker ps -a | awk '/qiime/ {print $1}') #把产生的一堆乱七八糟的容器全部删掉
 
 
 
