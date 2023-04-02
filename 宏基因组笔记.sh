@@ -203,7 +203,7 @@ docker rm $(docker ps -a | awk '/qiime/ {print $1}') #把产生的一堆乱七�
 
 kneaddata --input ${i} --input ${i%R1_fastpout.fq.gz}R2_fastpout.fq.gz --reference-db /home/leelee/biodata/index/metaphlan --output knea --threads 16
 
-
+kneaddata --input con-Input-1_L4_701D04.R1.fastq.gz --input con-Input-1_L4_701D04.R2.fastq.gz --reference-db /home/leelee/biodata/index/GRCm39 --output knea --threads 10
 
 
 
