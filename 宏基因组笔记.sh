@@ -201,7 +201,7 @@ docker rm $(docker ps -a | awk '/qiime/ {print $1}') #把产生的一堆乱七�
 ###############################################################################################################################################
 #宏基因组不止扩增子，使用基于dada2的qiime2不知道适不适用其它微生物组的数据，有一个Kneaddata加MetaPhlAn的流程可以使用
 
-
+kneaddata --input ${i} --input ${i%R1_fastpout.fq.gz}R2_fastpout.fq.gz --reference-db /home/leelee/biodata/index/metaphlan --output knea --threads 16
 
 
 
