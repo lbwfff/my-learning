@@ -35,3 +35,6 @@ cat list.txt| parallel -j 4 sleep ${id}  ####这是改过后的写法，时间�
 parallel 'sleep {}'  ::: 13 24 17 71 37 33 16 19 42 14 21 46 67 21  #####我是这样写的，startTime:	123321，endTime:	123539，用时两分18秒，比上面快一秒是为什么？
 
 #######按照这两种句式已经可以解决我绝大部分的问题了
+
+parallel -j 8 --link --xapply --plus  --regexp   ' metaphlan --input_type fastq --bowtie2db /home/qinliu/anaconda3/envs/mpa/lib/python3.7/site-packages/metaphlan/metaphlan_databases /home/qisu/long_covid_test/20220606/trim/{}/{}*_paired_1.fastq  -o  /home/qisu/long_covid_test/20220606/metaphlan3/{}.metaphlan.txt' :::: /home/qisu/long_covid_test/20220606/lists.txt
+#别人的写法，::::，我都忘了这玩意的用法了，三个冒号和四个冒号有什么区别？
