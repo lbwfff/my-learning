@@ -214,3 +214,7 @@ merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond
 
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31"
+#这套组件，一亿个bug
+#只会使用conda安装的话，有些东西一辈子都别想装上了
+
+
