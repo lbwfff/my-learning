@@ -205,7 +205,10 @@ kneaddata --input ${i} --input ${i%R1_fastpout.fq.gz}R2_fastpout.fq.gz --referen
 
 kneaddata --input con-Input-1_L4_701D04.R1.fastq.gz --input con-Input-1_L4_701D04.R2.fastq.gz --reference-db /home/leelee/biodata/index/GRCm39 --output knea --threads 10
 
+kneaddata -i ./seq/14818_1.fq.gz -i ./seq/14818_2.fq.gz --reference-db /home/leelee/biodata/index/Amel --trimmomatic /home/leelee/tools/trimmomatic  --output knea --threads 10 --bowtie2-options "--very-sensitive --dovetail" --remove-intermediate-output
 
+metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31 /home/leelee/share/qiime2/test2/knea/14817_1_kneaddata_paired_1.fastq -o /home/leelee/share/qiime2/test2/metaphlan/14817.metaphlan.txt
 
+merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
 
