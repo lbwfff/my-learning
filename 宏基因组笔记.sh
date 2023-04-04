@@ -213,4 +213,4 @@ merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond
 
-humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31 /home/leelee/share/qiime2/test2/knea/14817_1_kneaddata_paired_1.fastq"
+humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31"
