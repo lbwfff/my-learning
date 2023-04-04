@@ -211,4 +211,5 @@ metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x
 
 merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
+humann --input 14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50
 
