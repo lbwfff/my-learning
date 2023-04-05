@@ -217,4 +217,7 @@ humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --thre
 
 kraken2 --db /home/leelee/share/kraken2/8gb/ ./knea/14818_1_kneaddata_paired_1.fastq --threads 10 --output 14818_out --classified-out 14818_cla --unclassified-out 14818_uncla --report 14818_rep --use-mpa-style
 
+python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
+
+
 
