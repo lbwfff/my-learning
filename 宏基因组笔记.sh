@@ -216,6 +216,7 @@ humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --thre
 #只会使用conda安装的话，有些东西一辈子都别想装上了
 
 kraken2 --db /home/leelee/share/kraken2/8gb/ ./knea/14818_1_kneaddata_paired_1.fastq --threads 10 --output 14818_out --classified-out 14818_cla --unclassified-out 14818_uncla --report 14818_rep --use-mpa-style
+#这部分的比对率（类似的概念）只有四十左右，有几个想法，一是我用的是一个小的索引，用大索引的话或许会好很多？然后就还是觉得使用kneaddata去接头的时候有问题，试试调一下接头？
 
 python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
 
