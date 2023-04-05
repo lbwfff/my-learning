@@ -215,5 +215,6 @@ humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --thre
 #这套组件，一亿个bug
 #只会使用conda安装的话，有些东西一辈子都别想装上了
 
+kraken2 --db /home/leelee/share/kraken2/8gb/ ./knea/14818_1_kneaddata_paired_1.fastq --threads 10 --output 14818_out --classified-out 14818_cla --unclassified-out 14818_uncla --report 14818_rep --use-mpa-style
 
 
