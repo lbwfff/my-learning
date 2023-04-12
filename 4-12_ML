@@ -1,0 +1,316 @@
+#####################################################
+#数据前处理
+
+rm(list = ls())
+# save(pati,assaylearn,file = 'learning_data.RData')
+load('learning_data.RData')
+identical(pati$patient_SN,assaylearn$ID) 
+
+assaylearn$label<-ifelse(pati$patho=='腺癌','tumor','nontumor')
+# assaylearn<-assaylearn[!is.na(assaylearn$label),]
+assaylearn$label[is.na(assaylearn$label)]<-c('nontumor')
+assaylearn$label<-factor(assaylearn$label,level=c('tumor','nontumor')) #水平是很重要的，尤其是对于非平衡的数据如果要计算算PRAUC的话，哪个是阳性哪个是阴性是需要搞得很清楚的
+assaylearn<-assaylearn[,-1]
+
+#########################################
+#补缺
+assaylearn[is.na(assaylearn)] <- -999  #对于决策树的算法，是可以这样补的，你也可以试试不同的方法
+
+##########################################
+library(Boruta)
+library(showtext)
+showtext_auto() #设置中文字体
+
+set.seed(20230322)
+Var.Selec<-Boruta(label~., data=assaylearn,maxRuns=500, doTrace=1) #Boruta是一个特征选择算法
+
+save(Var.Selec,file = 'Boruta_sel.RData')
+load('Boruta_sel.RData')
+Var.Selec
+Var.Selec$finalDecision
+
+#####################################################
+#对boruta结果进行可视化
+
+Borutaplot<-function(vc){
+  imparray<-vc[["ImpHistory"]]
+  imparray<-reshape2::melt(imparray)
+  imparray$value[imparray$value == -Inf] <- 0
+  
+  feasel<-as.data.frame(vc[["finalDecision"]])
+  feasel<-feasel[match(imparray$Var2,rownames(feasel)),]
+  imparray$group<-as.character(feasel)
+  imparray$group[is.na(imparray$group)]<-c('shadow')
+  imparray$group<-factor(imparray$group,levels = c('Confirmed','Rejected','shadow','Tentative'))
+  library(ggplot2)
+  
+  p<-ggplot(imparray, aes(x = reorder(Var2,value), y = value)) +
+    stat_boxplot(geom = "errorbar",width=0.2)+
+    geom_boxplot(outlier.shape = 1,aes(fill=group),show.legend = F)+
+    # geom_boxplot(width=0.8,aes(fill=group),colour='black',alpha = 1,outlier.shape = NA)+
+    labs(y="Importance:Z-Score")+ 
+    theme_classic(base_size = 22)+ 
+    scale_fill_manual(values=MetBrewer::met.brewer("Hokusai1", 7)[c(6,3,7,4)])+
+    theme_classic(base_size = 14)+ 
+    theme(legend.position = "none")+
+    theme(panel.grid.major =element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank())+
+    coord_flip()+
+    xlab(NULL)+
+    theme(aspect.ratio=2)+
+    theme(axis.title.x = element_text(size = 16, color = "black"),
+          axis.title.y = element_text(size = 16, color = "black"),
+          axis.text.x = element_text(size = 14, color = "black"),
+          axis.text.y = element_text(size = 10, color = "black"),
+          legend.text = element_text(size = 14, color = "black"),
+          legend.background = element_rect(fill = "white"),
+          legend.key = element_rect(fill = "white"),
+          panel.background = element_rect(fill = "white"),
+          panel.border = element_rect(fill = NA, color = "black"),
+          panel.grid.minor = element_line(color = "gray", size = 0.25))
+  
+  return(p)
+}
+
+cairo_pdf("412_Importance.pdf",width = 10,height = 12)
+Borutaplot(Var.Selec)
+dev.off()
+
+#####################################################
+#得到最终的选择特征
+sel_fea<-assaylearn[,colnames(assaylearn) %in% c(rownames(test)[test$decision=='Confirmed'],'label')]
+
+library('caret')
+library('doParallel')
+library('MetBrewer')
+library('ggplot2')
+library('pROC')
+library('PRROC')
+library('ROCR')
+
+cl <- makePSOCKcluster(18)
+registerDoParallel(cl)
+
+set.seed(618)
+inTraining <- createDataPartition(sel_fea$label, p = .75, list = FALSE)
+training <- sel_fea[ inTraining,]
+testing  <- sel_fea[-inTraining,]
+
+save(training,testing,file = 'Splitting.RData')
+load('Splitting.RData')
+
+fitControl <- trainControl(method = "repeatedcv",repeats = 10,number = 10, 
+                           classProbs = TRUE,
+                           summaryFunction = prSummary)
+
+rfFit <- train(label ~ ., data = training, method = "rf", trControl = fitControl, 
+               tuneLength = 40,metric = "AUC")
+
+importance = varImp(rfFit,scale = FALSE) 
+
+save(rfFit,file = 'allfeature_mod.RData')
+load('allfeature_mod.RData')
+
+#PRAUC
+auprc <- function(mod,Test,modname){ 
+  
+  probs_1= predict(mod,Test) 
+  probs_2= predict(mod,Test,type = "prob")
+  Test$label<-factor(Test$label)
+  
+  eva<-cbind(probs_2,Test$label)
+  colnames(eva)[3]<-c('obs')
+  eva$group<-(modname)
+  eva$group<-as.factor(eva$group)
+  eva$obs<-as.factor(eva$obs)
+  
+  scores <- data.frame(eva$tumor)
+  scores$labels<-ifelse(eva$obs=='tumor','1','0')
+  pr <- pr.curve(scores.class0=scores[scores$labels=="1",]$eva.tumor,
+                 scores.class1=scores[scores$labels=="0",]$eva.tumor,
+                 curve=T) 
+  
+  y <- as.data.frame(pr$curve)
+  y$mod<-c(modname)
+  return(y)
+}
+
+#模型表现
+perf<-function(model){
+  #数值
+  rf.probs_1= predict(model,testing)
+  rf.probs_2= predict(model,testing,type = "prob")
+  postResample(pred = rf.probs_1, obs = testing$label)
+  
+  level<-levels(testing$label)
+  dat<-data.frame(obs=factor(testing$label),
+                  pred=factor(rf.probs_1,levels = c('tumor','nontumor')),
+                  tumor = rf.probs_2$tumor
+  )
+  dat$nontumor <- 1 - dat$tumor
+  
+  auc<-c(twoClassSummary(dat, lev = level),prSummary(dat, lev = level))
+  
+  #AUC图
+  library('pROC')
+  rf.ROC = roc(response = dat$obs,
+               predictor = dat$tumor, #閫夊摢鏍瑰ソ鍍忛兘娌℃湁鍖哄埆
+               levels = levels(dat$obs))
+  
+  g <- ggroc(rf.ROC)+theme_bw(base_size=18)+
+    theme(panel.grid.major =element_blank(), 
+          panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+          panel.grid.minor = element_blank(),panel.border = element_blank(),
+          legend.title = element_blank())+
+    geom_abline(intercept = 1, slope = 1, linetype = "dashed")+
+    scale_x_reverse(expand = c(0,0))+
+    scale_y_continuous(expand = c(0,0))+
+    annotate("text", x=0.4, y=0.3, label=paste0("AUC = ",round(rf.ROC[["auc"]],3)),size=8)+
+    theme(aspect.ratio=1)+
+    coord_fixed(ratio = 0.8)+
+    scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete'))
+  
+  dat$group1<-ifelse(dat$pred=='tumor','Positive','Negative')
+  dat$prediction<-ifelse(dat$obs==dat$pred,'True','False')
+  
+  #PRAUC图
+  auprcplot<-auprc(rfFit,testing,'RF')
+  
+  g2<-ggplot(auprcplot, aes(V1, V2))+
+    geom_path(size=0.5)+ylim(0,1)+
+    theme_bw(base_size=18)+
+    theme(panel.grid.major =element_blank(), 
+          panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          legend.title = element_blank())+
+    scale_x_continuous(expand = c(0,0))+
+    scale_y_continuous(expand = c(0,0))+
+    annotate("text", x=0.4, y=0.3, label=paste0("PRAUC = ",round(auc[4], 3)),size=8)+
+    theme(aspect.ratio=1)+
+    labs(x="Recall", y = "Precision")+
+    coord_cartesian(ylim=c(0,1),xlim=c(0,1))
+  
+  #四象限的表
+  library(table1)
+  tab<-table1(~ prediction| group1, data=dat)
+  tab<-as.data.frame(tab)
+  
+  list<-list(auc=auc,plot=g,auprc=g2,tab=tab)
+  return(list)
+}
+
+allfea<-perf(rfFit) 
+
+cairo_pdf("412_allfea_auc.pdf",width = 6,height = 6)
+print(allfea[["plot"]])
+dev.off()
+
+cairo_pdf("412_allfea_prauc.pdf",width = 6,height = 6)
+print(allfea[["auprc"]])
+dev.off()
+
+#####################################################
+fitControl <- trainControl(method = "repeatedcv",repeats = 10,number = 10, 
+                           classProbs = TRUE,
+                           summaryFunction = prSummary)
+
+rfFit1 <- train(label ~ ., data = training[,c(grep('总前列腺特异性抗原',colnames(training)),which(colnames(training)=='label'))], method = "rf", trControl = fitControl, 
+                tuneLength = 40,metric = "AUC")
+#
+rfFit2 <- train(label ~ ., data = training[,c(grep('游离前列腺特异性抗原',colnames(training)),which(colnames(training)=='label'))], method = "rf", trControl = fitControl, 
+                tuneLength = 40,metric = "AUC")
+#
+rfFit3 <- train(label ~ ., data = training[,c(grep('总前列腺特异性抗原',colnames(training)),grep('游离前列腺特异性抗原',colnames(training)),which(colnames(training)=='label'))], method = "rf", trControl = fitControl, 
+                tuneLength = 40,metric = "AUC")
+#对TPSA，FPSA，TPSA&FPSA分别进行建模
+
+rf1.probs = predict(rfFit1,testing,type = "prob")
+rf.ROC = roc(response = testing$label,
+             predictor = rf1.probs$nontumor,
+             levels = levels(testing$label))
+rf2.probs = predict(rfFit2,testing,type = "prob")
+rf2.ROC = roc(response = testing$label,
+              predictor = rf2.probs$nontumor,
+              levels = levels(testing$label))
+rf3.probs = predict(rfFit3,testing,type = "prob")
+rf3.ROC = roc(response = testing$label,
+              predictor = rf3.probs$nontumor,
+              levels = levels(testing$label))
+
+save(rfFit1,rfFit2,rfFit3,file = 'psa_mod.RData')
+
+g <- ggroc(list(tPSA=rf.ROC,fPSA=rf2.ROC,tPSAfPSA=rf3.ROC),size=0.8)
+
+pdf("412_auc_psa.pdf",width = 8,height = 6)
+g+theme_bw(base_size=18)+
+  theme(panel.grid.major =element_blank(), 
+        panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+        panel.grid.minor = element_blank(),panel.border = element_blank(),
+        legend.title = element_blank())+
+  geom_abline(intercept = 1, slope = 1, linetype = "dashed")+
+  scale_x_reverse(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0))+
+  theme(aspect.ratio=1)+
+  coord_fixed(ratio = 0.8)+
+  scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete')[c(1,2,4)])
+dev.off()
+
+#arpuc
+auprcplot<-rbind(auprc(rfFit1,testing,'tPSA'),
+                 auprc(rfFit2,testing,'fPSA'),
+                 auprc(rfFit3,testing,'tPSAfPSA'))
+auprcplot$mod<-factor(auprcplot$mod,levels = c('tPSA','fPSA','tPSAfPSA'))
+
+pdf("412_auprc_psa.pdf",width = 8,height = 6)
+ggplot(auprcplot, aes(V1, V2,colour = mod))+
+  geom_path(size=0.7)+ylim(0,1)+
+  theme_bw(base_size=18)+
+  theme(panel.grid.major =element_blank(), 
+        panel.background=element_rect(size =1.1,fill='transparent', color='black'),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  scale_x_continuous(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0))+
+  theme(aspect.ratio=1)+
+  labs(x="Recall", y = "Precision")+
+  coord_cartesian(ylim=c(0,1),xlim=c(0,1))+
+  scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete')[c(1,2,4)])
+dev.off()
+
+#######################################################
+#接下来这部分的代码，我想要知道添加一个特征是否能提升TPSA&FPSA的预测能力
+feature_list<-test[test$decision=='Confirmed',] #只选取通过特征选择的特征
+feature_list<-feature_list[order(feature_list$meanImp,decreasing = T),]
+feature_list<-rownames(feature_list)
+feature_list<-feature_list[-c(1,2,3)]
+
+feature_per<-data.frame(featurename=c(rep(feature_list,10)),
+                        runs=c(rep(1:10,each=length(feature_list))),  #这里我做了十次的重复
+                        diff_auc=c(NA),
+                        diff_prauc=c(NA))
+
+for (i in feature_list){
+  for (j in 1:10) {
+    
+    rfFit_sup <- train(label ~ ., data = training[,c(grep('游离前列腺特异性抗原',colnames(training)),grep('总前列腺特异性抗原',colnames(training)),which(colnames(training)==i),37)], method = "rf", trControl = fitControl, 
+                       tuneLength = 40,metric = "AUC")
+    allfea<-perf(rfFit_sup)
+    feature_per$diff_auc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[1]-as.numeric(rf3.ROC$auc))
+    feature_per$diff_prauc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[1]-as.numeric(perf(rfFit3)[["auc"]][4]))
+    
+  }
+  
+  print(which(feature_list==i)/length(feature_list))
+} 
+
+save(feature_per,file = 'feature_add.RData')
+
+##################################################################################3
+#
+
+
