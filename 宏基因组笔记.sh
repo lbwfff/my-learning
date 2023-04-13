@@ -213,10 +213,14 @@ merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31" --nucleotide-database /home/leelee/share/humann_databases/v31 --protein-database /home/leelee/share/humann_databases/uniref
 #这套组件，一亿个bug
-#只会使用conda安装的话，有些东西一辈子都别想装上了
+#这段时间给我的领悟就是：只会使用conda安装的话，有些东西一辈子都别想装上了。明明之前就已经明白了这个道理。
 
 kraken2 --db /home/leelee/share/kraken2/8gb/ ./knea/14818_1_kneaddata_paired_1.fastq --threads 10 --output 14818_out --classified-out 14818_cla --unclassified-out 14818_uncla --report 14818_rep --use-mpa-style
-#这部分的比对率（类似的概念）只有四十左右，有几个想法，一是我用的是一个小的索引，用大索引的话或许会好很多？然后就还是觉得使用kneaddata去接头的时候有问题，试试调一下接头？
+#这部分的比对率（类似的概念）只有四十左右，有几个想法，一是我用的是一个小的索引，用大索引的话或许会好很多？然后就还是觉得使用kneaddata去接头的时候有问题，试试调一下接头？（PS，确认了和接头没有关系，使用kneaddata时是否指定接头结果几乎没有差别）
+#我试了一下，使用16gb数据库的话，比对就能到百分之五十五，升高还是挺多的，如果使用标准数据库的话，肯定会更高，但是内存的限制不允许我把标准的数据库加载进去
+
+#使用metaphlan的话，是可以估测未知部分比例的，可以试一下用--unknown_estimation得到metaphlan未知部分的比例多少，然后再乘上序列reads的数量就可以得到绝对值了
+#如果需要一百多G的内存才可以运行完整的kraken2，那成本也太高了
 
 python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
 
