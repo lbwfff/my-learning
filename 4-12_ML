@@ -1,3 +1,7 @@
+#这些代码算是我目前对于传统机器学习算法的全部理解了，当然有一些问题一直没有解决，如果闲下来的话可以去尝试
+#一是，在多模型的情况下，我不知道要怎么把AUC值标上去，其实无论是放在图里面也好，放在legend上也好，应该都问题不大，是一个美学的问题
+#二是，其中很多地方是应该包装起来的，对于单模型，多模型的表现评估，其实都是可以包装起来的，不过那就比较费劲了，目前没有太多的力气去做这件事情，以后吧
+
 #####################################################
 #数据前处理
 
@@ -300,8 +304,8 @@ for (i in feature_list){
     rfFit_sup <- train(label ~ ., data = training[,c(grep('游离前列腺特异性抗原',colnames(training)),grep('总前列腺特异性抗原',colnames(training)),which(colnames(training)==i),37)], method = "rf", trControl = fitControl, 
                        tuneLength = 40,metric = "AUC")
     allfea<-perf(rfFit_sup)
-    feature_per$diff_auc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[1]-as.numeric(rf3.ROC$auc))
-    feature_per$diff_prauc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[1]-as.numeric(perf(rfFit3)[["auc"]][4]))
+    feature_per$diff_auc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[1]-as.numeric(perf(rfFit3)[["auc"]][1]))
+    feature_per$diff_prauc[which(feature_per$featurename==i&feature_per$runs==j)]<-(allfea$auc[4]-as.numeric(perf(rfFit3)[["auc"]][4])) #老在一些莫名其妙的地方出错
     
   }
   
@@ -311,6 +315,66 @@ for (i in feature_list){
 save(feature_per,file = 'feature_add.RData')
 
 ##################################################################################3
-#
+#增一特征后AUC，PRAUC的变化
+
+pdf("412_diff_auc.pdf",width = 8,height = 6)
+ggplot(feature_per, aes(x = reorder(featurename,diff_auc), y = diff_auc)) +
+  stat_boxplot(geom = "errorbar",width=0.2)+
+  geom_boxplot(outlier.shape = 1,show.legend = F)+ #aes(fill=group),
+  # geom_boxplot(width=0.8,aes(fill=group),colour='black',alpha = 1,outlier.shape = NA)+
+  labs(y="DIFF AUC")+ 
+  theme_classic(base_size = 22)+ 
+  scale_fill_manual(values=MetBrewer::met.brewer("Hokusai1", 7)[c(6,3,7,4)])+
+  theme_classic(base_size = 14)+ 
+  theme(legend.position = "none")+
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  coord_flip()+
+  xlab(NULL)+
+  theme(aspect.ratio=2)+
+  theme(axis.title.x = element_text(size = 16, color = "black"),
+        axis.title.y = element_text(size = 16, color = "black"),
+        axis.text.x = element_text(size = 14, color = "black"),
+        axis.text.y = element_text(size = 10, color = "black"),
+        legend.text = element_text(size = 14, color = "black"),
+        legend.background = element_rect(fill = "white"),
+        legend.key = element_rect(fill = "white"),
+        panel.background = element_rect(fill = "white"),
+        panel.border = element_rect(fill = NA, color = "black"),
+        panel.grid.minor = element_line(color = "gray", size = 0.25))
+dev.off()
+
+pdf("412_diff_prauc.pdf",width = 8,height = 6)
+ggplot(feature_per, aes(x = reorder(featurename,diff_prauc), y = diff_prauc)) +
+  stat_boxplot(geom = "errorbar",width=0.2)+
+  geom_boxplot(outlier.shape = 1,show.legend = F)+ #aes(fill=group),
+  # geom_boxplot(width=0.8,aes(fill=group),colour='black',alpha = 1,outlier.shape = NA)+
+  labs(y="DIFF PRAUC")+ 
+  theme_classic(base_size = 22)+ 
+  scale_fill_manual(values=MetBrewer::met.brewer("Hokusai1", 7)[c(6,3,7,4)])+
+  theme_classic(base_size = 14)+ 
+  theme(legend.position = "none")+
+  theme(panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.title = element_blank())+
+  coord_flip()+
+  xlab(NULL)+
+  theme(aspect.ratio=2)+
+  theme(axis.title.x = element_text(size = 16, color = "black"),
+        axis.title.y = element_text(size = 16, color = "black"),
+        axis.text.x = element_text(size = 14, color = "black"),
+        axis.text.y = element_text(size = 10, color = "black"),
+        legend.text = element_text(size = 14, color = "black"),
+        legend.background = element_rect(fill = "white"),
+        legend.key = element_rect(fill = "white"),
+        panel.background = element_rect(fill = "white"),
+        panel.border = element_rect(fill = NA, color = "black"),
+        panel.grid.minor = element_line(color = "gray", size = 0.25))
+dev.off()
 
 
