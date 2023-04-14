@@ -7,6 +7,8 @@ infer_experiment.py -i ./OVX14_1-Input.sam -r /home/leelee/biodata/annotation/NC
 #Fraction of reads explained by "1+-,1-+,2++,2--": 0.9327
 #可以看到reads大部分偏第二种情况，说明是链特异性的，read1在+链，相对的gene其实是在-链（reverse）。这种就是“fr-firststrand”，也就是参数中的--rf，first read maps to the reverse strand
 
+fastq-dl --accession PRJNA670603 --provider SRA #一个GEO和ENA数据的下载器，试了一下，下载的数据还是比较快的，它好像是会自动对SRA数据进行处理然后把fastq压缩成gz这样的，添加线程参数或许能让本地处理的部分更快
+
 signalp6 -fasta test.fasta -od ./ -f all -org eukarya --mode fast #一个预测信号肽的软件
 
 bedtools sort -i ./MOV10_hg38.bed > mov10_sorted.bed
