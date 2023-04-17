@@ -226,7 +226,7 @@ kraken2 --db /home/leelee/share/kraken2/8gb/ ./knea/14818_1_kneaddata_paired_1.f
 #如果需要一百多G的内存才可以运行完整的kraken2，那成本也太高了
 
 metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_SGB /home/leelee/share/qiime2/test2/knea/14817_1_kneaddata_paired_1.fastq -o /home/leelee/share/qiime2/test2/meta4.txt --nproc 15 --offline --unclassified_estimation
-#4.0的数据库也挺大的，不过属于还能用的那种程度，试试看吧，unclassified有多少
+#4.0的数据库也挺大的，不过属于还能用的那种程度，我试了一下用metaphlan 4.0的index进行分析UNCLASSIFIED的数目在9.2左右，这个比例是非常高的了，我决定还是用metaphlan吧
 
 python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
 
