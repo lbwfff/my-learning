@@ -211,6 +211,9 @@ metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x
 
 merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
+#
+seqkit stats ./knea/14818_1_kneaddata_paired_1.fastq > 14818.txt #可以用seqkit简单统计reads的数量再乘上比例就可以得到绝对值了
+
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31" --nucleotide-database /home/leelee/share/humann_databases/v31 --protein-database /home/leelee/share/humann_databases/uniref
 #这套组件，一亿个bug
 #这段时间给我的领悟就是：只会使用conda安装的话，有些东西一辈子都别想装上了。明明之前就已经明白了这个道理。
