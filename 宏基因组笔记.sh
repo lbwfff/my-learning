@@ -233,5 +233,26 @@ metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x
 
 python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
 
+#############################################################################################
+#一个循环脚本
+#circ.sh
 
+source activate humann 
+
+cat fastq-run-info.tsv | while IFS=$'\t' read -r run_accession sample_alias; do  #fastq-run-info.tsv中有两列，一列是SRR的序号，另一列这是sample的名
+ 
+ # Assign run_accession to i and sample_alias to j
+  i="$run_accession"
+  j="$sample_alias"
+  j=$(echo "$j" | tr -d '\r') #uses the tr command to remove the carriage return character from the samplealias variable. 
+ 
+# Print the values of i and j
+  echo "$i"
+  echo "$j"
+ 
+  kneaddata -i1 ./"$i"_1.fastq.gz -i2 ./"$i"_2.fastq.gz --reference-db /home/leelee/biodata/index/Amel --trimmomatic /home/leelee/tools/trimmomatic --output knea --threads 18 --bowtie2-options "--very-sensitive --dovetail" --remove-intermediate-outpu -p 18 --output-prefix "$j"_knea --trf /home/leelee/tools/trf/TRF-4.09.1/build/src
+  metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_SGB ./knea/"$j"_knea_paired_1.fastq -o ./metaphlan/"$j"_metaphlan.txt --nproc 18 --offline --unclassified_estimation
+  seqkit stats ./knea/"$j"_knea_paired_1.fastq > ./metaphlan/"$j"_stats.txt
+
+done
 
