@@ -207,6 +207,9 @@ kneaddata --input con-Input-1_L4_701D04.R1.fastq.gz --input con-Input-1_L4_701D0
 
 kneaddata -i ./seq/14818_1.fq.gz -i ./seq/14818_2.fq.gz --reference-db /home/leelee/biodata/index/Amel --trimmomatic /home/leelee/tools/trimmomatic  --output knea --threads 10 --bowtie2-options "--very-sensitive --dovetail" --remove-intermediate-output
 
+kneaddata -i1 ./SRR12898771_1.fastq.gz -i2 ./SRR12898771_2.fastq.gz --reference-db /home/leelee/biodata/index/Amel --trimmomatic /home/leelee/tools/trimmomatic --output knea --threads 18 --bowtie2-options "--very-sensitive --dovetail" --remove-intermediate-outpu -p 18 --output-prefix 14798_knea --trf /home/leelee/tools/trf/TRF-4.09.1/build/src
+#用新工具下载的数据，reads被全部去除了，不知道为什么，更新了kneaddata的版本，试一下手动做一个debug
+
 metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31 /home/leelee/share/qiime2/test2/knea/14817_1_kneaddata_paired_1.fastq -o /home/leelee/share/qiime2/test2/metaphlan/14817.metaphlan.txt
 
 merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
