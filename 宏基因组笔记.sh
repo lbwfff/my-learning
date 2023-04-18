@@ -214,7 +214,7 @@ metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x
 
 merge_metaphlan_tables.py *metaphlan.txt > merged_abundance_table.txt
 
-#它推荐的read_fastx.py感觉有点难用，可以用seqkit简单统计reads的数量再乘上比例就可以得到绝对值了
+#它推荐的read_fastx.py感觉有点难用，可以用seqkit简单统计reads的数量再乘上比例就可以得到绝对值了。其实metaphlan的输出已经包括有reads数了，但是在ID转换merge的过程中可能会被删除，所以还是用seqkit做个统计好了
 seqkit stats ./knea/14818_1_kneaddata_paired_1.fastq > 14818.txt
 
 humann --input ./knea/14817_1_kneaddata_paired_1.fastq --output ./humann/ --threads 10 --search-mode uniref50 --diamond /home/leelee/tools/diamond --metaphlan-options "--bowtie2db /home/leelee/biodata/index/metaphlan -x mpa_v31" --nucleotide-database /home/leelee/share/humann_databases/v31 --protein-database /home/leelee/share/humann_databases/uniref
