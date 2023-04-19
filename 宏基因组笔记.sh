@@ -233,6 +233,8 @@ metaphlan --input_type fastq --bowtie2db /home/leelee/biodata/index/metaphlan -x
 
 python ~/tools/kraken2/KrakenTools-1.2/combine_mpa.py -i ./*_rep -o combine_kraken2.txt #他这个代码其实没有很有用，因为sample_name没有做好，可以自己用R语言写一个可能还好用一些？
 
+#
+Kingdom：界,Phylum：门,Class：纲,Order：目,Family：科,Genus：属,Speies：种。
 #############################################################################################
 #一个循环脚本
 #circ.sh
@@ -256,3 +258,6 @@ cat fastq-run-info.tsv | while IFS=$'\t' read -r run_accession sample_alias; do 
 
 done
 
+#############################################################################################
+#做出来的结果，用MicrobiotaProcess的话，会在mp_rrarefy，mp_cal_rarecurve卡住。
+#用microeco的话，跑起来倒是流畅，但plot_bar明显有问题，似乎也没有做标准化什么的，各种各样的问题需要解决，非扩增子的宏基因组怎么这么麻烦。。。。
