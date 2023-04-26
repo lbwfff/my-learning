@@ -173,3 +173,49 @@ samtools index rev2.bam
 samtools merge -f "$1"_rev.bam rev1.bam rev2.bam
 samtools index "$1"_rev.bam
 
+##################################################################################
+#TRESS另一个callpeak的R包，怎么说呢，单论callpeak，运行速度和内存的占用确实要好多了，但是对于DMR并没有优势，无论是速度、内存占用、还是包装的程度
+
+ txdb <- makeTxDbFromGFF('~/biodata/annotation/gencode.v35.annotation.sorted.gtf',format = 'gtf')
+ saveDb(txdb, file = "/home/leelee/share/4-21_seq/callpeak/anno.sqlite")
+ 
+ list<-c('M2','NC','T1', 'PC9-AF', 'PC9','PC9-KY', 'AR-PC9')
+ 
+ for (i in list){
+ 
+ Input.file = paste0(i,"-Input-1.markdup.bam")
+ IP.file = paste0(i,"-IP-1.markdup.bam")
+ 
+ BamDir = c('/home/leelee/share/4-21_seq/bam/')
+ annoDir = c('/home/leelee/share/4-21_seq/callpeak/anno.sqlite')
+ 
+ OutDir = "/home/leelee/share/4-21_seq/callpeak/TRESS"  
+ 
+ TRESS_peak(IP.file = IP.file,
+            Input.file = Input.file,
+            Path_To_AnnoSqlite = annoDir,
+            InputDir = BamDir,
+            OutputDir = OutDir, 
+            experiment_name = paste0(i,'_rep1'), 
+            filetype = "bam")
+	    }
+
+#这些R语言写的为MERIP开发的包，感觉都没有特别好用，反而MACS比较喜欢，但那个就需要自己包装了，然后DMR我还没有用过，可以试着用一下
+
+#####################################################################################
+#对于RIP，其实可以做一个QC，ChIPQC是一个为CHIP-seq开发的工具，但是也可以用来做RIP-SEQ的QC，代码非常简单
+
+library(ChIPQC)
+
+samples <- read.csv('~/share/4-21_seq/callpeak/QC.csv')
+samples
+
+exampleExp <- ChIPQC(samples,annotaiton="hg19")
+exampleExp
+
+save(exampleExp,file = '~/share/4-21_seq/callpeak/qc.RData')
+ChIPQCreport(exampleExp,facetBy=c("Condition"))
+
+#从结果中，其实可以判断，IP的质量（这是其实是一直想看的东西），通过SSD score和RIP%这样的指标。
+
+
