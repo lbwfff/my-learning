@@ -709,8 +709,20 @@ ggplot(auprcplot, aes(V1, V2,colour = mod))+
     scale_colour_manual(values=met.brewer("Derain", 5,type ='discrete'))
 dev.off()
 
+##########################################################
+#AUC的置信区间
 
+predict<-data.frame(response=c(score$group),predictor=c(NA))
+predict$response<-factor(predict$response,levels = c('N','C'))
+predict$predictor<-predict (fit.full,score,type='response') #这里type=‘response’输出0-1的预测阈值
 
+roc<-plot.roc(predict$response, predict$predictor) 
+
+ci.sp.obj <- ci.sp(roc, sensitivities=seq(0, 1, .01), boot.n=100)
+plot(roc)
+plot(ci.sp.obj, type="shape", col=NA)
+
+#但是这玩意怎么用ggplot画出来呢？
 
 
 
