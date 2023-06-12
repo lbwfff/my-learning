@@ -1,5 +1,7 @@
 # my learing 
 
+rm(list= ls())
+
 Try to do something
 Trust the process
 
