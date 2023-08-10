@@ -262,7 +262,168 @@ plot(net_pc,vertex.size=1.5*deg,
 legend(x=-1.5,y=1.5,levels(factor(V(net_pc)$class)),pch=21,col="#777777",pt.bg=vcolor) #legend
 
 
+###############################################################################################
+#想那么多有的没的干嘛，别人写的快多了
 
+library(TwoSampleMR)
+library(doParallel)
+
+rm(list = ls())
+exp_data <- readRDS("./exp_data_2023.4.3_p5e8_idALL.rds")  #这个其实是比较关键的数据，目前是靠作者提供的，知道怎么创建这个数据是比较重要的
+load('./available_outcomes.RData') #全暴露
+
+# 去掉eqtl的
+delete_eqtl <- stringr::str_detect(
+  string = exp_data$id.exposure,
+  pattern = "eqtl-a", negate = TRUE )
+exp_data <- subset(exp_data,delete_eqtl)
+
+# 筛选人群, 你研究的人群确定下
+id2 <- subset(ao,ao$population=="European")
+length(unique(id2$id))
+
+dplyr::count(id2,population)
+
+exp_data <- subset(exp_data,exp_data$id.exposure %in% id2$id)   #这里文件从处理方法和习惯的不一样，但也还好理解
+
+start1=Sys.time()
+
+outcome=extract_outcome_data(
+  snps = unique(exp_data$SNP),
+  outcomes = c("ukb-b-6353"),   #你想要的结局
+  proxies = TRUE)
+
+save(outcome,file = 'outcomefinn-b-H7_MYOPIA.rda')
+end1=Sys.time();end1-start1
+
+exp_data_list=split(exp_data,list(exp_data$id.exposure))
+
+har_loop <- function(exp_data=exp_data_list){
+  BBB=TwoSampleMR::harmonise_data(
+    exposure_dat = exp_data, outcome_dat = outcome)
+  return(BBB)
+}
+
+start1=Sys.time()
+dat_list <- list()
+for(x in 1:length(exp_data_list)){
+  dat_list[[names(exp_data_list)[x]]] <- har_loop(exp_data=exp_data_list[[x]])   #批量的harmonise数据
+}
+end1=Sys.time();end1-start1
+
+dat <- do.call(rbind,dat_list)
+dat <- subset(dat,mr_keep)
+
+dat <- split(dat,list(dat$id.exposure,dat$id.outcome))
+length(dat)
+names(dat) <- paste0("A",1:length(dat))
+deleteSNP=names(dat)[sapply(dat,nrow)<3]
+length(deleteSNP)
+
+# [1]-去掉list里面小于3个SNP的
+for (deleteSNPid in deleteSNP) {
+  dat[[deleteSNPid]] <- NULL
+}
+length(dat)
+dat2 <- do.call(rbind,dat)
+length(unique(dat2$id.exposure)) 
+
+# 并行
+library(doParallel)
+#
+choose_MR <- function(dat1=dat){ 
+  res_hete <- mr_heterogeneity(dat1) 
+  if(nrow(res_hete)==1 & !grepl('Invers',res_hete$method[1])){next}
+  if(nrow(res_hete)==0 ){next}
+  if (res_hete$Q_pval[nrow(res_hete)]<0.05) {
+    res=TwoSampleMR::mr(dat1, method_list = c("mr_egger_regression",
+                                              "mr_weighted_median", "mr_ivw_mre"))
+  } else{
+    res=TwoSampleMR::mr(dat1, method_list = c("mr_egger_regression",
+                                              "mr_weighted_median", "mr_ivw_fe"))
+  }
+  return(res)
+}  #这里是先做了异质性的检验，然后根据异质性的结果使用不同的MR方法，这个function是分析的本体，需要修改的话可以在这里改
+
+start1=Sys.time()
+res_list <- list()
+for(x in 1:length(dat)){
+  res_list[[names(dat)[x]]] <- choose_MR(dat1=dat[[x]])
+}
+end1=Sys.time();end1-start1
+res <- do.call(rbind,res_list)
+
+write.csv(res,'res_6353.csv')
+
+# 结果提取
+res$pval=round(res$pval,3)
+
+res_ALL <- split(res,list(res$id.exposure))
+#
+judge_1 <- function(mr_res=res2) {
+  mr_res$b_direction <- as.numeric(sign(mr_res$b))
+  mr_res$b_direction=ifelse(abs(sum(mr_res$b_direction))==3 ,
+                            NA,"Inconsistent direction")
+  mr_res$p_no <- NA
+  mr_res[mr_res$method=="MR Egger","p_no"] <- ifelse(
+    mr_res[mr_res$method=="MR Egger","pval"]<0.05," ",
+    "MR Egger")
+  mr_res[mr_res$method=="Weighted median","p_no"] <- ifelse(
+    mr_res[mr_res$method=="Weighted median","pval"]<0.05," ",
+    "Weighted median")
+  mr_res[grep(x = mr_res$method,pattern = "Inverse variance"),"p_no"] <- ifelse(
+    mr_res[grep(x = mr_res$method,pattern = "Inverse variance"),"pval"]<0.05,
+    " ","IVW")
+  mr_res$p_no <- paste(mr_res$p_no,collapse = " ")
+  mr_res$p_no=trimws(mr_res$p_no,which = c("both"))
+  return(mr_res)
+}
+
+res_ALL=purrr::map(.x =res_ALL,.f = ~judge_1(.x) )
+res_ALL2 <- do.call(rbind,res_ALL)
+res_ALL3 <- subset(res_ALL2,
+                   is.na(res_ALL2$b_direction) )
+bool=stringr::str_detect(string =res_ALL3$p_no,
+                         pattern = "IVW",negate = TRUE )
+res_ALL4 <- subset(res_ALL3,bool)
+
+res_ALL4_1=subset(res_ALL4,select = exposure)
+res_ALL4_1 <- unique(res_ALL4_1)
+res_ALL4_1[1,1]
+res_ALL4_2 <- tidyr::separate(
+  data = res_ALL4_1,col = exposure,sep = "\\|",
+  into = c("exposure","delete")) %>%
+  dplyr::select(-delete)
+
+# 导出
+library(openxlsx)
+
+wb <- createWorkbook("My name here")
+## Add a worksheets
+addWorksheet(wb, "sheet1", gridLines = FALSE)
+addWorksheet(wb, "sheet2", gridLines = FALSE)
+## write data to worksheet 1
+writeData(wb,x = res_ALL4,sheet = "sheet1",
+          rowNames = FALSE)
+writeData(wb,x = res_ALL4_2,sheet = "sheet2",
+          rowNames = FALSE)
+## style for body
+bodyStyle <- createStyle(border = "TopBottom",
+                         bgFill ="#e3e9f4",  
+                         fgFill = "#e3e9f4")
+a=seq(2,nrow(res_ALL4)+1,6)
+b=seq(3,nrow(res_ALL4)+1,6)
+c=seq(4,nrow(res_ALL4)+1,6)
+d=sort(c(a,b,c))
+d
+addStyle(wb, sheet = 1, bodyStyle, 
+         rows = d,
+         cols = 1:11, 
+         gridExpand = TRUE)
+setColWidths(wb, 1, cols = 1, widths = 21) ## set column width for row names column
+## Not run: 
+saveWorkbook(wb, "MR_6353.xlsx", 
+             overwrite = TRUE)
 
 
 
