@@ -426,5 +426,177 @@ saveWorkbook(wb, "MR_6353.xlsx",
              overwrite = TRUE)
 
 
+######################################################################################################################
+#记录一下非批量的代码
+#单变量就不写了，直接多面量
+
+#之前需要引入三个function代码来自Marina Vabistsevits，三个function都是用来对MVMR（或TwosampleMR）的输入输出进行调整的
+library(MVMR)
+library(tidyr)
+library(tibble)
+library(dplyr)
+
+tidy_mvmr_output <- function(mvmr_res) {
+  #  tidy up MVMR returned output
+  mvmr_res %>%
+    as.data.frame() %>% 
+    rownames_to_column("exposure") %>% 
+    dplyr::rename(b='Estimate',  #会存在一个库错误
+                  se="Std. Error",
+                  pval="Pr(>|t|)") %>% 
+    select(-c(`t value`)) %>% 
+    TwoSampleMR::generate_odds_ratios()
+}
+
+tidy_pvals<-function(df){
+  # round up output values and keep p-vals in scientific notation
+  df %>% 
+    mutate(pval= as.character(pval)) %>% 
+    mutate_if(is.numeric, round, digits=4) %>% 
+    mutate(pval=as.numeric(pval),
+           pval=scales::scientific(pval, digits = 4),
+           pval=as.numeric(pval))
+}  #这个小数点位数搞那么少干嘛，用来画图的话不是很好
+
+make_mvmr_input <- function(exposure_dat, outcome.id.mrbase=NULL, outcome.data=NULL){
+  # provide exposure_dat created in the same way as for TwoSampleMR 
+  # also specify the outcome argument [only ONE!] (MR-base ID or full gwas data in .outcome format)
+  
+  # extract SNPs for both exposures from outcome dataset
+  # (for the selected option mr.base or local outcome data)
+  if (!is.null(outcome.id.mrbase)) {
+    # if mrbase.id is provided
+    outcome_dat <- extract_outcome_data(snps = unique(exposure_dat$SNP),
+                                        outcomes = outcome.id.mrbase)
+  } else if (!is.null(outcome.data)){
+    # if outcome df is provided
+    outcome_dat <- outcome.data %>% filter(SNP %in% exposure_dat$SNP)
+  }
+  
+  # harmonize datasets
+  exposure_dat <- exposure_dat %>% mutate(id.exposure = exposure)
+  outcome_harmonised <- mv_harmonise_data(exposure_dat, outcome_dat)
+  
+  exposures_order <- colnames(outcome_harmonised$exposure_beta)
+  
+  # Create variables for the analysis 
+  
+  ### works for many exposures
+  no_exp = dim(outcome_harmonised$exposure_beta)[2] # count exposures
+  # add beta/se names
+  colnames(outcome_harmonised$exposure_beta) <- paste0("betaX", 1:no_exp)
+  colnames(outcome_harmonised$exposure_se) <- paste0("seX", 1:no_exp)
+  
+  XGs <-left_join(as.data.frame(outcome_harmonised$exposure_beta) %>% rownames_to_column('SNP'), 
+                  as.data.frame(outcome_harmonised$exposure_se)   %>%rownames_to_column('SNP'), 
+                  by = "SNP")
+  
+  YG <- data.frame(beta.outcome = outcome_harmonised$outcome_beta,
+                   se.outcome = outcome_harmonised$outcome_se) %>% 
+    mutate(SNP = XGs$SNP)
+  
+  
+  return(list(YG = YG,
+              XGs = XGs,
+              exposures = exposures_order))
+}
+
+#OK基于这三个function我们进行多变量分析
+#首先是twosampleMR
+
+library(TwoSampleMR)
+
+id_exposure <-c('ukb-b-2209','ukb-b-1489','ukb-b-2134','ukb-b-4424')
+exposure_dat <- mv_extract_exposures(id_exposure,find_proxies = FALSE,
+                                     force_server = FALSE)
+outcome_dat <- extract_outcome_data(exposure_dat$SNP, 'ukb-d-5843_3')
+
+mvdat <- mv_harmonise_data(exposure_dat, outcome_dat)
+# mv_lasso<- mv_lasso_feature_selection(mvdat) #此处可用LASSO挑选变量，看需求吧
+
+res <- mv_multiple(mvdat,plots=T)
+
+result_2smr <- res$result %>%  #调整一下结果格式计算OR值
+  split_outcome() %>%
+  separate(outcome, "outcome", sep="[(]") %>% 
+  mutate(outcome=stringr::str_trim(outcome))%>% 
+  generate_odds_ratios() %>% 
+  select(-id.exposure, -id.outcome) %>% 
+  tidy_pvals()
+
+result_2smr$type<-c('TwoSampleMR')
+
+ggplot(result_2smr, aes(y=exposure, x=or, label=outcome, colour=type)) +  #shape=exposure, 
+  geom_errorbarh(aes(xmin=or_lci95, xmax=or_uci95), height=.3) +
+  geom_point(size=2)+
+  # xlim(0,2)+
+  scale_color_manual(values=met.brewer("VanGogh1", 3,type ='discrete'))+
+  # scale_shape_manual(values = c(19,20,17)) +
+  geom_vline(xintercept=1, linetype=3) +
+  theme_minimal_hgrid(10, rel_small = 1) +
+  facet_wrap(~outcome, ncol=1)+
+  labs(color = "",y = "", x = "Odds Ratio",
+       title= paste0("Univariate MR results for ",
+                     'Myopia' ,", 95% CI") )+
+  theme(legend.position = "none")
+#绘制森林图，我还挺喜欢这个画法的，虽然没有把P值OR值放上去，但随便吧好看就行
+
+#然后是MVMR
+mvmr_input <- make_mvmr_input(exposure_dat, outcome.id.mrbase= 'ukb-d-5843_3') #这个input好像也是用twosamplemr的function做的，只不过把结果调整为了MVMR的input形式
+
+mvmr_out <- format_mvmr(BXGs = mvmr_input$XGs %>% select(contains("beta")),  
+                        BYG = mvmr_input$YG$beta.outcome,                     
+                        seBXGs = mvmr_input$XGs %>% select(contains("se")),  
+                        seBYG = mvmr_input$YG$se.outcome,                     
+                        RSID = mvmr_input$XGs$SNP)   
+
+mvmr_res <- ivw_mvmr(r_input=mvmr_out) #多变量分析
+
+result_mvmr <-
+  mvmr_res %>% 
+  tidy_mvmr_output() %>% 
+  mutate(exposure = mvmr_input$exposures,
+         outcome = 'Breast cancer') %>% 
+  select(exposure, outcome, everything()) %>% 
+  tidy_pvals() 
+
+result_mvmr$type<-c('MVMR')
+
+merge<-data.frame(exposure=c(result_2smr$exposure,result_mvmr$exposure),
+                  OR=c(result_2smr$or,result_mvmr$or),outcome=c('myopia'),
+                  orlow=c(result_2smr$or_lci95,result_mvmr$or_lci95),
+                  orup=c(result_2smr$or_uci95,result_mvmr$or_uci95),
+                  type=c(result_2smr$type,result_mvmr$type))  #把twosampleMR的结果和MVMR整合到一起，两个output格式改得还不一样需要手动调一下
+
+merge$type<-factor(merge$type,levels = c('TwoSampleMR','MVMR'))
+
+pdf("multi_mr.pdf",width = 6,height = 4)
+ggplot(merge, aes(y=exposure, x=OR, label=outcome, colour=type)) +  #shape=exposure, 
+  geom_errorbarh(aes(xmin=orlow, xmax=orup), height=.3) +
+  geom_point(size=2)+
+  # xlim(0.88,1.14)+
+  scale_color_manual(values=met.brewer("VanGogh1", 3,type ='discrete'))+
+  # scale_shape_manual(values = c(19,20,17)) +
+  geom_vline(xintercept=1, linetype=3) +
+  theme_minimal_hgrid(10, rel_small = 1) +
+  facet_wrap(~type, ncol=1)+
+  labs(color = "",y = "", x = "Odds Radio",
+       title= paste0("Multivariate MR results for ",
+                     'Myopia' ,", 95% CI") )+
+  theme(legend.position = "none")
+dev.off()
+
+#画在一张图里
+
+
+
+
+
+
+
+
+
+
+
 
 
