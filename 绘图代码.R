@@ -132,6 +132,21 @@ wb <- c("white", "black")
 corrplot(M, method = "number")
 #一个多因素的相关性图，先用cor函数算出因数的相关性矩阵，后进行绘制，能绘制出的种类还挺多的，多因素相关分析可以用
 
+#####另一个相关性热图
+M <- cor(t(corexp))
+P <- ggcorrplot::cor_pmat(t(corexp))
+
+corrplot(corr =M, p.mat = P,method = "circle",
+         type="upper",col=rev(COL2('RdBu', 200)),
+         tl.pos="lt", tl.cex=1, tl.col="black",tl.srt = 45,tl.offset=0.5,
+         insig="label_sig",sig.level = c(.001, .01, .05),
+         pch.cex = 0.8,pch.col = "black") 
+corrplot(corr = M, method = "number",
+         type="lower",add=TRUE,col=rev(COL2('RdBu', 200)),
+         tl.pos = "n",cl.pos = "n",diag=FALSE,
+         number.digits = 3,number.cex = 1,number.font = NULL)
+#下半是R值，上半有标星表示P值的画法
+
 ##########3##############
 ggplot(try[try$`E-ID`=='MOV10',],aes(group,value,fill=group))+geom_boxplot(width=0.5,outlier.shape = NA)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(title="MOV10",x="group", y = "TPM")+
   theme(panel.grid.major =element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black")) +
