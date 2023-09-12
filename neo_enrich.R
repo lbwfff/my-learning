@@ -299,4 +299,148 @@ ggraph(net_2,layout = "centrality", cent = deg)+
   guides(size=F)+
   theme_graph()
 dev.off() 
-#就，目前也还能行，ggraph的美化又是一个大坑，应付甲方的话图画成这样也随便了          
+#就，目前也还能行，ggraph的美化又是一个大坑，应付甲方的话图画成这样也随便了    
+
+
+
+
+
+#############################################################
+##富集分析的弦图，这种画法还挺好看的，比起clusterprofiler那个网络，但是包写得很呆，需要自己调一些地方
+library('org.Hs.eg.db')
+library(patchwork)
+library(clusterProfiler)
+library(stringr)
+library(DOSE)
+library(openxlsx)
+library(ggplot2)
+R.utils::setOption("clusterProfiler.download.method",'auto')
+
+genelist<-bitr(unique(tr), fromType = "SYMBOL",
+               toType = c( "ENTREZID"),
+               OrgDb = org.Hs.eg.db)[,2] 
+kk.negative <- enrichKEGG(gene  = genelist,
+                          organism = 'hsa',
+                          pvalueCutoff = 0.05,
+                          qvalueCutoff =1)
+kk.negative<-setReadable(kk.negative,OrgDb = 'org.Hs.eg.db', keyType="ENTREZID")
+kk=kk.negative@result
+kk<-kk[order(kk$pvalue,decreasing = F),]
+
+write.csv(kk.negative@result,file = '02_DEG/KEGG_enrich.csv')
+
+{
+  library('GOplot')
+  
+  david<- kk[,c(1,3,4,10,8)]
+  colnames(david)
+  
+  david$geneID<-gsub("/",",",david$geneID)
+  colnames(david)<-c('category', 'ID', 'term','genes','adj_pval')
+  david[1:5,1:5]
+  
+  genelist<- data.frame(ID=deseq$X,logFC=deseq$log2FoldChange)  #然后对于每一个基因都是可以展示logFC的
+  colnames(genelist)
+  
+  circ <- circle_dat(david, genelist)#创建绘图对象
+  
+  ####
+  process<-kk$Description[1:5]
+  
+  chord <- chord_dat(data=circ,genelist,process=process)#为什么又要把logfc加进去，这个包实在粗糙
+  head(chord)
+  
+  p<-GOChord(chord, space = 0.02,
+             gene.space = 0.28, 
+             gene.size = 4,process.label=10,
+             ribbon.col=brewer.pal(5, "Set3")) 
+  #感觉像是一个魔改的ggplot对象，没法直接用ggplot的美学代码调整，但是可以对象进行操作
+  p[["guides"]][["size"]][["title"]]<-c('KEGG')
+  p[["guides"]][["size"]][["ncol"]]<-2
+  pdf("./02_DEG/kegg_chord.pdf",width =10,height = 12)
+  print(p)
+  dev.off()  #好多了
+  
+}
+
+#也展示一个GOBP的，CC和MF如法炮制就好了
+genelist<-bitr(unique(tr), fromType = "SYMBOL",
+               toType = c( "ENTREZID"),
+               OrgDb = org.Hs.eg.db)[,2] 
+BP <- enrichGO(gene          = genelist,
+               OrgDb         = org.Hs.eg.db,
+               ont           = 'BP' ,
+               pAdjustMethod = "BH",
+               pvalueCutoff  = 0.05,
+               qvalueCutoff  = 1,
+               readable      = TRUE)
+
+write.csv(BP@result,file = '02_DEG/GOBP_enrich.csv')
+
+{
+  david<- BP@result[,c(1,2,6,8)]
+  colnames(david)
+  
+  david$geneID<-gsub("/",",",david$geneID)
+  colnames(david)<-c('ID', 'term','adj_pval','genes')
+  david$category<-c('GO')
+  david[1:5,1:5]
+  
+  genelist<- data.frame(ID=deseq$X,logFC=deseq$log2FoldChange) 
+  colnames(genelist)
+  
+  circ <- circle_dat(david, genelist)#创建绘图对象
+  
+  ####
+  process<-BP@result$Description[1:5]
+  
+  chord <- chord_dat(data=circ, genelist, process=process)#构建数据
+  head(chord)
+  
+  p<-GOChord(chord, space = 0.02,
+             gene.space = 0.28, 
+             gene.size = 4,process.label=10,
+             ribbon.col=brewer.pal(5, "Set3")) 
+  p[["guides"]][["size"]][["title"]]<-c('GO BP')
+  p[["guides"]][["size"]][["ncol"]]<-2
+  
+  pdf("./02_DEG/GOBP_chord.pdf",width =10,height = 12)
+  print(p)
+  dev.off() 
+}
+
+
+#################################################################
+#GSEA的美化，主要是对于GseaVis包的使用
+library('GseaVis')
+p<-list()
+
+p[[1]]<-
+gseaNb(object = egmt,curveCol =met.brewer("Hokusai1", 5),
+       geneSetID = egmt@result$Description[1:5])
+
+gmtfile ='./05_enrich/c5.go.v2023.1.Hs.symbols.gmt'
+geneset <- clusterProfiler::read.gmt( gmtfile )  
+length(unique(geneset$term))
+egmt <- GSEA(test, TERM2GENE=geneset, 
+             minGSSize = 1,eps=0,
+             pvalueCutoff = 0.1,
+             verbose=FALSE)
+head(egmt)
+gsea_results_df <- egmt@result 
+
+write.csv(gsea_results_df,file = '05_enrich/gsea_go_results_df.csv')
+
+p[[2]]<-
+gseaNb(object = egmt,curveCol =met.brewer("Hokusai1", 5),
+       geneSetID = egmt@result$Description[1:5])
+
+pdf("05_enrich/two_GSEA.pdf",width = 10,height = 12)
+wrap_plots(p,nrow=2) #这张图目前的画法，感觉还是比较臃肿，其实东西多的话可以把底部的rank去掉也行
+dev.off() 
+
+
+
+
+
+                       
