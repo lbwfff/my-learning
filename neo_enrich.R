@@ -439,7 +439,30 @@ pdf("05_enrich/two_GSEA.pdf",width = 10,height = 12)
 wrap_plots(p,nrow=2) #这张图目前的画法，感觉还是比较臃肿，其实东西多的话可以把底部的rank去掉也行
 dev.off() 
 
+##################################################################################
+#再补充一个超几何分布的棒棒糖图，以前常用的柱状图现在怎么看怎么丑
+plot<-data.frame(category=c(rep('GO',10),rep('KEGG',10)),
+                 Description=c(BP$Description[1:10],kk$Description[1:10]),
+                 pvalue=c(BP$pvalue[1:10],kk$pvalue[1:10])) #合并KEGG和GO的结果
 
+library('ggsci')
+library('cowplot')
+library('stringr')
+pdf('05_enrich/100gene_enrich.pdf',width = 10,height = 8)
+  ggplot(data = plot, aes(x = reorder(Description,pvalue), y = -log(pvalue))) +
+  geom_segment(aes(x = Description, y = 0, xend = Description, 
+                   yend = -log(pvalue), color = category)) +
+  geom_point(size = 4, aes(color = category))+
+  scale_color_npg() +
+  # scale_y_continuous(expand = c(0,0)) +
+  theme_half_open() +
+  ylab('-log (P value)')+
+  xlab(NULL)+
+  theme(axis.text.x = element_text(angle = 45,size = 9,
+                                   hjust = 1,vjust = 1))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 45))+  #和之前一样，把太长的词条换行
+  theme(plot.margin=unit(rep(2,4),'cm'))
+dev.off()
 
 
 
