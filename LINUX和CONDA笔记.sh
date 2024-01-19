@@ -1,3 +1,11 @@
+#GEO,记得之前有一段时间喜欢直接从ENA下载fastq.gz文件，感觉能快一点，但是太麻烦了，geofetch
+
+geofetch -i GSE124535 -n GSE124535 -m `pwd` #下载一整个项目的话
+geofetch -i 19_1_down.txt  -n brain_ribo -m `pwd` #下载其中一写数据，文件有三列，项目ID，样本ID，名字，后面两列不填的话就下载整个项目
+
+fasterq-dump -e 8  *.sra #sra转fastq
+#
+
 infer_experiment.py -i ./OVX14_1-Input.sam -r /home/leelee/biodata/annotation/NCBI_mm39.bed -q 20
 #之前一直不太明白怎么判断数据的链特异性问题，这里有一个简单的工具，来自RSeQC
 #我得到的结果是
