@@ -2,6 +2,8 @@
 
 rm(list= ls())
 
+.libPaths("~/R/library")
+
 Try to do something
 Trust the process
 
