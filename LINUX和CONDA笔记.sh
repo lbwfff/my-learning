@@ -3,7 +3,7 @@
 geofetch -i GSE124535 -n GSE124535 -m `pwd` #下载一整个项目的话
 geofetch -i 19_1_down.txt  -n brain_ribo -m `pwd` #下载其中一写数据，文件有三列，项目ID，样本ID，名字，后面两列不填的话就下载整个项目
 
-fasterq-dump -e 8  *.sra #sra转fastq
+fasterq-dump -e 8  *.sra #sra转fastq, 这个代码虽然可以多核运行，但是过于多的核心可能并不会有加速，可能十个二十个左右会好一些？
 #
 
 infer_experiment.py -i ./OVX14_1-Input.sam -r /home/leelee/biodata/annotation/NCBI_mm39.bed -q 20
