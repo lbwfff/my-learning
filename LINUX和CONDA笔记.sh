@@ -1,3 +1,6 @@
+#conda环境的迁移，折腾这玩意是因为，工作目录不能长时间放置文件，home目录空间又不够，只能把环境暂时放到存档，狗屎
+conda create  -p /archive/lb4489/conda/ribotish  --clone /home/lb4489/.conda/envs/ribotish
+
 #GEO,记得之前有一段时间喜欢直接从ENA下载fastq.gz文件，感觉能快一点，但是太麻烦了，geofetch
 
 geofetch -i GSE124535 -n GSE124535 -m `pwd` #下载一整个项目的话
