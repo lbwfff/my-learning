@@ -61,3 +61,9 @@ m6anet dataprep --eventalign ./data/HEK293T-WT-rep1/nanopolish/eventalign.txt \
 m6anet inference --input_dir KO_m6anet --out_dir KO_m6anet_result  --pretrained_model HEK293T_RNA004 --n_processes 20 --num_iterations 1000
 m6anet inference --input_dir WT_m6anet --out_dir WT_m6anet_result  --pretrained_model HEK293T_RNA004 --n_processes 20 --num_iterations 1000
 
+############################
+#转录组定量的话可以直接
+
+tringtie -L -o ./test/test.gtf ./test/test.bam -p 5
+
+#就还挺方便的，但是这个FPKM TPM是怎么估计出来的？
