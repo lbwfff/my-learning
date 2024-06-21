@@ -61,6 +61,24 @@ m6anet dataprep --eventalign ./data/HEK293T-WT-rep1/nanopolish/eventalign.txt \
 m6anet inference --input_dir KO_m6anet --out_dir KO_m6anet_result  --pretrained_model HEK293T_RNA004 --n_processes 20 --num_iterations 1000
 m6anet inference --input_dir WT_m6anet --out_dir WT_m6anet_result  --pretrained_model HEK293T_RNA004 --n_processes 20 --num_iterations 1000
 
+
+############################
+#basecall的话也挺方便的，使用gpu加速的guppy_basecaller，但是我可以不解压fast5文件吗？文件数量超过系统限制了
+
+#!/bin/bash
+#SBATCH -p nvidia
+#SBATCH -c 5
+#SBATCH --gres=gpu:1
+#SBATCH -t 00:40:00
+
+#/scratch/lb4489/project/dRNA/ont-guppy/bin/guppy_basecaller -v
+#/scratch/lb4489/project/dRNA/ont-guppy/bin/guppy_basecaller --help
+
+#nvidia-smi --query-gpu=name --format=csv,noheader
+
+/scratch/lb4489/project/dRNA/ont-guppy/bin/guppy_basecaller -i /scratch/lb4489/project/dRNA/20181121_1017_21112018_Sho_METTI3_10/fast5 -s /scratch/lb4489/project/dRNA/20181121_1017_21112018_Sho_METTI3_10/fastq --flowcell FLO-MIN106 --kit SQK-RNA002 --device auto -q 0 -r
+
+
 ############################
 #转录组定量的话可以直接
 
