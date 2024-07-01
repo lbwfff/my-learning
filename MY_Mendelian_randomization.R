@@ -91,6 +91,6 @@ susie_plot(finemapresult, y="PIP", b=b)
 
 res=coloc.susie(S5,S4) #可以对两个runsusie的输出对象直接coloc
 
-
+#但这样做的话不就纯为coloc服务了吗，我以为会对summary结果有什么影响，需要再看看文献是怎么做的
 
 
