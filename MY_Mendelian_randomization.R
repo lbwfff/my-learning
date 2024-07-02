@@ -10,6 +10,15 @@
 
 #但是这个工具也存在许多的限制，比如说我想做genetic colocalisation就没法实现，然后也缺少一些精细的质量控制结果，敏感性异质性什么的
 
+#PS:smr文件是可以自己做的，例如下面是一个例子，根据不同的格式有不同的方法进行制作，这个例子是fastqtl的输出结果所以会麻烦一些
+
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --eqtl-summary Astrocytes_merged.txt --fastqtl-nominal-format --make-besd --out Astrocytes
+
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary Astrocytes --update-esi allsnp.esi #这个esi文件类似于一个pool,有所有SNP的信息，位置，A1A2，MAF等等
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary Astrocytes --update-epi all.epi #这个是基因信息
+
+#esi，epi都是可以自己编辑的，但是顺序不能变，所以第一步的时候就应该把会导致麻烦的信息都过滤掉，不然后续很麻烦
+
 #################################
 #基于R语言的finemapping和colocalisation
 
