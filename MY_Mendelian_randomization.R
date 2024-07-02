@@ -19,6 +19,10 @@
 
 #esi，epi都是可以自己编辑的，但是顺序不能变，所以第一步的时候就应该把会导致麻烦的信息都过滤掉，不然后续很麻烦
 
+#想要从中提取结果的话
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary BrainMeta_cis_eQTL_chr2 --extract-probe myprobe.list  --make-besd --out LRPPRC
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary LRPPRC --query 1 --out LRPPRC_allsnp
+
 #################################
 #基于R语言的finemapping和colocalisation
 
