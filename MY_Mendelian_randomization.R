@@ -23,6 +23,19 @@
 /scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary BrainMeta_cis_eQTL_chr2 --extract-probe myprobe.list  --make-besd --out LRPPRC
 /scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --beqtl-summary LRPPRC --query 1 --out LRPPRC_allsnp
 
+#可视化的话
+/scratch/lb4489/project/GWAS/smr-1.3.1-linux-x86_64/smr --bfile /scratch/lb4489/project/GWAS/csmr/data/1kg/EUR \
+      --gwas-summary /scratch/lb4489/project/GWAS/csmr/data/finn_adj  \
+      --beqtl-summary BrainMeta_cis_eQTL_chr2 \
+      --out testExi \
+      --plot --probe ENSG00000138095.19 --probe-wind 500 --gene-list glist-hg19 
+
+#然后在R中，方便倒是挺方便的，就是有些小bug，输出的对象也不是ggplot对象，不太懂调整原生绘图代码
+source('./plot/plot_SMR.r')
+SMRData = ReadSMRData("./testExi.ENSG00000138095.19.txt")
+SMRLocusPlot(data=SMRData, smr_thresh=5e-4, heidi_thresh=0.05, plotWindow=600, max_anno_probe=16)
+SMREffectPlot(data=SMRData, trait_name="PTSD")
+
 #################################
 #基于R语言的finemapping和colocalisation
 
