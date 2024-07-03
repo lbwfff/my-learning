@@ -36,6 +36,9 @@ SMRData = ReadSMRData("./testExi.ENSG00000138095.19.txt")
 SMRLocusPlot(data=SMRData, smr_thresh=5e-4, heidi_thresh=0.05, plotWindow=600, max_anno_probe=16)
 SMREffectPlot(data=SMRData, trait_name="PTSD")
 
+#SMR其实就已经有敏感性分析的属性了，《COLOCdb: a comprehensive resource for multi-model colocalization of complex traits》中直接把SMR和coloc并列了
+#我现在主要的问题是，我要怎么理解SMR结果呢？
+
 #################################
 #基于R语言的finemapping和colocalisation
 
