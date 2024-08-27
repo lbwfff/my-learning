@@ -964,6 +964,59 @@ ggbarplot(test, x = "group", y = "exp",add = c("mean_se", "point"),
           ylab('Centralized Intensity')+
           xlab(NULL)+
           facet_grid(. ~ title)  #分面
-     
+
+
+
+
+
+
+#########################一个巨复杂的森林图####################
+                   
+z_value <- (result$BETA[1] - result$BETA[3]) / sqrt(result$SE[1]^2 + result$SE[3]^2)
+p_value1 <- 2 * (1 - pnorm(abs(z_value))) #比较两个geneset之间的差异
+z_value <- (result$BETA[2] - result$BETA[3]) / sqrt(result$SE[2]^2 + result$SE[3]^2)
+p_value2 <- 2 * (1 - pnorm(abs(z_value)))
+    
+plot<-result[c(1,3,2),] #这里把结果分成了两个图来展示
+plot$VARIABLE<-factor(plot$VARIABLE,levels=c(plot$VARIABLE))
+
+segment_width <- (max(plot$or_uci95) - min(plot$or_lci95)) * 0.05
+or_limits <- range( plot$or_lci95 - 3*segment_width, plot$or_uci95 + 3*segment_width, na.rm = TRUE)
+p_value_limits <-range(-log10(plot$P), na.rm = TRUE)
+
+or_limits2<-range( plot$or_lci95+ 1*segment_width, plot$or_uci95- 1*segment_width, na.rm = TRUE)
+scale_factor <- diff(p_value_limits) / diff(or_limits2)
+offset <- p_value_limits[1] - or_limits2[1] * scale_factor
+
+or_limits2* scale_factor + offset
+  
+p[[which(genelist==j)]]<-
+  local({                                        #这里用local，否则的话ggplot会把scale_factor和offset进行延迟评估，循环中就会导致绘图的错误
+    current_scale_factor <- scale_factor
+    current_offset <- offset
+    
+    ggplot(plot, aes(y = VARIABLE, x = or, colour = VARIABLE)) + 
+      geom_errorbarh(aes(xmin = or_lci95, xmax = or_uci95), height = 0.3) +
+      geom_point(size = 2) +
+      scale_color_manual(values = MetBrewer::met.brewer("VanGogh1", 5, type = 'discrete')) +
+      geom_vline(xintercept = 1, linetype = 3) +
+      geom_point(aes(x = ((-log10(P) - current_offset) / current_scale_factor), colour = VARIABLE), shape = 4, size = 3) +  #对P值进行了缩放
+      scale_x_continuous(name = "Odds Ratio", limits = or_limits,sec.axis = sec_axis(~ . * current_scale_factor + current_offset, name = "-log10 (P-value)") )+ #这里是两个刻度线存在的关键，ggplot无法自动生成第二刻度的取值范围（或许是我没找到）所以计算了scale_factor和offset手动设置取值范围
+      theme_minimal_hgrid(10, rel_small = 1) +
+      labs(color = "", y = "", title = paste0("Gene-set level analysis for ", disease ,", 95% CI")) +
+      theme(legend.position = "none",axis.title.y.right = element_text(angle = 90, vjust = 0.5))+
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width, y = 1.2, xend = max(plot$or_uci95) + segment_width, yend = 1.8), color = "black") + #手动添加了P值的比较对象，这里为了美学注释掉了
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width / 2, y = 1.2, xend = max(plot$or_uci95) + segment_width, yend = 1.2), color = "black") +
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width / 2, y = 1.8, xend = max(plot$or_uci95) + segment_width, yend = 1.8), color = "black") +
+      annotate("text", x = max(plot$or_uci95) + segment_width * 2, y = 1.5,  #手动添加了P值
+           label = ifelse(p_value1 <= 0.001, "***", ifelse(p_value1 <= 0.01, "**",ifelse(p_value1 <= 0.05, "*", "ns"))), 
+           size = 4, color = "black")+
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width, y = 2.2, xend = max(plot$or_uci95) + segment_width, yend = 2.8), color = "black") +
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width / 2, y = 2.8, xend = max(plot$or_uci95) + segment_width, yend = 2.8), color = "black") +
+      # geom_segment(aes(x = max(plot$or_uci95) + segment_width / 2, y = 2.2, xend = max(plot$or_uci95) + segment_width, yend = 2.2), color = "black") +
+      annotate("text", x = max(plot$or_uci95) + segment_width * 2, y = 2.5, 
+           label = ifelse(p_value2 <= 0.001, "***", ifelse(p_value2 <= 0.01, "**",ifelse(p_value2 <= 0.05, "*", "ns"))), 
+           size = 4, color = "black")+
+  theme(aspect.ratio=0.5)})
                    
       
