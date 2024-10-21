@@ -152,3 +152,19 @@ gsea_dot<-function(geneset_id) {
 gsea_dot('GO:0050778')
 gsea_dot('GO:0002253')
 
+#############################
+#一个把跨物种Gene name进行转换的方法
+human <- useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+mouse <- useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+
+local1<-rbind(fread('./subcell_gene/transcript/Hacisuleyman_24_dep.csv'),
+                fread('./subcell_gene/transcript/Hacisuleyman_24_rest.csv'))
+local1<-local1[!duplicated(local1$GeneName),]
+  
+
+  transname<-getLDS(attributes = c("mgi_symbol"),
+         filters = "mgi_symbol", values = local1$GeneName,
+         mart = mouse,
+         attributesL = c("hgnc_symbol"), 
+         martL = human)$HGNC.symbol
+
