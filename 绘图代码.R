@@ -1018,5 +1018,50 @@ p[[which(genelist==j)]]<-
            label = ifelse(p_value2 <= 0.001, "***", ifelse(p_value2 <= 0.01, "**",ifelse(p_value2 <= 0.05, "*", "ns"))), 
            size = 4, color = "black")+
   theme(aspect.ratio=0.5)})
+
+
+########################################################
+#一个qqplot，我还挺喜欢这个美学代码的
+library(tidyverse)
+library(ggtext)
+library(normentR)
+
+ci <- 0.95
+nsnp <- nrow(METTL3MDD1)
+
+plotdata1 <- tibble(
+  observed = -log10(sort(METTL3MDD1$P)),
+  expected = -log10(ppoints(nsnp)),
+  group= METTL3MDD1$group,
+  clower = -log10(qbeta(
+    p = (1 - ci) / 2,
+    shape1 = seq(nsnp),
+    shape2 = rev(seq(nsnp)))),
+  cupper = -log10(qbeta(
+    p = (1 + ci) / 2,
+    shape1 = seq(nsnp),
+    shape2 = rev(seq(nsnp)))))
+
+ggplot(plotdata1,aes(x = expected, y = observed)) +
+  geom_ribbon(aes(ymax = cupper, ymin = clower),
+              fill = "grey30", alpha = 0.5) +
+  geom_step(data = plotdata,aes(color = group), 
+    linewidth = 1.1, direction = "vh") +
+  geom_segment(
+    data = plotdata1 %>% filter(expected == max(expected)),
+    aes(x = 0, xend = expected, y = 0, yend = expected),
+    linewidth = 1.25, alpha = 0.5,
+    color = "grey30", lineend = "round") +
+  labs(
+    x = str_glue("Expected -log<sub>10</sub>(P)"),
+    y = str_glue("Observed -log<sub>10</sub>(P)"),
+    title= paste0(gene,' conditioning on ',dea)) +
+  theme_norment() +
+  theme(axis.title.x = element_markdown(),
+    axis.title.y = element_markdown(),
+    plot.title = element_text(size = 10))+
+  scale_color_manual(values=met.brewer("Egypt",n=4,type="continuous"))+
+  scale_fill_manual(values=met.brewer("Egypt",n=4,type="continuous"))+
+  theme(aspect.ratio=1)
                    
       
