@@ -58,10 +58,20 @@ ggplot(lopplot_sample, aes(x=group, y=mean))+
 ########################################
 par(mar=c(8, 8.5, 3, 3))  #对页面布局非常重要的一句，数值分别代表bottom, left, top, right。
                           #一个具体的例子就是，如果底部的字跑出去了，就可以把8改大，可以把跑出去的字画回图里。
+
                           
 #######################################
 #ggplot想要固定长宽比的话可以：
  theme(aspect.ratio=1) #比率可以自己调
+
+ggplot2::theme(panel.border = element_rect(size = 1.7,fill = 'transparent'),
+          axis.ticks = element_line(size = 0.5), #刻度线
+          axis.line = element_line(size = 0.25), #轴
+          axis.ticks.length = unit(0.25, "cm"), #刻度线长度
+          legend.background = element_blank(),
+          legend.position = 'right',
+          legend.text = element_text(size = 12))
+#有时候AI的缩放会把线段粗细变得非常的怪，这是因为没有比例缩放描边导致的
 
 ############1##############
 ggplot(data = cor,aes(x=METTL3,y=CAPRIN1))+
