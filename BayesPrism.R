@@ -247,3 +247,24 @@ bp.res <- run.prism(prism = myPrism, n.cores=78)
 
 save(bp.res,file = '/scratch/lb4489/biotools/BayesPrism/BayesPrism_test_result.RData')
 
+#########################################
+#很早之前就听说过这个工具了但是一直没有用过，主要是不怎么感兴趣于细胞组成，我的研究更加分子尺度一些
+#有很多基因集打分的工具也可以用于细胞类型的预测https://github.com/omnideconv/immunedeconv，这里整合了许多的算法，R包可以做这个
+#为什么要用BayesPrism呢，因为这个基于基因集的工具，大部分都是在做免疫细胞的预测，其它可能就找不到工具了，二是可能只能做人类的数据的分析？
+#BayesPrism可以自定义的部分就多得多了，缺点就是慢，需要的资源多
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
