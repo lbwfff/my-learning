@@ -252,7 +252,7 @@ save(bp.res,file = '/scratch/lb4489/biotools/BayesPrism/BayesPrism_test_result.R
 #有很多基因集打分的工具也可以用于细胞类型的预测https://github.com/omnideconv/immunedeconv，这里整合了许多的算法，R包可以做这个
 #为什么要用BayesPrism呢，因为这个基于基因集的工具，大部分都是在做免疫细胞的预测，其它可能就找不到工具了，二是可能只能做人类的数据的分析？
 #BayesPrism可以自定义的部分就多得多了，缺点就是慢，需要的资源多
-
+#InstaPrism据说可以得到BayesPrism一样的结果但是运行资源要少得多，有时间可以试试
 
 
 
