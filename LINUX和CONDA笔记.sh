@@ -210,3 +210,22 @@ trimmomatic PE \
 source /home/leelee/miniconda3/etc/profile.d/conda.sh
 conda activate p2
 之前不是没法在脚本里改变conda环境吗，用这个方法。
+
+##RSEM
+
+rsem-prepare-reference --gtf /scratch/lb4489/bioindex/gencode.vM33.annotation.gtf \
+                        /scratch/lb4489/bioindex/GRCm39.genome.fa \
+                        /scratch/lb4489/bioindex/rsem_Cm39 #这个reference到底是一个什么东西，看起来就是不同转录本的序列信息
+
+
+rsem-calculate-expression --alignments \
+                          -p 40 \
+                          ./ERR1551315Aligned.toTranscriptome.out.bam \
+			                    ./ERR1551316Aligned.toTranscriptome.out.bam \
+			                    ./ERR1551317Aligned.toTranscriptome.out.bam \
+			                    ./ERR1551318Aligned.toTranscriptome.out.bam \
+		                  	  ./ERR1551319Aligned.toTranscriptome.out.bam \
+			                    ./ERR1551320Aligned.toTranscriptome.out.bam \
+                          /scratch/lb4489/bioindex/rsem_Cm39 \
+                          ERR_quals
+
