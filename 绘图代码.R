@@ -298,7 +298,8 @@ ggpie(data = peaklist, group_key = "adj_type", count_type = "full",
   scale_fill_manual(values=rev(met.brewer('Hiroshige',n=4)))+ #同样本质上也是一个ggplot对象，可以自己对美学进行改造
   labs(fill='Gene type')+
   ggtitle('test') 
-  
+
+p[[1]]$layers[[1]]$aes_params$size <- 0 #如果想要改线的宽度的话
 
 ###########PCA图##########
 ###########我现在喜欢用DEseq包里的函数来画，因为自带标准化，后面也可以用ggplot来美化图片#######
