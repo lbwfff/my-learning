@@ -168,3 +168,17 @@ local1<-local1[!duplicated(local1$GeneName),]
          attributesL = c("hgnc_symbol"), 
          martL = human)$HGNC.symbol
 
+#listAttributes(drosophila) #必须注释中有的attributes才可以转换
+#另一个例子
+
+human <- useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+drosophila <- useMart("ensembl", dataset = "dmelanogaster_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+list<-read.csv('Working Index for Capstone.xlsx - tableExport-2.csv')
+
+transname<-getLDS(attributes = c("hgnc_symbol"),
+                  filters = "hgnc_symbol", 
+                  values = unique(list$Gene.Symbol),
+                  mart = human,
+                  attributesL = c("ensembl_gene_id",'description','flybase_gene_id','external_gene_name'),
+                  martL = drosophila)
+
