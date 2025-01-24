@@ -123,3 +123,21 @@ res=coloc.susie(S5,S4) #可以对两个runsusie的输出对象直接coloc
 #但这样做的话不就纯为coloc服务了吗，要怎么用它来筛选IV呢？
 
 
+##############################
+#phenoscanner感觉已经死掉了，不过可以使用ieugwasr来做phewas
+
+library(ieugwasr)
+res <- phewas(merge$rsIDs, pval = 1e-05, batch = c(), 
+       opengwas_jwt = ('')) # https://api.opengwas.io得到jwt
+
+res<-res[-grep('eqtl',res$id),]
+
+res$phewas<-paste0(res$trait,'(',formatC(res$p, format = "e", digits = 3),')')
+res<-res[order(res$p),]
+res<-res[!duplicated(res$trait),]
+
+match<-res[match(merge$rsIDs,res$rsid),]
+merge$phewas<-match$phewas
+
+write.csv(merge,file = 'merge_METTL14.csv')
+
