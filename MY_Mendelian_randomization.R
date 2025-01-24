@@ -136,8 +136,4 @@ res$phewas<-paste0(res$trait,'(',formatC(res$p, format = "e", digits = 3),')')
 res<-res[order(res$p),]
 res<-res[!duplicated(res$trait),]
 
-match<-res[match(merge$rsIDs,res$rsid),]
-merge$phewas<-match$phewas
-
-write.csv(merge,file = 'merge_METTL14.csv')
 
