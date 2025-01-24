@@ -182,3 +182,45 @@ transname<-getLDS(attributes = c("hgnc_symbol"),
                   attributesL = c("ensembl_gene_id",'description','flybase_gene_id','external_gene_name'),
                   martL = drosophila)
 
+###################################
+#在多序列比对中找到对应位置的方法
+
+find_mapped_site<-function(pa) {
+aligned_s1 <- pattern(pa)
+aligned_s2 <- subject(pa)
+aligned_s1_vec <- as.character(aligned_s1) 
+aligned_s2_vec <- as.character(aligned_s2)
+mapping_s1_to_s2 <- rep(NA_integer_, nchar(s1))
+pos1 <- 0  
+pos2 <- 0  
+for (i in 1:nchar(aligned_s1_vec)) {
+  aa1 <- substr(aligned_s1_vec,i,i)
+  aa2 <- substr(aligned_s2_vec,i,i)
+  if (aa1 != "-") {
+    pos1 <- pos1 + 1
+  }
+  if (aa2 != "-") {
+    pos2 <- pos2 + 1
+  }
+  if (aa1 != "-" && aa2 != "-") {
+    mapping_s1_to_s2[pos1] <- pos2
+  }
+}
+return(mapping_s1_to_s2)
+}
+
+library(Biostrings)
+
+s1 <-readAAStringSet('HUMAN_NSUN2.txt')
+s2 <-readAAStringSet('DROME_NSUN2.txt')
+
+
+pa<-pairwiseAlignment(s1, s2,
+                  substitutionMatrix = "BLOSUM62",
+                  gapOpening = 0, gapExtension = 8) #Biostrings可以做简单的比对
+
+pairsite<-find_mapped_site(pa)
+
+pairsite[767] #这个方法最开始被我用来在跨物种的比对中计算对应的位置，这种尝试可能并不是太适用，但是这个方法是非常有趣的
+
+
