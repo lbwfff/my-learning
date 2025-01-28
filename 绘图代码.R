@@ -345,6 +345,18 @@ peak<-GRanges(
   strand = c(SRR5602442$V6,SRR5602446$V6))
 peak$sample <- c(rep("SYN",nrow(SRR5602442)), rep("HOM", nrow(SRR5602446)))
 
+original_data <- meta[[2]]$data
+filtered_data <- subset(original_data, Position != 5) #有一些没有比对到基因位置的，或是会被放在Position==5，不知道为什么，挺奇怪的
+new_plot <- meta[[2]] %+% filtered_data #这个方法还挺厉害的，对于ggplot对象的操作
+
+pdf("/scratch/lb4489/project/rnaloca/m6a/merip_meta_2.pdf",width = 6,height = 4)
+new_plot + ggtitle("Meta Profile")+
+  theme(legend.position = "right")+
+  theme_classic()+
+  scale_color_manual(values = c("#0073C2FF", "#EFC000FF"))+ 
+  scale_y_continuous(expand = c(0,0)) 
+dev.off()
+
 ###########祖传火山图，陪伴我整个生涯的代码，颜色还需要优化一下，其他的地方暂时没什么不满意的#########
 library('ggrepel')
 Dat$x<-rownames(Dat)
