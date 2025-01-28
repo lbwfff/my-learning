@@ -336,6 +336,15 @@ meta[[2]] + ggtitle("Meta Profile")+
   scale_color_manual(values = c("#0073C2FF", "#EFC000FF"))+ ######但优点是高度的可定制化
   scale_y_continuous(expand = c(0,0))   #把横轴从零开始
 
+#或者直接创建GRanges对象更快一些，也不用每次都调用ChIPpeakAnno
+SRR5602442 <- data.table::fread('/scratch/lb4489/project/rnaloca/m6a/SRR5602442.bed')
+SRR5602446 <- data.table::fread('/scratch/lb4489/project/rnaloca/m6a/SRR5602446.bed')
+peak<-GRanges(
+  seqnames = c(SRR5602442$V1,SRR5602446$V1),
+  ranges = IRanges(start=c(SRR5602442$V2,SRR5602446$V2), end = c(SRR5602442$V3,SRR5602446$V3)),
+  strand = c(SRR5602442$V6,SRR5602446$V6))
+peak$sample <- c(rep("SYN",nrow(SRR5602442)), rep("HOM", nrow(SRR5602446)))
+
 ###########祖传火山图，陪伴我整个生涯的代码，颜色还需要优化一下，其他的地方暂时没什么不满意的#########
 library('ggrepel')
 Dat$x<-rownames(Dat)
