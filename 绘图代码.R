@@ -933,7 +933,30 @@ ht_list<-Heatmap(Heatmapexp,col = col_fun1, name = "Score",
 
 pdf("cacocluster_test.pdf",width =16,height = 16)
 draw(ht_list, annotation_legend_side = "bottom")
-dev.off()                   
+dev.off()       
+
+#Heatmapexp好难啊
+                   
+Heatmap(m6atefc,na_col = "grey",col = col_fun1,
+          name = "log2 (FC)",
+          column_title = NULL,
+          cluster_columns = F,
+          cluster_rows =F,
+          show_row_dend = T,
+          show_column_names =T,
+          show_heatmap_legend = T,
+          row_names_side = "right",
+          width = ncol(m6atefc)*unit(4, "mm"), 
+          height = nrow(m6atefc)*unit(4, "mm"),
+          cell_fun = function(j, i, x, y, width, height, fill) {
+            p = m6atepadj[i, j]
+            if (!is.na(p)) {
+              if (p < 0.05) {
+                grid.text('**', x, y, gp = gpar(fontsize = 10))
+              } else if (p < 0.1) {
+                grid.text('*', x, y, gp = gpar(fontsize = 10))
+              }
+            } } #如果想要在cell里面加东西的话，本质上可以加任何的东西吗修改function内容就好了
                    
                    
                    
