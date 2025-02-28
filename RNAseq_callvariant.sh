@@ -66,6 +66,50 @@ done
 
 #之后就是使用R语言的脚步来进行合并了，我在bcftools中加入了参数--ploidy GRCh38，这使得我可以在VCF文件中看到多个ALT allele（如果存在的话），这会是一个对于质控非常重要的信息。
 
+###############################################################################
+##然后是两段R代码，怎么从fasta切序列和怎么从bam切coverage
+
+library(Biostrings)
+library(GenomicRanges)
+
+fasta_file <- "/scratch/lb4489/bioindex/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+genome <- FaFile(fasta_file)
+
+query_granges <- GRanges(seqnames = vcf$`#CHROM`,
+                          ranges = IRanges(start = c(vcf$POS-5), width = 10))
+sequences <- getSeq(genome, query_granges)
+
+print(sequences)
+
+regex_pattern <- "GTTC[ATCG]A[ATCG][ATCG]C" #正则化的表达方式，对于核苷酸序列好像很好用
+matches <- grep(regex_pattern, as.character(sequences))
+vcf$motif<-as.character(sequences)
+
+moti<-vcf[matches,]
+
+########
+library(GenomicAlignments)
+  
+bam_file <- meta$bam_pos
+  
+query_range <- GRanges(seqnames = posbed$V1,
+                         ranges = IRanges(start = c(posbed$V2-20), 
+                                          width = 40))
+  
+posalignments_list <- lapply(bam_file, function(bam) {
+    readGAlignments(bam, param = ScanBamParam(which = query_range))
+  }) #用循环可以同时切好几个bam文件
+
+cove<-posalignments_list[[j]] #选择其中一个
+cove <- coverage(cove) #计算覆盖率
+
+coverage_at_position <-cove[[chr]][(site-5):(site+5)]
+    
+merge$score[i]<- ifelse(mean(coverage_at_position[1:10], na.rm = TRUE) > 20,
+                            (mean(coverage_at_position[6:10], na.rm = TRUE)/mean(coverage_at_position[1:5], na.rm = TRUE)),
+                            NA)
+  
+
 
 
 
