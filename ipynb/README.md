@@ -2,4 +2,6 @@
 
 #My_test 是对于allen_brain数据（一个scRNA项目）再分析的结果，很有意思的资源
 
-#
+#在finetune_nucleotide_transformer.ipynb中我们尝试了对DNA LLM模型进行了fine-tune，这部分的尝试后来被用做了new_TN.py和new_GROVER.py，这是两个不同的模型但是使用方法相似
+
+#在Qwen.ipynb，我第一次对语言模型进行了fine-tune，通过使用unsloth包极大的降低了对于显存的需求，尝试了对一些神经科学领域的文章的摘要进行了训练，没有训练台词时间但是看起来还行
