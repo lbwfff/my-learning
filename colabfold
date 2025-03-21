@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH -p nvidia
+#SBATCH -c 5
+#SBATCH -t 1:00:00
+#SBATCH --gres=gpu:1
+
+module load singularity
+
+export LC_ALL="C"
+
+singularity exec -B /scratch/lb4489/project/colabfold/cache:/cache \
+  colabfold_1.5.5-cuda12.2.2.sif \
+  python -m colabfold.download #下载alphafold的权重
+  
+singularity exec --nv \
+  -B /scratch/lb4489/project/colabfold/cache:/cache -B $(pwd):/work \
+  colabfold_1.5.5-cuda12.2.2.sif \
+  colabfold_batch ./test.fa ./output #如果使用msa服务的话可以直接提供fasta文件，对于复合物使用NNN:NNN这样就行
+  
+singularity exec --nv \
+  -B /scratch/lb4489/project/colabfold/cache:/cache -B $(pwd):/work \
+  colabfold_1.5.5-cuda12.2.2.sif \
+  colabfold_batch ./a3m/ ./output_a3m #如果有a3m文件的话可以直接预测，这样的话就可以本地运行，绕开msa服务的限制
+
+#本地msa的话需要colabfold_search，索引还没有构建好，之后可以试一下。
