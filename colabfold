@@ -23,3 +23,6 @@ singularity exec --nv \
   colabfold_batch ./a3m/ ./output_a3m #如果有a3m文件的话可以直接预测，这样的话就可以本地运行，绕开msa服务的限制
 
 #本地msa的话需要colabfold_search，索引还没有构建好，之后可以试一下。
+#不过我感觉就算这样做的话，速度依然很忙，想要更高的通量还是需要绕过msa
+
+
