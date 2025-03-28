@@ -5,3 +5,5 @@
 #在finetune_nucleotide_transformer.ipynb中我们尝试了对DNA LLM模型进行了fine-tune，这部分的尝试后来被用做了new_TN.py和new_GROVER.py，这是两个不同的模型但是使用方法相似
 
 #在Qwen.ipynb，我第一次对语言模型进行了fine-tune，通过使用unsloth包极大的降低了对于显存的需求，尝试了对一些神经科学领域的文章的摘要进行了训练，没有训练台词时间但是看起来还行
+
+#在for_ESM中我们测试了蛋白LLM模型ESM的使用，包括结构预测模型ESM fold
