@@ -357,6 +357,52 @@ new_plot + ggtitle("Meta Profile")+
   scale_y_continuous(expand = c(0,0)) 
 dev.off()
 
+#######################################################
+
+
+library(cliProfiler)
+library(ChIPpeakAnno)
+library(ggplot2)
+
+gr <- GRanges(
+  seqnames = c(filter$V1[filter$V4=='a'],
+               filter$V1[filter$V4=='m'],
+               filter$V1[filter$V4=='17596'],
+               filter$V1[filter$V4=='17802']),
+  ranges = c(IRanges(start = filter$V2[filter$V4=='a'], width = 1),
+             IRanges(start = filter$V2[filter$V4=='m'], width = 1),
+             IRanges(start = filter$V2[filter$V4=='17596'], width = 1),
+             IRanges(start = filter$V2[filter$V4=='17802'], width = 1)),
+  strand = c(filter$V6[filter$V4=='a'],
+             filter$V6[filter$V4=='m'],
+             filter$V6[filter$V4=='17596'],
+             filter$V6[filter$V4=='17802'])
+)
+
+gr$sample <- c(rep("m6A",length(filter$V1[filter$V4=='a'])),
+               rep("m5C", length(filter$V1[filter$V4=='m'])),
+               rep("inosine",length(filter$V1[filter$V4=='17596'])),
+               rep("pseudouridine", length(filter$V1[filter$V4=='17802'])))
+
+
+meta<-metaGeneProfile(object = gr,annotation= '/scratch/lb4489/bioindex/gencode.vM34.chr_patch_hapl_scaff.annotation.gff3',
+                      group = 'sample',include_intron = F)
+
+
+p <- meta[[2]]
+plot_data <- p[["data"]]
+filtered_data <- plot_data[plot_data$Position!=5,]
+p$data <- filtered_data
+
+p + ggtitle("Meta Profile")+
+  geom_density(linewidth = 1)+
+  theme(legend.position = "right")+
+  theme_classic()+
+  scale_color_manual(values=MetBrewer::met.brewer("Egypt", 4))
+
+
+
+
 ###########祖传火山图，陪伴我整个生涯的代码，颜色还需要优化一下，其他的地方暂时没什么不满意的#########
 library('ggrepel')
 Dat$x<-rownames(Dat)
