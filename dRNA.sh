@@ -85,3 +85,31 @@ m6anet inference --input_dir WT_m6anet --out_dir WT_m6anet_result  --pretrained_
 tringtie -L -o ./test/test.gtf ./test/test.bam -p 5
 
 #就还挺方便的，但是这个FPKM TPM是怎么估计出来的？
+
+################################################################
+#m6anet最近也更新的RNA004模型，但是就还是感觉用起来挺麻烦的，而且也只能做m6A。
+#dorado可以在basecall时同时做预测
+
+singularity exec dorado.sif dorado basecaller --estimate-poly-a sup,inosine_m6A,m5C,pseU ./HIP_test2 --reference /scratch/lb4489/bioindex/GRCm39.genome.fa  > HIP_mum_mod.bam #我这里用--estimate-poly-a顺便估计了poly A长度
+
+samtools view -b -h -F 4 HIP_mum_mod.bam > HIP_mum_mapped.bam
+samtools sort -o HIP_mum_mapped.sorted.bam HIP_mum_mapped.bam
+samtools index ./HIP_mum_mapped.sorted.bam
+
+/scratch/lb4489/project/dRNA/modkit/modkit pileup ./HIP_mum_mapped.sorted.bam ./HIP_test.bed --log-filepath HIP_test.log #然后用modkit把修饰提取出来
+
+#也可以自己手动指定阈值，但是差距相当小
+/scratch/lb4489/project/dRNA/modkit/modkit pileup ./HIP_mum_mapped.sorted.bam ./HIP_test_95.bed \
+    --filter-threshold 0.95 \
+    --mod-thresholds m:0.95 --mod-thresholds a:0.95 --mod-thresholds 17596:0.95 --mod-thresholds 17802:0.95 \
+    --log-filepath HIP_test.log
+
+bgzip modkit_m6a.bed
+tabix modkit_m6a.bed.gz #我用R手动过滤了一下
+
+/scratch/lb4489/project/dRNA/modkit/modkit localise modkit_m6a.bed.gz --regions ./mm39_stopcodon.bed --threads 40 -s same --force --genome-sizes mm39.chrom.sizes.txt -o m6a_stopcodon_localisze.txt #可以看一下localise的分布
+
+
+
+
+
