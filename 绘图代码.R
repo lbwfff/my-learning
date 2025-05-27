@@ -1037,6 +1037,19 @@ plot(motif)
 
 }
 dev.off()    #已经完全完了这段代码是什么意思，应该是画了前十显著的基序？得到的基序和homer的结果还不太一样，好像homer做了合并什么的
+
+#另一个更简单的motif
+        
+library(ggseqlogo)
+library(ggplot2)
+
+p<-list()
+
+p[[1]]<-
+  ggseqlogo( comod$motif[comod$order=='m6A-m5C'] )
+
+p[[2]]<-
+  ggseqlogo( comod$motif[comod$order=='m5C-m6A'] )
                    
 #######################################################################################
 #一个柱状图
