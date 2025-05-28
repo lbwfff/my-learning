@@ -2,6 +2,8 @@
 
 rm(list= ls())
 
+FYI, minknow applies default qscore filters of 8, 9 and 10 for fast, hac and sup models respectively.
+
 .libPaths("~/R/library")
 
 Try to do something
