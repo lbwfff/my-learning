@@ -340,3 +340,428 @@ plot_sample
 #Seurat对象确实是可以高度自定义的一个框架，设计得非常厉害
 #然后我们主要会去调整的就是meta.data这个位置
 #不去考虑细胞通讯和拟时序的话，基本上对于单细胞项目的需求就是这些了
+
+
+#################################################################
+#近期在分析的一个项目
+
+library('Seurat')
+library('SCpubr') #一个对scRNA-seq数据进行可视化的包
+
+setwd('/scratch/lb4489/project/GWAS/GWAS_for_MS/scRNA/')
+mat = Read10X("./data",gene.column = 1)
+meta = read.table("meta.tsv", header=T, sep="\t", as.is=T, row.names=1)
+so <- CreateSeuratObject(counts = mat, project = "MS", meta.data=meta) #读取数据
+
+so[["percent.mt"]] <- PercentageFeatureSet(so, pattern = "^MT-")
+VlnPlot(so, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+so <- NormalizeData(so, normalization.method = "LogNormalize", scale.factor = 10000)
+
+so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(so), 10)
+
+plot1 <- VariableFeaturePlot(so)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+all.genes <- rownames(so)
+so <- ScaleData(so, features = all.genes)
+
+so <- RunPCA(so, features = VariableFeatures(object = so))
+gc()
+
+so <- RunUMAP(so, dims = 1:10)
+
+DimPlot(so, reduction = "umap",split.by=c('batch_sn'))
+
+# do_DimPlot(so, reduction = "umap",split.by=c('batch_sn')) #为什么比原生绘图代码慢这么多
+
+DimPlot(so, reduction = "umap",group.by=c('celltype'))
+
+#细胞类型和原文注释的类型是对得上的
+
+FeaturePlot(so, features = c("PRRC2A"))
+
+# do_FeaturePlot(so, features = c("PRRC2A")) #用不了一点，猛吃内存
+
+DimPlot(so, split.by=c('lesion_type'),group.by=c('celltype'))
+
+#saveRDS(so, file = "/scratch/lb4489/project/GWAS/GWAS_for_MS/scRNA/Seurat_R.rds") #保存一下，下次不用重新PCA了
+so<-readRDS('/scratch/lb4489/project/GWAS/GWAS_for_MS/scRNA/Seurat_R.rds')
+
+features<-c('ABCA9','CEMIP','LAMA2','VWF','CLDN5','FTL','AQP4','ADCY2','GFAP',
+            'PCDH15','PTPRZ1','PDGFRA','NRGN','SV2B','SYT1','PRKCH','SKAP1',
+            'PARP8','TBXAS1','ARHGAP24','LRMDA','FCRL5','IGKC','IGHG2','MOBP','ST18','MOG')
+
+pdf("./dotplot_mainctype.pdf",width = 10,height = 6)
+DotPlot(so, features = features,group.by=c('celltype')) + RotatedAxis() #看一下细胞大类的注释是不是准确，这些都是cell maker基因
+dev.off()
+
+#用SCpubr的function画一下柱状图，就是不同样本，疾病非疾病中不同细胞类型的数量分布之类的信息
+
+p<-list()
+
+p[[1]]<-
+SCpubr::do_BarPlot(sample = so, 
+                   group.by = "celltype", 
+                   legend.position = "none",
+                   plot.title = "Number of cells per cluster", 
+                   flip = TRUE,order=T)
+# p[[2]]<-
+# SCpubr::do_BarPlot(so,position = "fill",
+#                    group.by = "celltype",
+#                    split.by = "lesion_type",
+#                    plot.title = "Number of cells per cluster in each sample") 
+
+p[[2]]<-
+SCpubr::do_BarPlot(so,position = "fill",
+                   group.by = "lesion_type",
+                   split.by = "celltype",
+                   plot.title = "Number of cells per cluster in each sample")
+
+library(patchwork)
+pdf("./type_count.pdf",width = 12,height = 6)
+wrap_plots(p,nrow=1, guides="keep") 
+dev.off()
+
+#做一下pseudobulk的分析
+
+pseudo_ifnb <- AggregateExpression(so, assays = "RNA", 
+                                   return.seurat = T, 
+                                   group.by = c("lesion_type", "sample_id", "celltype"))
+
+pseudo_ifnb$celltype.lesiontype <- paste(pseudo_ifnb$celltype, pseudo_ifnb$lesion_type, sep = "_")
+Idents(pseudo_ifnb) <- "celltype.lesiontype"
+
+MRG<-read.csv('RNAME_for_magma.csv')
+
+deg_celltype<-list()
+MRG_celltype<-list()
+
+library(ggplot2)
+library(ggrepel)
+library(patchwork)
+
+#使用循环对所有细胞类型中进行差异分析，因为有三个不同的组别，有些组别中还缺失细胞类型，导致这个循环写得很复杂
+
+for (i in unique(so@meta.data$celltype)){
+
+
+if(i != 'BC') {
+
+bulk1 <- FindMarkers(object = pseudo_ifnb, 
+                            ident.1 = paste0(i,'_CA'), 
+                            ident.2 = paste0(i,'_Ctrl'),
+                            test.use = "DESeq2")
+
+bulk1<-bulk1[!is.na(bulk1$p_val_adj),]
+bulk1$group<-c('CA_vs_Ctrl')
+
+bulk1$gene<-rownames(bulk1)
+bulk1$score<-(log10(bulk1$p_val_adj)*sign(bulk1$avg_log2FC)*(-1))
+bulk1<-bulk1[order(bulk1$score),]
+bulk1$order<-(1:nrow(bulk1))
+bulk1$group<-ifelse(abs(bulk1$score)>1.3,'Sign','Non-Sign')
+
+p<-list()
+
+p[[1]]<-
+ggplot(bulk1, aes(x = order, y = score, color = group)) +
+  geom_point(alpha = 0.7, size = 3) +
+  scale_color_manual(values = c("#A0A0A0", "#c9c9dd")) +
+  geom_point(data = bulk1[bulk1$gene %in% MRG$Gene.Symbol & bulk1$group == 'Sign', ],
+             color = '#8282aa', size = 3) +
+  geom_text_repel(data = bulk1[bulk1$gene %in% MRG$Gene.Symbol & bulk1$group == 'Sign', ],
+                  aes(label = gene),color = '#8282aa',size = 3,segment.color = "black",
+                  show.legend = FALSE, nudge_x = -200,  nudge_y = 0.8, box.padding = 0.5, point.padding = 0.5) +
+  theme_bw() +theme_classic(base_size = 15) +
+  theme(aspect.ratio=1)+
+  labs(title = paste0('DEG for ','CA_vs_Ctrl',' in ',i),
+       y = '-log10(FDR) * sign(logFC)', x = NULL,color = 'Group') +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        legend.position = "top",  legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10)  ) +
+  geom_hline(yintercept = c(-1.3,1.3), linetype = "dashed", color = "black", size = 0.5)
+
+
+bulk2 <- FindMarkers(object = pseudo_ifnb, 
+                     ident.1 = paste0(i,'_CI'), 
+                     ident.2 = paste0(i,'_Ctrl'),
+                     test.use = "DESeq2")
+bulk2<-bulk2[!is.na(bulk2$p_val_adj),]
+bulk2$group<-c('CI_vs_Ctrl')
+bulk2$gene<-rownames(bulk2)
+
+bulk2$score<-(log10(bulk2$p_val_adj)*sign(bulk2$avg_log2FC)*(-1))
+bulk2<-bulk2[order(bulk2$score),]
+bulk2$order<-(1:nrow(bulk2))
+bulk2$group<-ifelse(abs(bulk2$score)>1.3,'Sign','Non-Sign')
+
+p[[2]]<-
+  ggplot(bulk2, aes(x = order, y = score, color = group)) +
+  geom_point(alpha = 0.7, size = 3) +
+  scale_color_manual(values = c("#A0A0A0", "#c9c9dd")) +
+  geom_point(data = bulk2[bulk2$gene %in% MRG$Gene.Symbol & bulk2$group == 'Sign', ],
+             color = '#8282aa', size = 3) +
+  geom_text_repel(data = bulk2[bulk2$gene %in% MRG$Gene.Symbol & bulk2$group == 'Sign', ],
+                  aes(label = gene),color = '#8282aa',size = 3,segment.color = "black",
+                  show.legend = FALSE, nudge_x = -200,  nudge_y = 0.8, box.padding = 0.5, point.padding = 0.5) +
+  theme_bw() +theme_classic(base_size = 15) +
+  theme(aspect.ratio=1)+
+  labs(title = paste0('DEG for ','CI_vs_Ctrl',' in ',i),
+       y = '-log10(FDR) * sign(logFC)', x = NULL,color = 'Group') +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        legend.position = "top",  legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10)  ) +
+  geom_hline(yintercept = c(-1.3,1.3), linetype = "dashed", color = "black", size = 0.5)
+
+bulk3 <- FindMarkers(object = pseudo_ifnb, 
+                     ident.1 = paste0(i,'_CA'), 
+                     ident.2 = paste0(i,'_CI'),
+                     test.use = "DESeq2")
+
+bulk3<-bulk3[!is.na(bulk3$p_val_adj),]
+bulk3$group<-c('CA_vs_CI')
+bulk3$gene<-rownames(bulk3)
+
+bulk3$score<-(log10(bulk3$p_val_adj)*sign(bulk3$avg_log2FC)*(-1))
+bulk3<-bulk3[order(bulk3$score),]
+bulk3$order<-(1:nrow(bulk3))
+bulk3$group<-ifelse(abs(bulk3$score)>1.3,'Sign','Non-Sign')
+
+p[[3]]<-
+  ggplot(bulk3, aes(x = order, y = score, color = group)) +
+  geom_point(alpha = 0.7, size = 3) +
+  scale_color_manual(values = c("#A0A0A0", "#c9c9dd")) +
+  geom_point(data = bulk3[bulk3$gene %in% MRG$Gene.Symbol & bulk3$group == 'Sign', ],
+             color = '#8282aa', size = 3) +
+  geom_text_repel(data = bulk3[bulk3$gene %in% MRG$Gene.Symbol & bulk3$group == 'Sign', ],
+                  aes(label = gene),color = '#8282aa',size = 3,segment.color = "black",
+                  show.legend = FALSE, nudge_x = -200,  nudge_y = 0.8, box.padding = 0.5, point.padding = 0.5) +
+  theme_bw() +theme_classic(base_size = 15) +
+  theme(aspect.ratio=1)+
+  labs(title = paste0('DEG for ','CA_vs_CI',' in ',i),
+       y = '-log10(FDR) * sign(logFC)', x = NULL,color = 'Group') +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        legend.position = "top",  legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10)  ) +
+  geom_hline(yintercept = c(-1.3,1.3), linetype = "dashed", color = "black", size = 0.5)
+
+pdf(paste0('./DEG_for_celltype_',i,'.pdf'),width = 14,height = 4)
+print(wrap_plots(p,nrow=1, guides="collect") )
+dev.off()
+
+bulkall<-rbind(bulk1,bulk2,bulk3)
+
+deg_celltype[[i]]<-bulkall[bulkall$p_val_adj<0.05 & abs(bulkall$avg_log2FC)>0.5,]
+
+MRG_celltype[[i]]<-bulkall[bulkall$gene %in% MRG$Gene.Symbol,]
+
+} else{
+  
+  bulk1 <- FindMarkers(object = pseudo_ifnb, 
+                       ident.1 = paste0(i,'_CA'), 
+                       ident.2 = paste0(i,'_CI'),
+                       test.use = "DESeq2")
+  
+  bulk1<-bulk1[!is.na(bulk1$p_val_adj),]
+  bulk1$group<-c('CA_vs_Ctrl')
+  bulk1$gene<-rownames(bulk1)
+  
+  bulk1$score<-(log10(bulk1$p_val_adj)*sign(bulk1$avg_log2FC)*(-1))
+  bulk1<-bulk1[order(bulk1$score),]
+  bulk1$order<-(1:nrow(bulk1))
+  bulk1$group<-ifelse(abs(bulk1$score)>1.3,'Sign','Non-Sign')
+  
+pdf(paste0('./DEG_for_celltype_',i,'.pdf'),width = 6,height = 4)
+print(ggplot(bulk1, aes(x = order, y = score, color = group)) +
+    geom_point(alpha = 0.7, size = 3) +
+    scale_color_manual(values = c("#A0A0A0", "#c9c9dd")) +
+    geom_point(data = bulk1[bulk1$gene %in% MRG$Gene.Symbol & bulk1$group == 'Sign', ],
+               color = '#8282aa', size = 3) +
+    geom_text_repel(data = bulk1[bulk1$gene %in% MRG$Gene.Symbol & bulk1$group == 'Sign', ],
+                    aes(label = gene),color = '#8282aa',size = 3,segment.color = "black",
+                    show.legend = FALSE, nudge_x = -200,  nudge_y = 0.8, box.padding = 0.5, point.padding = 0.5) +
+    theme_bw() +theme_classic(base_size = 15) +
+    theme(aspect.ratio=1)+
+    labs(title = paste0('DEG for ','CA_vs_CI',' in ',i),
+         y = '-log10(FDR) * sign(logFC)', x = NULL,color = 'Group') +
+    theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "top",  legend.title = element_text(size = 12, face = "bold"),
+          legend.text = element_text(size = 10)  ) +
+    geom_hline(yintercept = c(-1.3,1.3), linetype = "dashed", color = "black", size = 0.5))
+dev.off()
+  
+  
+  
+  bulkall<-rbind(bulk1)
+  
+  deg_celltype[[i]]<-bulkall[bulkall$p_val_adj<0.05 & abs(bulkall$avg_log2FC)>0.5,]
+  
+  MRG_celltype[[i]]<-bulkall[bulkall$gene %in% MRG$Gene.Symbol,]
+  
+}
+}
+
+#有几个细胞类型还挺有意思的
+library(openxlsx)
+
+write.xlsx(deg_celltype,'deg_celltype.xlsx')
+write.xlsx(MRG_celltype,'MRG_celltype.xlsx')
+
+#之后仅看了OPC细胞
+
+OPC<-subset(so, subset = celltype=='OPC')
+
+
+OPC <- RunPCA(OPC, features = VariableFeatures(object = OPC))
+OPC <- RunUMAP(OPC, dims = 1:10) #重新进行降维
+
+p<-list()
+p[[1]]<-
+DimPlot(OPC, reduction = "umap",group.by = "subtype")+
+  theme(aspect.ratio=1)
+
+
+features<-c('MMD2','MIR3681HG','ITGA8','DLC1','NRXN3',
+            'VIM','TRAK2','GPR17','BCAS1','MT-CO2',
+            'MT-ND4','MT-ND5','ANKRD10','CAMK2D','TPST1',
+            'SNED1','RALYL','CDH18','KCNMB2-AS1','TAFA1',
+            'SOX2','CLDN11','SOX10','MOBP','CTNNA3','PEX5L') #cell maker
+p[[2]]<-
+DotPlot(OPC, features = features,group.by=c('subtype')) + RotatedAxis()+
+  theme(aspect.ratio=0.5)
+
+pdf("./DotPlot_OPC_type.pdf",width = 18,height = 6)
+wrap_plots(p,nrow=1, guides="keep") 
+dev.off()
+
+library(MetBrewer)
+
+p<-list()
+
+p[[1]]<-
+SCpubr::do_BarPlot(OPC,position = "fill",
+                   group.by = "lesion_type",
+                   split.by = "subtype",
+                   plot.title = "Number of cells per cluster in each sample") 
+
+p[[2]]<-
+SCpubr::do_BarPlot(OPC,position = "fill",
+                   group.by = "subtype",
+                   split.by = "lesion_type",
+                   plot.title = "Number of cells per cluster in each sample") +
+  scale_fill_manual(values=met.brewer("Egypt", 8))
+
+pdf("./BarPlot_OPC_type.pdf",width = 12,height = 6)
+wrap_plots(p,nrow=1, guides="keep") 
+dev.off()
+
+
+pdf("./IGF2BP2_features_OPC.pdf",width = 12,height = 6)
+do_FeaturePlot(sample = OPC,
+               features = "IGF2BP2",
+               split.by = "lesion_type",
+               group.by = "subtype",
+               na.value = "grey90") 
+dev.off()
+
+#之后是伪时序分析
+
+library(monocle3)
+library(tidyverse)
+
+expression_matrix = GetAssayData(OPC,assay ='RNA',layer ='counts')
+cell_metadata = data.frame(OPC@meta.data)
+gene_annotation = data.frame(expression_matrix[,1])
+gene_annotation[,1] = row.names(gene_annotation)
+colnames(gene_annotation)=c("gene_short_name")
+
+##构建Monocle3对象
+cds <- new_cell_data_set(expression_matrix,
+                         cell_metadata = cell_metadata,
+                         gene_metadata = gene_annotation)
+
+cds <- preprocess_cds(cds, num_dim = 50,norm_method = c("none"))
+
+cds <- align_cds(cds, alignment_group = "orig.ident")
+
+cds <- reduce_dimension(cds,cores=5)
+
+cds <- cluster_cells(cds,resolution = 0.0000001)
+
+# cds <- learn_graph(cds)
+
+# plot_cells(cds, label_groups_by_cluster=FALSE,  color_cells_by = "subtype")
+
+# cds <- order_cells(cds)
+
+#使用Seurat的降维结果
+# cds.embed <- cds@int_colData$reducedDims$UMAP
+# int.embed <- Embeddings(OPC, reduction = "umap")
+# int.embed <- int.embed[rownames(cds.embed),]
+# cds@int_colData$reducedDims$UMAP <- int.embed
+
+#如果使用Seurat的降维结果的话，细胞轨迹会和UMAP展示的一致，但问题在于这样的话可能会非常乱
+#也不一定要用这个降维结果，也可以用Monocle3的降维度方法，专门为时序设计的，结果要清楚得多
+
+# plot_cells(cds, label_groups_by_cluster=FALSE,  color_cells_by = "subtype")
+
+# cds <- order_cells(cds) #这个交互界面用来分析UMAP结果的话就不太好用了
+
+myselect <- function(cds,select.classify,my_select){
+  cell_ids <- which(colData(cds)[,select.classify] == my_select)
+  closest_vertex <-
+    cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+    igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+                                                              (which.max(table(closest_vertex[cell_ids,]))))]
+  root_pr_nodes}
+
+cds <- learn_graph(cds)
+cds <- learn_graph(cds)
+
+cds <- order_cells(cds, 
+                   root_pr_nodes=myselect(cds,select.classify = 'subtype',my_select = "OPC_PreOPC")) #手动选择起始点
+
+
+
+pdf("./OPC_traject.pdf",width = 18,height = 6)
+plot_cells(cds, color_cells_by = "pseudotime",
+           show_trajectory_graph=T,cell_size=1) + 
+  plot_cells(cds,color_cells_by = "subtype",label_cell_groups=FALSE,
+             label_leaves=FALSE,label_branch_points=FALSE,graph_label_size=2,cell_size=1)+ 
+  scale_color_manual(values=met.brewer("Egypt", 8)) +
+  plot_cells(cds,color_cells_by = "lesion_type",label_cell_groups=FALSE,
+             label_leaves=FALSE,label_branch_points=FALSE,graph_label_size=2,cell_size=1)+  #这个非常明显的轨迹
+  scale_color_manual(values=met.brewer("Egypt", 3)) 
+dev.off()
+#看得头疼这个绘图
+
+genes <- c('IGF2BP2')
+genes_cds <- cds[rowData(cds)$gene_short_name %in% genes, ]
+IGFBP2_Ctrl <- genes_cds[, colData(cds)$lesion_type == "Ctrl"]
+IGFBP2_CA <- genes_cds[, colData(cds)$lesion_type == "CA"]
+IGFBP2_CI <- genes_cds[, colData(cds)$lesion_type == "CI" ]
+
+p<-list()
+p[[1]]<-
+plot_genes_in_pseudotime(IGFBP2_Ctrl,color_cells_by="subtype",min_expr=0.5,cell_size=1.5)+ 
+  scale_color_manual(values=met.brewer("Egypt", 8))+
+  theme(aspect.ratio=0.5)
+p[[2]]<-
+plot_genes_in_pseudotime(IGFBP2_CA,color_cells_by="subtype",min_expr=0.5,cell_size=1.5)+ 
+  scale_color_manual(values=met.brewer("Egypt", 8))+
+  theme(aspect.ratio=0.5)
+p[[3]]<-
+plot_genes_in_pseudotime(IGFBP2_CI,color_cells_by="subtype",min_expr=0.5,cell_size=1.5)+ 
+  scale_color_manual(values=met.brewer("Egypt", 8))+
+  theme(aspect.ratio=0.5)
+
+
+pdf("./IGFBP2_pseudotime_tar.pdf",width = 6,height = 8)
+wrap_plots(p,nrow=3, guides="collect") 
+dev.off()
