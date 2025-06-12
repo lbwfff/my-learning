@@ -765,3 +765,223 @@ plot_genes_in_pseudotime(IGFBP2_CI,color_cells_by="subtype",min_expr=0.5,cell_si
 pdf("./IGFBP2_pseudotime_tar.pdf",width = 6,height = 8)
 wrap_plots(p,nrow=3, guides="collect") 
 dev.off()
+
+#######################################
+#之后用同一组数据做了另一个项目
+so<-readRDS('/scratch/lb4489/project/GWAS/GWAS_for_MS/scRNA/Seurat_R.rds')
+
+ctrl<-subset(so, subset = condition=='Control') #这里只考虑对照样本
+
+p<-list()
+
+p[[1]]<-
+DimPlot(ctrl, reduction = "umap",group.by=c('celltype'))+
+  theme(aspect.ratio=1) 
+
+table(ctrl@meta.data$patient_id,ctrl@meta.data$celltype)
+
+features<-unique(c('AQP4', 'GFAP', 'ALDH1L1', 'S100B',
+            'CLDN5', 'FLT1', 'PECAM1', 'VWF',
+            'CX3CR1', 'P2RY12', 'TREM2', 'TMEM119',
+            'RBFOX3' , 'SNAP25', 'SYT1', 'MAP2',
+            'MBP', 'MOG', 'PLP1', 'MAG',
+            'PDGFRA', 'CSPG4' , 'OLIG1', 'OLIG2',
+            'MPZ', 'SOX10', 'PLP1',
+            'CD3D', 'CD3E', 'CD2', 'CD8A'))
+
+p[[2]]<-
+  DotPlot(ctrl, features = features,group.by=c('celltype')) + RotatedAxis()+
+  theme(aspect.ratio=0.5)  #看一下注释的准确
+
+library(patchwork)
+pdf("./5gene_vgat.pdf",width = 18,height = 6)
+wrap_plots(p,nrow=1, guides="keep") 
+dev.off()
+
+
+table(ctrl@meta.data$patient_id,ctrl@meta.data$celltype)
+
+p<-do_FeaturePlot(sample = ctrl,
+               features = c('SLC32A1','GAD1','GAD2','SLC6A1','SLC6A13'),
+               group.by = "celltype",
+               na.value = "grey90")  #单基因的表达
+
+q<-list()
+
+q[[1]]<-p[[1]]+theme(aspect.ratio=1) +labs(title='SLC32A1')
+q[[2]]<-p[[2]]+theme(aspect.ratio=1) +labs(title='GAD1')
+q[[3]]<-p[[3]]+theme(aspect.ratio=1) +labs(title='GAD2')
+q[[4]]<-p[[4]]+theme(aspect.ratio=1) +labs(title='SLC6A1')
+q[[5]]<-p[[5]]+theme(aspect.ratio=1) +labs(title='SLC6A13')
+
+features<-c('SLC32A1','GAD1','GAD2','SLC6A1','SLC6A13')
+
+q[[6]]<-
+  DotPlot(ctrl, features = features,group.by=c('celltype')) + RotatedAxis()+
+  theme(aspect.ratio=1) 
+
+pdf("5gene_FeaturePlot.pdf", width = 8, height = 8)  # 这里我实在搞不定这些图的排版了，干脆每张图单独保存得了
+for (i in 1:6) {
+  print(q[[i]]) 
+}
+dev.off() 
+
+NEU<-subset(ctrl, subset = celltype=='NEU') #之后在Neuron中如法炮制
+
+NEU <- RunPCA(NEU, features = VariableFeatures(object = NEU))
+NEU <- RunUMAP(NEU, dims = 1:10)
+
+table(NEU@meta.data$subtype)
+
+p<-list()
+
+p[[1]]<-
+  DimPlot(NEU, reduction = "umap",group.by=c('subtype'))+
+  theme(aspect.ratio=1) 
+
+features<-unique(c('SV2B' ,'LINC00507' ,'CUX2', 'RORB' ,'LINC01202' ,'LRRK1' ,
+                   'ARHGEF28', 'ADAMTSL1', 'LNC01776', 'CCN2' ,
+                   'SEMA3E', 'HTR2C', 'THEMIS' ,'NTNG2', 'BHHLHE22' ,
+                   'GAD1', 'VIP' ,'PVALB' ,'MYO5B' ,'KIT','CA8' ,
+                   'SST', 'GNG7','DACH1' ,'SV2C'))
+
+p[[2]]<-
+  DotPlot(NEU, features = features,group.by=c('subtype')) + RotatedAxis()+
+  theme(aspect.ratio=0.5)
+
+library(patchwork)
+pdf("./5gene_vgat_NEU.pdf",width = 18,height = 6)
+wrap_plots(p,nrow=1, guides="keep") 
+dev.off()
+
+
+p<-do_FeaturePlot(sample = NEU,
+                  features = c('SLC32A1','GAD1','GAD2','SLC6A1','SLC6A13'),
+                  group.by = "subtype",
+                  na.value = "grey90") 
+
+q<-list()
+
+q[[1]]<-p[[1]]+theme(aspect.ratio=1) +labs(title='SLC32A1')
+q[[2]]<-p[[2]]+theme(aspect.ratio=1) +labs(title='GAD1')
+q[[3]]<-p[[3]]+theme(aspect.ratio=1) +labs(title='GAD2')
+q[[4]]<-p[[4]]+theme(aspect.ratio=1) +labs(title='SLC6A1')
+q[[5]]<-p[[5]]+theme(aspect.ratio=1) +labs(title='SLC6A13')
+
+features<-c('SLC32A1','GAD1','GAD2','SLC6A1','SLC6A13')
+
+q[[6]]<-
+  DotPlot(NEU, features = features,group.by=c('subtype')) + RotatedAxis()+
+  theme(aspect.ratio=0.5)+
+  theme(aspect.ratio=1) 
+
+gc()
+
+pdf("5gene_FeaturePlot_subtype.pdf", width = 8, height = 8) 
+for (i in 1:6) {
+  print(q[[i]]) 
+}
+dev.off() 
+
+#####又看了另一个数据集，除了文件读取别的代码都是一样的
+
+meta<-read.table('PEC2_sample_metadata.txt',fill = T)
+colnames(meta)<-meta[1,]
+meta<-meta[-1,]
+meta<-meta[meta$Cohort=='CMC' & meta$Disorder=='control',]
+
+samples <- meta$Individual_ID[1:10] #只使用了十个样本
+
+seurat_list <- lapply(samples, function(smp) {
+  mat <- fread(paste0('CMC/',smp, "-annotated_matrix.txt.gz"), data.table = FALSE)
+  rownames(mat) <- mat[, 1]
+  mat <- mat[, -1]
+  mat <- as.matrix(mat)
+  obj <- CreateSeuratObject(counts = mat, project = smp)
+  obj@meta.data$celltype<-sub("\\..*$", "", rownames(obj@meta.data)) #原数据直接把下拨分类表到细胞名了，这里单独拿出来作为一列
+  obj$sample <- smp #样本名
+  return(obj)
+})
+
+names(seurat_list) <- samples
+
+combined <- merge(seurat_list[[1]], y = seurat_list[-1], add.cell.ids = samples)
+
+combined[["percent.mt"]] <- PercentageFeatureSet(combined, pattern = "^MT-")
+VlnPlot(combined, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+combined <- NormalizeData(combined, normalization.method = "LogNormalize", scale.factor = 10000)
+
+combined <- FindVariableFeatures(combined, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(combined), 10)
+
+plot1 <- VariableFeaturePlot(combined)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+all.genes <- rownames(combined)
+combined <- ScaleData(combined, features = all.genes)
+
+combined <- RunPCA(combined, features = VariableFeatures(object = combined))
+gc()
+
+combined <- RunUMAP(combined, dims = 1:10)
+
+DimPlot(combined, reduction = "umap",split.by=c('sample'))
+
+DimPlot(combined, reduction = "umap",group.by=c('celltype'))
+
+#saveRDS(combined, file = "/scratch/lb4489/project/vgat/CMC_tensample_Seurat_R.rds")
+combined<-readRDS('/scratch/lb4489/project/vgat/CMC_tensample_Seurat_R.rds')
+
+# 建立映射表（命名向量，小类名为名字，大类为值），把小类映射为大类
+celltype_map <- c(
+  # Astrocyte类
+  "Astro" = "AS",
+  
+  # Oligodendrocyte相关
+  "Oligo" = "OL",
+  "OPC" = "OPC",
+
+  # Microglia 和免疫
+  "Micro" = "MG",
+  "Immune" = "TC",
+  
+  # Endothelial / SMC / VLMC 属于血管相关
+  "Endo" = "EC",
+  "SMC" = "EC",
+  "VLMC" = "EC",
+  
+  # Excitatory neurons (IT, ET, CT, etc.)
+  "L2/3 IT" = "NEU",
+  "L4 IT" = "NEU",
+  "L5 IT" = "NEU",
+  "L5 ET" = "NEU",
+  "L5/6 NP" = "NEU",
+  "L6 CT" = "NEU",
+  "L6 IT" = "NEU",
+  "L6b" = "NEU",
+  "PC" = "NEU",
+  "Pax6" = "NEU",  # 发育中的神经元，归类为 NEU 可接受
+  "L6 IT Car3" = "NEU",  # 可选，也可能归 NEU，看研究设计
+  
+  # Inhibitory neurons
+  "Lamp5" = "NEU",
+  "Lamp5 Lhx6" = "NEU",
+  "Pvalb" = "NEU",
+  "Sst" = "NEU",
+  "Sst Chodl" = "NEU",
+  "Vip" = "NEU",
+  "Sncg" = "NEU",
+  "Chandelier" = "NEU"
+)
+
+combined@meta.data$bigclass <- celltype_map[combined@meta.data$celltype] #这个语法还挺有意思的，之前居然从来没用过
+
+table(combined@meta.data$sample, combined@meta.data$bigclass) #之后就是一样的分析了
+
+
+
+
+
