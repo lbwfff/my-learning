@@ -38,3 +38,17 @@ detach("package:seqinr", unload = TRUE) #seqinr某个函数和Biostrings重名�
 
 #和blast无关，记录一下怎么从一个biostring对象中提取序列
 sequence = gsub("\\.","",paste(test)) #test就是这个biostring对象，没有这一行还真不知道要怎么拿出这些序列来。
+
+
+
+#######在R语言上liftover，不然每次都去UCSC挺麻烦的#####
+
+library(rtracklayer)
+chain <- import.chain('mm10ToMm39.over.chain')
+library(GenomicRanges)
+gr <- GRanges(seqnames = bed$V1, ranges = IRanges(start = bed$V2, end = bed$V3))
+lifted <- liftOver(gr, chain)
+lifted <- unlist(lifted)
+lifted<-as.data.frame(lifted)
+
+
