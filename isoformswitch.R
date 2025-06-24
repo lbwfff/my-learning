@@ -168,6 +168,6 @@ ggplot(data=mySwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF)) +
   labs(x='Gene log2 fold change', y='dIF') +
   theme_bw()
 
-#总的来说还是比较方便使用的
 
+#我没有使用novel转录本相关的功能，如果做了de nova的组装的话也是可以拓展分析的，总的来说适用性还算广
 
