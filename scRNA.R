@@ -982,6 +982,147 @@ combined@meta.data$bigclass <- celltype_map[combined@meta.data$celltype] #这个
 table(combined@meta.data$sample, combined@meta.data$bigclass) #之后就是一样的分析了
 
 
+###################################################
+#一个10x multiomic数据，包括scRNA_seq和scATAC-seq的结果
+
+library(qs)
+library(ggplot2)
+library(Seurat)
+
+res<-qread("6_SCELL_RNA_ATAC_WNN_data.qs") #不太熟悉的保存格式
+celltype<-qread('6_SCELL_celltype_annotations.qs')
+
+res <- RunUMAP(res, dims = 1:10)
+
+map<-celltype[["annotated_cells"]]
+identical(rownames(res@meta.data),rownames(map))
+res@meta.data$celltype <- map$cluster_celltype_global
+res@meta.data$subtype<-map$cluster_celltype_detail1
+res@meta.data$subtype2<-map$cluster_celltype_detail3
+
+#先随便看一下scRNA_seq水平，细胞的注释是不是对得上，什么的，随便过一下
+
+DimPlot(res, reduction = "umap",split.by=c('orig.ident'),group.by=c('celltype'))
+
+features<-c('Aldh1l1', 'Gfap', 'Aqp4', 'S100b',
+            'Cx3cr1', 'Tmem119', 'P2ry12', 'Aif1',
+            'Snap25', 'Rbfox3', 'Slc6a1' , 'Gad1', 'Gad2',
+            'Mog', 'Plp1', 'Cnp', 'Mag', 'Mobp',
+            'Pdgfra', 'Cspg4' , 'Sox10',
+            'Pdgfrb', 'Rgs5', 'Acta2', 'Col1a1', 'Lama2')
+
+DotPlot(res, features = features,group.by=c('celltype'), assay = "RNA") + RotatedAxis()  #因为对象中包括多个维度的数据，所以需要使用assay来指定需要展示或分析的组
+
+NEU<-subset(res, subset = celltype=='NEU')
+
+NEU <- RunPCA(NEU, features = VariableFeatures(object = NEU))
+NEU <- RunUMAP(NEU, dims = 1:10)
+
+table(NEU@meta.data$subtype2)
+
+DimPlot(NEU, reduction = "umap",group.by=c('subtype2'))+
+  theme(aspect.ratio=1) 
+
+features<-unique(c('Sv2b' ,'Cux2', 'Rorb' ,'Lrrk1' ,
+                   'Arhgef28', 'Adamtsl1',  'Ccn2' ,
+                   'Sema3e', 'Htr2c', 'Themis' ,'Ntng2', 'Bhhlhe22' ,
+                   'Gad1', 'Vip' ,'Pvalb' ,'Myo5b' ,'Kit','Ca8' ,
+                   'Sst', 'Gng7','Dach1' ,'Sv2c','Lamp5','Sncg'))
+
+DotPlot(NEU, features = features,group.by=c('subtype'), assay = "RNA") + RotatedAxis()+
+  theme(aspect.ratio=0.5)
+
+test<-
+DotPlot(NEU, features = features,group.by=c('subtype2'), assay = "SCT") + RotatedAxis()+
+  theme(aspect.ratio=0.5)
+
+#重点在于scATAC-seq的结果
+
+DefaultAssay(res) <- "ATAC"
+
+library(BSgenome.Mmusculus.UCSC.mm10)
+res <- RegionStats(res, genome = BSgenome.Mmusculus.UCSC.mm10)
+
+res <- LinkPeaks(
+  object = res,
+  peak.assay = "ATAC",
+  expression.assay = "SCT",
+  genes.use = c("Neurod6", "Gad1")
+)
+
+idents.plot <- c("ASC", "MIG", "NEU",
+                 "OLG", "OPC", "VLM")
+
+res <- SortIdents(res)
+
+Idents(res) <- "celltype"
+
+#需要为Seurat对象重新指定fragments.tsv.gz文件的位置，这是一个类似于bam的文件但是少了需要信息
+#使用Signac分析scATAC-seq数据fragments.tsv.gz是几乎必须的
+
+frags <- Fragments(res)
+sapply(frags, function(x) x@path)
+
+cells.use <- colnames(res)
+
+frags <- Fragments(res)  
+Fragments(res) <- NULL  
+
+new.paths <- list(
+  "/scratch/lb4489/project/ee_long&short/cellranger_outputs/YC/atac_fragments.tsv.gz",
+  "/scratch/lb4489/project/ee_long&short/cellranger_outputs/YE/atac_fragments.tsv.gz",
+  "/scratch/lb4489/project/ee_long&short/cellranger_outputs/OC/atac_fragments.tsv.gz",
+  "/scratch/lb4489/project/ee_long&short/cellranger_outputs/OE/atac_fragments.tsv.gz"
+)
+
+for (i in seq_along(frags)) {
+  frags[[i]] <- UpdatePath(frags[[i]], new.path = new.paths[[i]])
+}
+
+Fragments(res) <- frags #更新了文件位置
+
+library(EnsDb.Mmusculus.v79)
+library(Signac)
+
+genes<-
+GetGRangesFromEnsDb(
+  ensdb=EnsDb.Mmusculus.v79,
+  standard.chromosomes = TRUE,
+  biotypes = c("protein_coding", "lincRNA", "rRNA", "processed_transcript"),
+  verbose = TRUE
+)
+
+genome(res[["ATAC"]])
+genome(genes)
+
+seqlevelsStyle(genes) <- "UCSC"
+genome(genes) <- "mm10"
+
+Annotation(res[["ATAC"]]) <-  genes #给Seurat对象添加基因注释
+
+p1 <- CoveragePlot(
+  object = res,
+  region = "Neurod6",
+  features = "Neurod6",
+  expression.assay = "SCT",
+  idents = idents.plot,
+  extend.upstream = 8000,
+  extend.downstream = 5000
+)
+
+p2 <- CoveragePlot(
+  object = res,
+  region = "Gad1",
+  features = "Gad1",
+  expression.assay = "SCT",
+  idents = idents.plot,
+  extend.upstream = 8000,
+  extend.downstream = 5000
+)
+
+patchwork::wrap_plots(p1, p2, ncol = 1)
+       
+#然后展示了两个基因的ATAC signal，图片效果其实非常不错
 
 
 
