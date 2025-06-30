@@ -1124,5 +1124,9 @@ patchwork::wrap_plots(p1, p2, ncol = 1)
        
 #然后展示了两个基因的ATAC signal，图片效果其实非常不错
 
-
+TilePlot(
+  object = "Gad1",
+  region = roi,
+  idents = idents.plot
+)  #也可以话Tileplot，效果类似于深海图
 
