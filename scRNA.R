@@ -1130,3 +1130,72 @@ TilePlot(
   idents = idents.plot
 )  #也可以话Tileplot，效果类似于深海图
 
+########对于差异ATAC分析
+
+
+##接着上面的数据来，类似于RNA-seq也可以计算pseudobulk
+
+pseudobulk.counts <- AggregateExpression(
+  object = NEU,
+  group.by = "orig.ident",  
+  assays = "ATAC",  
+  slot = "counts"
+)$ATAC 
+
+#有重复样本的话可以用deseq2分析，但是这个数据没有，所以用了FindMarkers来做
+
+cells.use <- WhichCells(res, ident = "NEU") #重新得到亚群数据，之前的没有带fragments.tsv.gz
+res_subset <- subset(res, cells = cells.use)
+Idents(res_subset) <- "orig.ident"
+DefaultAssay(res_subset) <- "ATAC"
+
+markers_atac <- FindMarkers(
+  object = res_subset,
+  ident.1 = "OE",
+  ident.2 = "YE",
+  min.pct = 0.1,    
+  logfc.threshold = 0.25, 
+  test.use = "LR",  
+  latent.vars = "nCount_ATAC"  
+) 
+#我先做了OE_vs_OC但是差异很小，这里仅作为例子所以比较了OE YE
+
+
+TilePlot(
+  object = res_subset,
+  region = "chr19-37275402-37276367",
+  idents = c("OE", "YE","OC","YC")
+)
+
+CoveragePlot(
+  object = res_subset,
+  region = "Ide",
+  features = "Ide",
+  expression.assay = "SCT",
+  idents =  c("OE", "YE","OC","YC"),
+  extend.upstream = 8000,
+  extend.downstream = 5000
+) #整个基因的情况
+
+CoveragePlot(
+  object = res_subset,
+  region = "chr19-37275402-37276367",
+  features = "Ide",
+  expression.assay = "SCT",
+  idents =  c("OE", "YE","OC","YC"),
+  extend.upstream = 800,
+  extend.downstream = 500
+) #zoom in，单个peak的情况,其实差异不是很大，old组稍微高一些。
+
+
+CoveragePlot(
+  object = res_subset,
+  region = "chr6-31284835-31285714",
+  # features = "Ide",
+  expression.assay = "SCT",
+  idents =  c("OE", "YE","OC","YC"),
+  extend.upstream = 800,
+  extend.downstream = 500
+)
+#另一个例子，方向是对的，没有问题
+
