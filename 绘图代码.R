@@ -155,7 +155,24 @@ corrplot(corr = M, method = "number",
          type="lower",add=TRUE,col=rev(COL2('RdBu', 200)),
          tl.pos = "n",cl.pos = "n",diag=FALSE,
          number.digits = 3,number.cex = 1,number.font = NULL)
+
 #下半是R值，上半有标星表示P值的画法
+
+####另一个改版
+
+M <- cor(log2(df3ratio))
+P <- ggcorrplot::cor_pmat(log2(df3ratio))
+diag(M) <- NA #这样做是为了不展示对角线
+
+corrplot(corr =M, ,method = "circle",
+         is.corr = FALSE,na.label = " ", na.label.col = NA, #is.corr = FALSE能让颜色更有区分度，在对相关性矩阵的差异性不大时可以使用，然后就是不把NA值（对角线）画出来
+         type="upper",col=c(rev(COL2('RdBu', 100))),
+         tl.pos="lt", tl.cex=1, tl.col="black",tl.srt = 45,tl.offset=0.5)
+corrplot(corr = M, method = "number",
+         is.corr = FALSE,diag = FALSE,
+         type="lower",add=TRUE,col=rev(COL2('RdBu', 100)),
+         tl.pos = "n",cl.pos = "n",
+         number.digits = 3,number.cex = 1,number.font = NULL)
 
 ##########3##############
 ggplot(try[try$`E-ID`=='MOV10',],aes(group,value,fill=group))+geom_boxplot(width=0.5,outlier.shape = NA)+theme(plot.title=element_text(size = 25),axis.text.x=element_text(size=15,angle=0),axis.text.y=element_text(size=15),axis.title.x=element_text(size = 23),axis.title.y=element_text(size = 23))+labs(title="MOV10",x="group", y = "TPM")+
