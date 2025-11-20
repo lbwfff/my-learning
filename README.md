@@ -15,10 +15,12 @@ This project is equivalent to my notebook. When I want to use the code I have wr
 
 ssh lb4489@10.230.14.44 -p 4410
 
-scp -P 4410 lb4489@10.230.14.44:/path/to/file ~/Downloads/ #下载文件
+scp -P 4410 lb4489@10.230.14.44:/path/to/file ~/Downloads/   #下载文件
 
-for d in */; do echo -n "$d "; find "$d" -type f | wc -l; done #统计文件数量
+for d in */; do echo -n "$d "; find "$d" -type f | wc -l; done   #统计文件数量
 
-rsync -avP /archive/lb4489/archive_project/hcc/ ./ #cp
+rsync -avP /archive/lb4489/archive_project/hcc/ ./   #cp
 
-dmfget -d /archive/lb4489/archive_project/hcc/ #把文件从磁带拿出来
+dmfget -d /archive/lb4489/archive_project/hcc/  #把文件从磁带拿出来
+
+awk -F '\t' 'NR>1 {print $7}' filereport_read_run_PRJNA1090549.tsv   | tr ';' '\n'   > fastq_list.txt   #从ENA拿链接
