@@ -24,3 +24,9 @@ rsync -avP /archive/lb4489/archive_project/hcc/ ./   #cp
 dmfget -d /archive/lb4489/archive_project/hcc/  #把文件从磁带拿出来
 
 awk -F '\t' 'NR>1 {print $7}' filereport_read_run_PRJNA1090549.tsv   | tr ';' '\n'   > fastq_list.txt   #从ENA拿链接
+
+tar -I "zstd -T50" -cf CTX_09.tar.zst CTX_09/ #T50为线程数，会比tar.gz快且小
+zstd -t archive.tar.zst
+tar -I zstd -xf CTX_09.tar.zst
+
+
