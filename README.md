@@ -31,4 +31,4 @@ tar -I "zstd -T50" -cf CTX_09.tar.zst CTX_09/ #T50为线程数，会比tar.gz快
 zstd -t archive.tar.zst
 tar -I zstd -xf CTX_09.tar.zst
 
-
+nohup conda run -n pyega bash down.sh &
