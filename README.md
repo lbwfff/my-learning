@@ -16,6 +16,7 @@ This project is equivalent to my notebook. When I want to use the code I have wr
 ssh lb4489@10.230.14.44 -p 4410
 
 scp -P 4410 lb4489@10.230.14.44:/path/to/file ~/Downloads/   #下载文件
+
 rsync -av --progress -e "ssh -p 4410" "lb4489@10.230.14.44:/data/download/bulklong/SRP*" /Volumes/Elements/ #使用rsync实现
 
 
