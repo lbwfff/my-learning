@@ -33,3 +33,5 @@ zstd -t archive.tar.zst
 tar -I zstd -xf CTX_09.tar.zst
 
 nohup conda run -n pyega bash down.sh &
+
+setsid nohup bash run.sh > logs/brca_batch.log 2>&1 < /dev/null & #新服务器上奇怪的逻辑，nohup之后仍无法退出终端，否则任务就会中断，为什么会这样？
